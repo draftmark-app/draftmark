@@ -190,7 +190,50 @@ Authorization: Bearer {api_key}
 }
 ```
 
-### 6.5 Reactions
+### 6.5 Collections
+
+Group related documents together (e.g., an architecture plan + API spec + migration guide).
+
+**Creating a collection (API):**
+```
+POST /api/v1/collections
+Authorization: Bearer {api_key}
+
+{
+  "title": "API Redesign",
+  "docs": [
+    { "slug": "arch-plan", "label": "main" },
+    { "slug": "api-spec", "label": "reference" },
+    { "slug": "migration-guide", "label": "appendix" }
+  ]
+}
+
+→ 201 Created
+{
+  "slug": "col_xyz789",
+  "url": "https://draftmark.app/c/xyz789"
+}
+```
+
+**Collection view (UI):**
+- Sidebar or tab navigation listing all docs in the collection
+- Each doc shows its own comment counts and review status
+- Labels displayed next to doc titles ("main", "reference", "appendix")
+
+**Cross-document references in comments:**
+Comments can reference lines in other documents within the same collection:
+```
+POST /api/v1/docs/:slug/comments
+{
+  "body": "This contradicts the rate limits defined in the API spec",
+  "author": "alice",
+  "anchor": { "type": "line", "ref": 42 },
+  "cross_ref": { "slug": "api-spec", "line": 15 }
+}
+```
+Cross-references render as clickable links that jump to the exact line in the referenced doc.
+
+### 6.6 Reactions
 
 - Simple emoji reactions on the doc (👍 ✅ 🤔 ❌)
 - No account required
@@ -227,7 +270,22 @@ anchor_type:string   # "line" or null (general comment)
 anchor_ref:integer   # line number, null for general comments
 doc_version:integer  # version of the doc when comment was made
 status:string        # "open" (default), "resolved", "dismissed"
+cross_ref_slug:string   # optional: slug of referenced doc (within same collection)
+cross_ref_line:integer  # optional: line number in referenced doc
 created_at:datetime
+
+# Collection
+slug:string          # nanoid, URL-safe
+title:string
+magic_token:string   # owner management token (hashed)
+api_key:string       # for programmatic access (hashed)
+created_at:datetime
+
+# CollectionDoc (join table)
+collection:references
+doc:references
+position:integer     # ordering within collection
+label:string         # optional: "main", "reference", "appendix"
 
 # Like
 doc:references
@@ -269,6 +327,10 @@ Public docs can be read without auth.
 | `POST` | `/docs/:slug/like` | Like a doc |
 | `GET` | `/docs/:slug/reviews` | List who has reviewed |
 | `POST` | `/docs/:slug/reviews` | Mark as "done reviewing" |
+| `POST` | `/collections` | Create a collection |
+| `GET` | `/collections/:slug` | Get collection with all docs and their metadata |
+| `PATCH` | `/collections/:slug` | Update collection (add/remove/reorder docs) |
+| `DELETE` | `/collections/:slug` | Delete collection (docs remain, only grouping removed) |
 
 ---
 
