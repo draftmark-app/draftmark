@@ -833,6 +833,206 @@ footer nav ul a { font-size: 14px; }
   margin-bottom: 24px !important;
 }
 
+/* DOCUMENT VIEW */
+.doc-view {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 60px 40px 80px;
+}
+
+.doc-view-header {
+  margin-bottom: 40px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.doc-view-title-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+
+.doc-view-title {
+  font-family: var(--font-instrument-serif), serif;
+  font-size: 36px;
+  font-weight: 400;
+  line-height: 1.2;
+  margin-bottom: 0;
+}
+
+.doc-view-meta {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 13px;
+  color: var(--muted);
+  display: flex;
+  gap: 16px;
+}
+
+.doc-view-body {
+  margin-bottom: 40px;
+}
+
+.doc-view-body h2 {
+  font-family: var(--font-geist-sans), sans-serif;
+  font-size: 22px;
+  font-weight: 500;
+  color: var(--text);
+  margin-top: 36px;
+  margin-bottom: 12px;
+}
+
+.doc-view-body h2:first-child {
+  margin-top: 0;
+}
+
+.doc-view-body p {
+  font-size: 16px;
+  color: var(--muted);
+  line-height: 1.7;
+  margin-bottom: 16px;
+}
+
+.doc-view-body ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding-left: 0;
+}
+
+.doc-view-body ul li {
+  font-size: 16px;
+  color: var(--muted);
+  line-height: 1.7;
+  padding-left: 20px;
+  position: relative;
+}
+
+.doc-view-body ul li::before {
+  content: '\2014';
+  position: absolute;
+  left: 0;
+  color: var(--border);
+}
+
+.doc-view-body ul li strong {
+  color: var(--text);
+  font-weight: 500;
+}
+
+.doc-view-code {
+  background: #1a1a1a;
+  border: 1px solid var(--border);
+  padding: 16px 18px;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 14px;
+  color: var(--accent);
+  margin-bottom: 16px;
+  border-radius: 2px;
+  white-space: pre;
+  overflow-x: auto;
+  line-height: 1.7;
+}
+
+.doc-view-mermaid {
+  background: #111;
+  border: 1px solid var(--border);
+  padding: 20px;
+  margin-bottom: 16px;
+  border-radius: 2px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.doc-view-stats {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 13px;
+  color: var(--muted);
+  display: flex;
+  gap: 20px;
+  padding: 16px 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 32px;
+}
+
+.doc-view-comments {
+  margin-bottom: 48px;
+}
+
+.doc-view-comments h3 {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 14px;
+  color: var(--muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 20px;
+}
+
+.doc-view-comment {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.doc-view-comment:last-of-type {
+  border-bottom: none;
+}
+
+.doc-view-comment-body {
+  flex: 1;
+}
+
+.doc-view-comment-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.doc-view-comment-time {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.doc-view-comment-body p {
+  font-size: 15px;
+  color: #9a9a9a;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.doc-view-comment-inline .doc-view-comment-body {
+  border-left: 2px solid var(--accent-dim);
+  padding-left: 12px;
+}
+
+.doc-view-inline-anchor {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 12px;
+  color: var(--accent-dim);
+}
+
+.doc-view-cta {
+  text-align: center;
+  padding: 40px 0;
+  border-top: 1px solid var(--border);
+}
+
+.doc-view-cta p {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 14px;
+  color: var(--muted);
+  margin-bottom: 16px;
+}
+
 /* MOBILE */
 @media (max-width: 768px) {
   nav {
@@ -890,6 +1090,23 @@ footer nav ul a { font-size: 14px; }
 
   .selfhost-cmd {
     width: 100%;
+    overflow-x: auto;
+  }
+
+  .doc-view {
+    padding: 40px 20px 60px;
+  }
+
+  .doc-view-title {
+    font-size: 28px;
+  }
+
+  .doc-view-stats {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .doc-view-mermaid {
     overflow-x: auto;
   }
 

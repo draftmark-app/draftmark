@@ -46,9 +46,9 @@ export default function Home() {
             <a href="#" className="btn-primary">
               start writing
             </a>
-            <a href="#" className="btn-ghost">
+            <Link href="/d/example" className="btn-ghost">
               see an example &rarr;
-            </a>
+            </Link>
           </div>
         </div>
 
