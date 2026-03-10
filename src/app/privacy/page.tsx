@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Nav from "@/components/Nav";
 
 export const metadata = {
   title: "Privacy Policy — Draftmark",
@@ -7,24 +7,7 @@ export const metadata = {
 export default function PrivacyPage() {
   return (
     <>
-      <nav>
-        <Link href="/" className="logo">
-          draft<span>mark</span>
-        </Link>
-        <ul>
-          <li>
-            <Link href="/docs">docs</Link>
-          </li>
-          <li>
-            <Link href="/about">about</Link>
-          </li>
-        </ul>
-        <div className="nav-right">
-          <a href="/" className="nav-cta">
-            get started &rarr;
-          </a>
-        </div>
-      </nav>
+      <Nav />
 
       <main className="static-page">
         <h1>Privacy Policy</h1>

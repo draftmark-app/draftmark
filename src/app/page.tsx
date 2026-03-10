@@ -1,32 +1,17 @@
 import Link from "next/link";
+import Nav from "@/components/Nav";
 
 export default function Home() {
   return (
     <>
-      <nav>
-        <Link href="/" className="logo">
-          draft<span>mark</span>
-        </Link>
-        <ul>
-          <li>
-            <a href="#how">how it works</a>
-          </li>
-          <li>
-            <a href="#features">features</a>
-          </li>
-          <li>
-            <a href="#pricing">pricing</a>
-          </li>
-          <li>
-            <Link href="/docs">docs</Link>
-          </li>
-        </ul>
-        <div className="nav-right">
-          <a href="#" className="nav-cta">
-            get started &rarr;
-          </a>
-        </div>
-      </nav>
+      <Nav
+        links={[
+          { href: "#how", label: "how it works", anchor: true },
+          { href: "#features", label: "features", anchor: true },
+          { href: "#pricing", label: "pricing", anchor: true },
+          { href: "/docs", label: "docs" },
+        ]}
+      />
 
       <section className="hero">
         <div>

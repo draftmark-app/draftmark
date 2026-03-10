@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Nav from "@/components/Nav";
 
 export const metadata = {
   title: "API Redesign Proposal — Draftmark",
@@ -7,24 +7,7 @@ export const metadata = {
 export default function ExampleDocPage() {
   return (
     <>
-      <nav>
-        <Link href="/" className="logo">
-          draft<span>mark</span>
-        </Link>
-        <ul>
-          <li>
-            <Link href="/docs">docs</Link>
-          </li>
-          <li>
-            <Link href="/about">about</Link>
-          </li>
-        </ul>
-        <div className="nav-right">
-          <a href="/" className="nav-cta">
-            get started &rarr;
-          </a>
-        </div>
-      </nav>
+      <Nav />
 
       <main className="doc-view">
         <div className="doc-view-header">
@@ -161,7 +144,7 @@ X-RateLimit-Reset: 1710000000`}
           </div>
 
           <div className="doc-view-comment">
-            <div className="avatar" style={{ background: "#2a2a3a", color: "#8ab4d4" }}>M</div>
+            <div className="avatar avatar-c">M</div>
             <div className="doc-view-comment-body">
               <div className="doc-view-comment-header">
                 <span className="comment-author">marcos</span>
@@ -176,7 +159,7 @@ X-RateLimit-Reset: 1710000000`}
           </div>
 
           <div className="doc-view-comment doc-view-comment-inline">
-            <div className="avatar" style={{ background: "#3a2a2a", color: "#c47a7a" }}>J</div>
+            <div className="avatar avatar-d">J</div>
             <div className="doc-view-comment-body">
               <div className="doc-view-comment-header">
                 <span className="comment-author">julia</span>
