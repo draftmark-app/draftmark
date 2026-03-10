@@ -22,7 +22,7 @@ body {
   color: var(--text);
   font-family: var(--font-geist-sans), sans-serif;
   font-weight: 300;
-  font-size: 15px;
+  font-size: 18px;
   line-height: 1.6;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
@@ -44,7 +44,7 @@ nav {
 
 .logo {
   font-family: var(--font-geist-mono), monospace;
-  font-size: 14px;
+  font-size: 18px;
   font-weight: 500;
   color: var(--text);
   text-decoration: none;
@@ -62,7 +62,7 @@ nav ul {
 nav ul a {
   color: var(--muted);
   text-decoration: none;
-  font-size: 13px;
+  font-size: 15px;
   font-family: var(--font-geist-mono), monospace;
   transition: color 0.2s;
 }
@@ -77,8 +77,8 @@ nav ul a:hover { color: var(--text); }
 
 .nav-cta {
   font-family: var(--font-geist-mono), monospace;
-  font-size: 12px;
-  padding: 8px 16px;
+  font-size: 15px;
+  padding: 10px 20px;
   background: transparent;
   border: 1px solid var(--border);
   color: var(--text);
@@ -92,7 +92,7 @@ nav ul a:hover { color: var(--text); }
 
 /* HERO */
 .hero {
-  max-width: 900px;
+  max-width: 1040px;
   margin: 0 auto;
   padding: 100px 40px 80px;
   display: grid;
@@ -103,7 +103,7 @@ nav ul a:hover { color: var(--text); }
 
 .tag {
   font-family: var(--font-geist-mono), monospace;
-  font-size: 11px;
+  font-size: 14px;
   color: var(--green-bright);
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -129,11 +129,11 @@ nav ul a:hover { color: var(--text); }
 
 h1 {
   font-family: var(--font-instrument-serif), serif;
-  font-size: 48px;
+  font-size: 60px;
   line-height: 1.1;
   font-weight: 400;
   color: var(--text);
-  margin-bottom: 20px;
+  margin-bottom: 24px;
   letter-spacing: -0.02em;
 }
 
@@ -144,10 +144,10 @@ h1 em {
 
 .hero-desc {
   color: var(--muted);
-  font-size: 14px;
+  font-size: 18px;
   line-height: 1.7;
   margin-bottom: 36px;
-  max-width: 340px;
+  max-width: 380px;
 }
 
 .hero-actions {
@@ -159,8 +159,8 @@ h1 em {
 
 .btn-primary {
   font-family: var(--font-geist-mono), monospace;
-  font-size: 12px;
-  padding: 10px 20px;
+  font-size: 15px;
+  padding: 14px 28px;
   background: var(--accent);
   color: #0d0d0d;
   border: none;
@@ -175,8 +175,8 @@ h1 em {
 
 .btn-ghost {
   font-family: var(--font-geist-mono), monospace;
-  font-size: 12px;
-  padding: 10px 20px;
+  font-size: 15px;
+  padding: 14px 28px;
   background: transparent;
   color: var(--muted);
   border: 1px solid var(--border);
@@ -198,7 +198,7 @@ h1 em {
 }
 
 .doc-card-header {
-  padding: 12px 16px;
+  padding: 14px 18px;
   border-bottom: 1px solid var(--border);
   display: flex;
   align-items: center;
@@ -214,14 +214,14 @@ h1 em {
 
 .doc-title {
   font-family: var(--font-geist-mono), monospace;
-  font-size: 12px;
+  font-size: 14px;
   color: var(--text);
 }
 
 .badge {
   font-family: var(--font-geist-mono), monospace;
-  font-size: 10px;
-  padding: 2px 7px;
+  font-size: 12px;
+  padding: 2px 8px;
   border-radius: 2px;
   letter-spacing: 0.05em;
 }
@@ -232,8 +232,8 @@ h1 em {
 
 .doc-action-btn {
   font-family: var(--font-geist-mono), monospace;
-  font-size: 10px;
-  padding: 3px 8px;
+  font-size: 12px;
+  padding: 4px 10px;
   background: transparent;
   color: var(--muted);
   border: 1px solid var(--border);
@@ -243,24 +243,24 @@ h1 em {
 
 .doc-action-btn:hover { color: var(--text); }
 
-.doc-body { padding: 20px 16px; font-size: 13px; line-height: 1.8; }
+.doc-body { padding: 20px 18px; font-size: 15px; line-height: 1.8; }
 
 .md-h1 {
   font-family: var(--font-instrument-serif), serif;
-  font-size: 20px;
+  font-size: 24px;
   color: var(--text);
   margin-bottom: 10px;
   font-weight: 400;
 }
 
-.md-p { color: #8a8a8a; margin-bottom: 12px; font-size: 12px; }
+.md-p { color: #8a8a8a; margin-bottom: 12px; font-size: 14px; }
 
 .md-code {
   background: #1a1a1a;
   border: 1px solid var(--border);
-  padding: 10px 12px;
+  padding: 12px 14px;
   font-family: var(--font-geist-mono), monospace;
-  font-size: 11px;
+  font-size: 13px;
   color: #c8b89a;
   margin-bottom: 12px;
   border-radius: 2px;
@@ -280,7 +280,7 @@ h1 em {
 
 .mermaid-label {
   font-family: var(--font-geist-mono), monospace;
-  font-size: 10px;
+  font-size: 12px;
   color: var(--muted);
   align-self: flex-start;
 }
@@ -294,18 +294,18 @@ h1 em {
 
 .mermaid-node {
   font-family: var(--font-geist-mono), monospace;
-  font-size: 10px;
-  padding: 4px 10px;
+  font-size: 12px;
+  padding: 5px 12px;
   border: 1px solid #3a3a3a;
   color: #8a8a8a;
   border-radius: 2px;
 }
 
 .mermaid-node.active { border-color: var(--accent-dim); color: var(--accent); }
-.mermaid-arrow { color: #3a3a3a; font-size: 12px; }
+.mermaid-arrow { color: #3a3a3a; font-size: 14px; }
 
 .doc-footer {
-  padding: 10px 16px;
+  padding: 12px 18px;
   border-top: 1px solid var(--border);
   display: flex;
   align-items: center;
@@ -314,7 +314,7 @@ h1 em {
 
 .doc-meta {
   font-family: var(--font-geist-mono), monospace;
-  font-size: 10px;
+  font-size: 12px;
   color: var(--muted);
   display: flex;
   gap: 14px;
@@ -322,7 +322,7 @@ h1 em {
 
 .comment-thread {
   border-top: 1px solid var(--border);
-  padding: 14px 16px;
+  padding: 14px 18px;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -331,10 +331,10 @@ h1 em {
 .comment { display: flex; gap: 10px; align-items: flex-start; }
 
 .avatar {
-  width: 20px; height: 20px;
+  width: 24px; height: 24px;
   border-radius: 50%;
   font-family: var(--font-geist-mono), monospace;
-  font-size: 9px;
+  font-size: 11px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -345,12 +345,12 @@ h1 em {
 .avatar-a { background: #2a3a2a; color: var(--green-bright); }
 .avatar-b { background: #1e2a1e; color: #5a9a6a; }
 
-.comment-content { font-size: 11px; color: #7a7a7a; }
+.comment-content { font-size: 13px; color: #7a7a7a; }
 .comment-author { color: var(--text); font-weight: 400; }
 .comment-tag {
   font-family: var(--font-geist-mono), monospace;
-  font-size: 9px;
-  padding: 1px 5px;
+  font-size: 11px;
+  padding: 1px 6px;
   background: rgba(74,124,89,0.15);
   color: var(--green-bright);
   border-radius: 2px;
@@ -359,7 +359,7 @@ h1 em {
 
 /* FLOW SECTION */
 .flow {
-  max-width: 900px;
+  max-width: 1040px;
   margin: 0 auto;
   padding: 60px 40px;
   border-top: 1px solid var(--border);
@@ -367,7 +367,7 @@ h1 em {
 
 .flow-label {
   font-family: var(--font-geist-mono), monospace;
-  font-size: 11px;
+  font-size: 15px;
   color: var(--muted);
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -384,41 +384,41 @@ h1 em {
 
 .flow-step {
   background: var(--bg);
-  padding: 24px 20px;
+  padding: 28px 24px;
   position: relative;
 }
 
 .step-num {
   font-family: var(--font-geist-mono), monospace;
-  font-size: 10px;
+  font-size: 12px;
   color: var(--border);
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
 
 .step-icon {
   font-family: var(--font-geist-mono), monospace;
-  font-size: 18px;
-  margin-bottom: 12px;
+  font-size: 22px;
+  margin-bottom: 14px;
   display: block;
 }
 
 .flow-step h3 {
-  font-size: 12px;
+  font-size: 18px;
   font-weight: 500;
   color: var(--text);
-  margin-bottom: 6px;
+  margin-bottom: 8px;
   font-family: var(--font-geist-sans), sans-serif;
 }
 
 .flow-step p {
-  font-size: 11px;
+  font-size: 16px;
   color: var(--muted);
-  line-height: 1.5;
+  line-height: 1.6;
 }
 
 /* FEATURES */
 .features {
-  max-width: 900px;
+  max-width: 1040px;
   margin: 0 auto;
   padding: 0 40px 60px;
   border-top: 1px solid var(--border);
@@ -427,7 +427,7 @@ h1 em {
 
 .features-label {
   font-family: var(--font-geist-mono), monospace;
-  font-size: 11px;
+  font-size: 15px;
   color: var(--muted);
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -452,24 +452,24 @@ h1 em {
 
 .feature-icon {
   font-family: var(--font-geist-mono), monospace;
-  font-size: 11px;
+  font-size: 16px;
   color: var(--accent-dim);
   margin-bottom: 16px;
 }
 
 .feature h3 {
-  font-size: 13px;
+  font-size: 18px;
   font-weight: 500;
   color: var(--text);
   margin-bottom: 8px;
   font-family: var(--font-geist-sans), sans-serif;
 }
 
-.feature p { font-size: 12px; color: var(--muted); line-height: 1.6; }
+.feature p { font-size: 16px; color: var(--muted); line-height: 1.6; }
 
 /* API SNIPPET */
 .api-section {
-  max-width: 900px;
+  max-width: 1040px;
   margin: 0 auto;
   padding: 0 40px 60px;
   border-top: 1px solid var(--border);
@@ -482,7 +482,7 @@ h1 em {
 
 .api-label {
   font-family: var(--font-geist-mono), monospace;
-  font-size: 11px;
+  font-size: 15px;
   color: var(--muted);
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -491,7 +491,7 @@ h1 em {
 
 .api-heading {
   font-family: var(--font-instrument-serif), serif;
-  font-size: 28px;
+  font-size: 40px;
   font-weight: 400;
   color: var(--text);
   line-height: 1.2;
@@ -500,17 +500,17 @@ h1 em {
 
 .api-heading em { font-style: italic; color: var(--accent); }
 
-.api-desc { font-size: 13px; color: var(--muted); line-height: 1.7; margin-bottom: 20px; }
+.api-desc { font-size: 17px; color: var(--muted); line-height: 1.7; margin-bottom: 20px; }
 
 .api-endpoints {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 
 .endpoint {
   font-family: var(--font-geist-mono), monospace;
-  font-size: 11px;
+  font-size: 15px;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -518,11 +518,11 @@ h1 em {
 }
 
 .method {
-  padding: 2px 6px;
+  padding: 3px 8px;
   border-radius: 2px;
-  font-size: 10px;
+  font-size: 13px;
   font-weight: 500;
-  min-width: 36px;
+  min-width: 42px;
   text-align: center;
 }
 
@@ -536,7 +536,7 @@ h1 em {
   border: 1px solid var(--border);
   padding: 20px;
   font-family: var(--font-geist-mono), monospace;
-  font-size: 11px;
+  font-size: 14px;
   line-height: 1.8;
   border-radius: 2px;
 }
@@ -549,7 +549,7 @@ h1 em {
 
 /* PRICING */
 .pricing {
-  max-width: 900px;
+  max-width: 1040px;
   margin: 0 auto;
   padding: 0 40px 80px;
   border-top: 1px solid var(--border);
@@ -558,7 +558,7 @@ h1 em {
 
 .pricing-label {
   font-family: var(--font-geist-mono), monospace;
-  font-size: 11px;
+  font-size: 15px;
   color: var(--muted);
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -573,12 +573,12 @@ h1 em {
   border: 1px solid var(--border);
 }
 
-.plan { background: var(--bg); padding: 28px 24px; }
+.plan { background: var(--bg); padding: 32px 28px; }
 .plan.highlighted { background: var(--surface); }
 
 .plan-name {
   font-family: var(--font-geist-mono), monospace;
-  font-size: 11px;
+  font-size: 14px;
   color: var(--muted);
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -587,7 +587,7 @@ h1 em {
 
 .plan-price {
   font-family: var(--font-instrument-serif), serif;
-  font-size: 36px;
+  font-size: 48px;
   color: var(--text);
   margin-bottom: 4px;
   line-height: 1;
@@ -595,24 +595,24 @@ h1 em {
 
 .plan-price span {
   font-family: var(--font-geist-sans), sans-serif;
-  font-size: 13px;
+  font-size: 16px;
   color: var(--muted);
   font-weight: 300;
 }
 
-.plan-desc { font-size: 12px; color: var(--muted); margin-bottom: 24px; margin-top: 8px; }
+.plan-desc { font-size: 16px; color: var(--muted); margin-bottom: 24px; margin-top: 8px; }
 
 .plan-features {
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
   margin-bottom: 24px;
 }
 
 .plan-features li {
   font-family: var(--font-geist-mono), monospace;
-  font-size: 11px;
+  font-size: 15px;
   color: #888;
   display: flex;
   align-items: center;
@@ -621,11 +621,11 @@ h1 em {
 
 .plan-features li::before { content: '\2014'; color: var(--border); }
 .plan-features li.active { color: var(--text); }
-.plan-features li.active::before { content: '\2713'; color: var(--green-bright); font-size: 10px; }
+.plan-features li.active::before { content: '\2713'; color: var(--green-bright); font-size: 13px; }
 
 /* SELF HOST */
 .selfhost {
-  max-width: 900px;
+  max-width: 1040px;
   margin: 0 auto;
   padding: 0 40px 80px;
   border-top: 1px solid var(--border);
@@ -644,20 +644,20 @@ h1 em {
 
 .selfhost-left h3 {
   font-family: var(--font-geist-mono), monospace;
-  font-size: 13px;
+  font-size: 18px;
   font-weight: 500;
   color: var(--text);
   margin-bottom: 6px;
 }
 
-.selfhost-left p { font-size: 12px; color: var(--muted); }
+.selfhost-left p { font-size: 16px; color: var(--muted); }
 
 .selfhost-cmd {
   font-family: var(--font-geist-mono), monospace;
-  font-size: 12px;
+  font-size: 15px;
   background: #0a0a0a;
   border: 1px solid var(--border);
-  padding: 10px 16px;
+  padding: 12px 18px;
   color: var(--green-bright);
   white-space: nowrap;
 }
@@ -669,15 +669,15 @@ footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  max-width: 900px;
+  max-width: 1040px;
   margin: 0 auto;
 }
 
-footer .logo { font-size: 12px; }
+footer .logo { font-size: 15px; }
 
 footer p {
   font-family: var(--font-geist-mono), monospace;
-  font-size: 11px;
+  font-size: 14px;
   color: var(--muted);
   display: flex;
   align-items: center;
@@ -688,7 +688,7 @@ footer p span { color: var(--border); }
 
 footer nav { border-bottom: none; position: static; background: transparent; backdrop-filter: none; padding: 0; }
 footer nav ul { gap: 20px; }
-footer nav ul a { font-size: 11px; }
+footer nav ul a { font-size: 14px; }
 
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(12px); }
@@ -697,3 +697,72 @@ footer nav ul a { font-size: 11px; }
 
 .hero > * { animation: fadeUp 0.5s ease both; }
 .hero > *:last-child { animation-delay: 0.1s; }
+
+/* MOBILE */
+@media (max-width: 768px) {
+  nav {
+    padding: 14px 20px;
+  }
+
+  nav ul { display: none; }
+
+  .hero {
+    grid-template-columns: 1fr;
+    padding: 60px 20px 40px;
+    gap: 32px;
+  }
+
+  h1 { font-size: 40px; }
+
+  .hero-desc { max-width: none; }
+
+  .flow { padding: 40px 20px; }
+
+  .flow-steps {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .features { padding: 40px 20px; }
+
+  .features-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .api-section {
+    grid-template-columns: 1fr;
+    padding: 40px 20px;
+    gap: 32px;
+  }
+
+  .code-block {
+    overflow-x: auto;
+  }
+
+  .pricing { padding: 40px 20px; }
+
+  .pricing-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .selfhost { padding: 0 20px 40px; }
+
+  .selfhost-inner {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 20px;
+  }
+
+  .selfhost-cmd {
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  footer {
+    flex-direction: column;
+    gap: 16px;
+    padding: 24px 20px;
+    text-align: center;
+  }
+
+  footer nav ul { display: flex; }
+}

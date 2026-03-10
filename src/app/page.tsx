@@ -90,7 +90,7 @@ export default function Home() {
             </div>
             <div className="doc-footer">
               <div className="doc-meta">
-                <span>&nearr; 12 views</span>
+                <span>↗ 12 views</span>
                 <span>&hearts; 3 likes</span>
                 <span>&#9678; 2 comments</span>
               </div>
@@ -135,7 +135,7 @@ export default function Home() {
           </div>
           <div className="flow-step">
             <div className="step-num">02</div>
-            <span className="step-icon">&nearr;</span>
+            <span className="step-icon">↗</span>
             <h3>Share</h3>
             <p>
               Send the link. Reviewer sees a clean rendered doc — no login
@@ -200,7 +200,7 @@ export default function Home() {
             </p>
           </div>
           <div className="feature">
-            <div className="feature-icon">[&nearr;]</div>
+            <div className="feature-icon">[↗]</div>
             <h3>Clean share links</h3>
             <p>
               Every doc gets a clean URL at draftmark.app/d/:slug. No cruft, no
@@ -318,7 +318,7 @@ export default function Home() {
               className="btn-ghost"
               style={{
                 display: "inline-block",
-                fontSize: 12,
+                fontSize: 15,
                 padding: "9px 20px",
               }}
             >
@@ -346,7 +346,7 @@ export default function Home() {
               className="btn-primary"
               style={{
                 display: "inline-block",
-                fontSize: 12,
+                fontSize: 15,
                 padding: "9px 20px",
               }}
             >
@@ -374,7 +374,7 @@ export default function Home() {
               className="btn-ghost"
               style={{
                 display: "inline-block",
-                fontSize: 12,
+                fontSize: 15,
                 padding: "9px 20px",
               }}
             >
