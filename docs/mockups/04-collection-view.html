@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mockup — Collection View | Draftmark</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist+Mono:wght@300;400;500&family=Geist:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0d0d0d; --surface: #141414; --border: #242424; --border-light: #1e1e1e;
+    --text: #e8e6e1; --muted: #5a5a5a; --accent: #c8b89a; --accent-dim: #8a7a66;
+    --green: #4a7c59; --green-bright: #6db384; --blue: #5b8fd4;
+  }
+  body {
+    background: var(--bg); color: var(--text); font-family: 'Geist', sans-serif;
+    font-weight: 300; font-size: 15px; line-height: 1.6; min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* NAV */
+  nav {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 20px 40px; border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; background: rgba(13,13,13,0.92);
+    backdrop-filter: blur(12px); z-index: 100;
+  }
+  .logo { font-family: 'Geist Mono', monospace; font-size: 14px; font-weight: 500; color: var(--text); text-decoration: none; letter-spacing: -0.02em; }
+  .logo span { color: var(--accent); }
+  nav ul { display: flex; gap: 32px; list-style: none; }
+  nav ul a { color: var(--muted); text-decoration: none; font-size: 13px; font-family: 'Geist Mono', monospace; transition: color 0.2s; }
+
+  /* LAYOUT: SIDEBAR + CONTENT */
+  .collection-layout {
+    display: flex; min-height: calc(100vh - 61px);
+  }
+
+  /* SIDEBAR */
+  .sidebar {
+    width: 280px; border-right: 1px solid var(--border); padding: 24px 0;
+    flex-shrink: 0; background: var(--surface);
+  }
+  .sidebar-header {
+    padding: 0 20px 20px; border-bottom: 1px solid var(--border);
+  }
+  .sidebar-header h2 {
+    font-family: 'Instrument Serif', serif; font-size: 20px; font-weight: 400;
+    margin-bottom: 4px;
+  }
+  .sidebar-header .collection-meta {
+    font-family: 'Geist Mono', monospace; font-size: 11px; color: var(--muted);
+  }
+
+  .sidebar-docs { padding: 12px 0; }
+
+  .sidebar-doc {
+    display: block; padding: 12px 20px; cursor: pointer;
+    transition: background 0.15s; text-decoration: none; color: inherit;
+    border-left: 3px solid transparent;
+  }
+  .sidebar-doc:hover { background: rgba(200,184,154,0.04); }
+  .sidebar-doc.active {
+    background: rgba(200,184,154,0.06); border-left-color: var(--accent);
+  }
+  .sidebar-doc-title {
+    font-size: 14px; color: var(--text); margin-bottom: 4px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .sidebar-doc-label {
+    font-family: 'Geist Mono', monospace; font-size: 10px; color: var(--accent-dim);
+    background: rgba(200,184,154,0.08); padding: 1px 6px; border-radius: 3px;
+    text-transform: uppercase; letter-spacing: 0.04em;
+  }
+  .sidebar-doc-stats {
+    font-family: 'Geist Mono', monospace; font-size: 11px; color: var(--muted);
+    display: flex; gap: 10px;
+  }
+  .sidebar-doc-stat { display: flex; align-items: center; gap: 3px; }
+
+  /* CONTENT */
+  .collection-content {
+    flex: 1; padding: 40px 48px; max-width: 800px;
+  }
+
+  .doc-header { margin-bottom: 24px; }
+  .doc-header h1 {
+    font-family: 'Instrument Serif', serif; font-size: 32px; font-weight: 400;
+    margin-bottom: 8px;
+  }
+  .doc-meta {
+    display: flex; align-items: center; gap: 12px;
+    font-family: 'Geist Mono', monospace; font-size: 12px; color: var(--muted);
+  }
+  .badge {
+    background: rgba(74, 124, 89, 0.15); color: var(--green-bright);
+    padding: 2px 8px; border-radius: 3px; font-size: 11px;
+  }
+  .doc-meta .sep { color: var(--border); }
+
+  .stats-bar {
+    display: flex; gap: 20px; padding: 12px 0; margin-bottom: 24px;
+    border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+    font-family: 'Geist Mono', monospace; font-size: 12px; color: var(--muted);
+  }
+  .stat { display: flex; align-items: center; gap: 6px; }
+  .stat-num { color: var(--text); font-weight: 500; }
+
+  /* DOC BODY */
+  .doc-body { font-size: 15px; line-height: 1.8; }
+  .doc-body h2 {
+    font-family: 'Instrument Serif', serif; font-size: 24px; font-weight: 400;
+    margin: 28px 0 12px;
+  }
+  .doc-body p { margin-bottom: 16px; }
+  .doc-body ul, .doc-body ol { margin-bottom: 16px; padding-left: 24px; }
+  .doc-body li { margin-bottom: 6px; }
+  .doc-body table {
+    width: 100%; border-collapse: collapse; margin: 16px 0;
+    font-size: 13px;
+  }
+  .doc-body th, .doc-body td {
+    text-align: left; padding: 8px 12px;
+    border: 1px solid var(--border);
+  }
+  .doc-body th {
+    background: var(--surface); font-family: 'Geist Mono', monospace;
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em;
+    color: var(--muted);
+  }
+  .doc-body code {
+    font-family: 'Geist Mono', monospace; font-size: 13px;
+    background: var(--surface); padding: 2px 6px; border-radius: 3px;
+    border: 1px solid var(--border);
+  }
+
+  /* CROSS-DOC REFERENCE */
+  .cross-ref {
+    display: inline-flex; align-items: center; gap: 4px;
+    color: var(--blue); font-family: 'Geist Mono', monospace; font-size: 12px;
+    text-decoration: none; background: rgba(91,143,212,0.08);
+    padding: 2px 8px; border-radius: 3px; transition: background 0.15s;
+  }
+  .cross-ref:hover { background: rgba(91,143,212,0.15); }
+  .cross-ref-arrow { font-size: 10px; }
+
+  /* INLINE COMMENT */
+  .inline-comment {
+    background: rgba(91, 143, 212, 0.06); border-left: 3px solid var(--blue);
+    margin: 8px 0; padding: 12px 16px; border-radius: 0 6px 6px 0;
+  }
+  .comment-author {
+    font-family: 'Geist Mono', monospace; font-size: 11px; color: var(--blue);
+    margin-bottom: 4px;
+  }
+  .comment-body { font-size: 13px; color: var(--text); line-height: 1.5; }
+  .comment-meta {
+    font-family: 'Geist Mono', monospace; font-size: 10px; color: var(--muted);
+    margin-top: 6px;
+  }
+
+  .mockup-label {
+    position: fixed; top: 12px; right: 12px; background: #ff6b35; color: #fff;
+    font-family: 'Geist Mono', monospace; font-size: 10px; font-weight: 500;
+    padding: 4px 10px; border-radius: 4px; text-transform: uppercase;
+    letter-spacing: 0.08em; z-index: 200;
+  }
+</style>
+</head>
+<body>
+
+<div class="mockup-label">Mockup</div>
+
+<nav>
+  <a href="#" class="logo">draft<span>mark</span></a>
+  <ul>
+    <li><a href="#">docs</a></li>
+    <li><a href="#">api</a></li>
+    <li><a href="#">github</a></li>
+  </ul>
+</nav>
+
+<div class="collection-layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <h2>API Redesign</h2>
+      <div class="collection-meta">3 documents &middot; created Mar 10</div>
+    </div>
+    <div class="sidebar-docs">
+
+      <a class="sidebar-doc active" href="#">
+        <div class="sidebar-doc-title">
+          Architecture Plan
+          <span class="sidebar-doc-label">main</span>
+        </div>
+        <div class="sidebar-doc-stats">
+          <span class="sidebar-doc-stat">3 comments</span>
+          <span class="sidebar-doc-stat">2 reviews</span>
+        </div>
+      </a>
+
+      <a class="sidebar-doc" href="#">
+        <div class="sidebar-doc-title">
+          API Specification
+          <span class="sidebar-doc-label">reference</span>
+        </div>
+        <div class="sidebar-doc-stats">
+          <span class="sidebar-doc-stat">1 comment</span>
+          <span class="sidebar-doc-stat">1 review</span>
+        </div>
+      </a>
+
+      <a class="sidebar-doc" href="#">
+        <div class="sidebar-doc-title">
+          Migration Guide
+          <span class="sidebar-doc-label">appendix</span>
+        </div>
+        <div class="sidebar-doc-stats">
+          <span class="sidebar-doc-stat">0 comments</span>
+          <span class="sidebar-doc-stat">0 reviews</span>
+        </div>
+      </a>
+
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT (showing the active doc) -->
+  <div class="collection-content">
+
+    <div class="doc-header">
+      <h1>Architecture Plan</h1>
+      <div class="doc-meta">
+        <span class="badge">public</span>
+        <span class="sep">/</span>
+        <span>v2</span>
+        <span class="sep">/</span>
+        <span>42 views</span>
+      </div>
+    </div>
+
+    <div class="stats-bar">
+      <div class="stat"><span class="stat-num">3</span> comments</div>
+      <div class="stat"><span class="stat-num">2</span> reviews</div>
+      <div class="stat"><span class="stat-num">5</span> reactions</div>
+    </div>
+
+    <div class="doc-body">
+      <h2>Overview</h2>
+      <p>This document outlines the high-level architecture for the API v2 migration. It covers the new endpoint structure, authentication flow, and rate limiting strategy.</p>
+
+      <h2>Endpoint Structure</h2>
+      <p>All v2 endpoints follow a consistent pattern with versioned response envelopes:</p>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Method</th>
+            <th>Path</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td><code>GET</code></td><td>/v2/resources</td><td>List resources (paginated)</td></tr>
+          <tr><td><code>POST</code></td><td>/v2/resources</td><td>Create resource</td></tr>
+          <tr><td><code>GET</code></td><td>/v2/resources/:id</td><td>Get single resource</td></tr>
+          <tr><td><code>PATCH</code></td><td>/v2/resources/:id</td><td>Update resource</td></tr>
+          <tr><td><code>DELETE</code></td><td>/v2/resources/:id</td><td>Delete resource</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Rate Limiting</h2>
+      <p>Rate limits are defined per API key tier. See the full specification in the
+        <a class="cross-ref" href="#">
+          <span class="cross-ref-arrow">&#8599;</span> API Specification &middot; line 15
+        </a>
+        for exact limits per endpoint.
+      </p>
+
+      <!-- INLINE COMMENT WITH CROSS-DOC REFERENCE -->
+      <div class="inline-comment">
+        <div class="comment-author">alice</div>
+        <div class="comment-body">
+          This contradicts the rate limits defined in the API spec &mdash;
+          <a class="cross-ref" href="#">
+            <span class="cross-ref-arrow">&#8599;</span> API Specification &middot; line 42
+          </a>
+        </div>
+        <div class="comment-meta">Mar 10, 2026 at 14:32</div>
+      </div>
+
+      <p>Default rate limit: 1000 requests per minute per API key. Burst allowance of 50 requests over 1 second. Headers included in every response:</p>
+      <ul>
+        <li><code>X-RateLimit-Limit</code>: Maximum requests per window</li>
+        <li><code>X-RateLimit-Remaining</code>: Requests remaining</li>
+        <li><code>X-RateLimit-Reset</code>: Unix timestamp of window reset</li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mockup — Document Created | Draftmark</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist+Mono:wght@300;400;500&family=Geist:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0d0d0d; --surface: #141414; --border: #242424; --border-light: #1e1e1e;
+    --text: #e8e6e1; --muted: #5a5a5a; --accent: #c8b89a; --accent-dim: #8a7a66;
+    --green: #4a7c59; --green-bright: #6db384;
+  }
+  body {
+    background: var(--bg); color: var(--text); font-family: 'Geist', sans-serif;
+    font-weight: 300; font-size: 15px; line-height: 1.6; min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+  nav {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 20px 40px; border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; background: rgba(13,13,13,0.92);
+    backdrop-filter: blur(12px); z-index: 100;
+  }
+  .logo { font-family: 'Geist Mono', monospace; font-size: 14px; font-weight: 500; color: var(--text); text-decoration: none; letter-spacing: -0.02em; }
+  .logo span { color: var(--accent); }
+  nav ul { display: flex; gap: 32px; list-style: none; }
+  nav ul a { color: var(--muted); text-decoration: none; font-size: 13px; font-family: 'Geist Mono', monospace; transition: color 0.2s; }
+  nav ul a:hover { color: var(--text); }
+
+  main { max-width: 560px; margin: 0 auto; padding: 80px 24px; text-align: center; }
+
+  .success-icon {
+    width: 56px; height: 56px; border-radius: 50%;
+    background: rgba(74, 124, 89, 0.15); border: 1px solid var(--green);
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 24px; font-size: 24px;
+  }
+
+  h1 { font-family: 'Instrument Serif', serif; font-size: 28px; font-weight: 400; margin-bottom: 8px; }
+  .subtitle { color: var(--muted); font-size: 14px; margin-bottom: 40px; }
+
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 24px; text-align: left; margin-bottom: 16px;
+  }
+
+  .card-label {
+    font-family: 'Geist Mono', monospace; font-size: 11px; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px;
+  }
+
+  .card-row {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px; margin-bottom: 16px;
+  }
+  .card-row:last-child { margin-bottom: 0; }
+
+  .card-value {
+    font-family: 'Geist Mono', monospace; font-size: 13px; color: var(--text);
+    background: var(--bg); border: 1px solid var(--border); border-radius: 4px;
+    padding: 8px 12px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+
+  .card-value.url { color: var(--accent); }
+
+  .btn-copy {
+    background: var(--border); color: var(--text); border: none; border-radius: 4px;
+    padding: 8px 14px; font-family: 'Geist Mono', monospace; font-size: 11px;
+    cursor: pointer; transition: opacity 0.2s; white-space: nowrap;
+  }
+  .btn-copy:hover { opacity: 0.8; }
+
+  .warning-box {
+    background: rgba(200, 184, 154, 0.06); border: 1px solid var(--accent-dim);
+    border-radius: 6px; padding: 14px 16px; margin-top: 24px; text-align: left;
+  }
+  .warning-box p {
+    font-size: 12px; color: var(--accent); line-height: 1.5;
+    font-family: 'Geist Mono', monospace;
+  }
+  .warning-box strong { font-weight: 500; }
+
+  .actions { display: flex; justify-content: center; gap: 12px; margin-top: 32px; }
+  .btn-primary {
+    background: var(--accent); color: var(--bg); border: none; border-radius: 6px;
+    padding: 10px 28px; font-family: 'Geist', sans-serif; font-size: 14px;
+    font-weight: 500; cursor: pointer; transition: opacity 0.2s; text-decoration: none;
+  }
+  .btn-primary:hover { opacity: 0.85; }
+  .btn-secondary {
+    background: transparent; color: var(--muted); border: 1px solid var(--border);
+    border-radius: 6px; padding: 10px 20px; font-family: 'Geist', sans-serif;
+    font-size: 14px; cursor: pointer; transition: all 0.2s; text-decoration: none;
+  }
+  .btn-secondary:hover { border-color: var(--accent-dim); color: var(--text); }
+
+  .mockup-label {
+    position: fixed; top: 12px; right: 12px; background: #ff6b35; color: #fff;
+    font-family: 'Geist Mono', monospace; font-size: 10px; font-weight: 500;
+    padding: 4px 10px; border-radius: 4px; text-transform: uppercase;
+    letter-spacing: 0.08em; z-index: 200;
+  }
+</style>
+</head>
+<body>
+
+<div class="mockup-label">Mockup</div>
+
+<nav>
+  <a href="#" class="logo">draft<span>mark</span></a>
+  <ul>
+    <li><a href="#">docs</a></li>
+    <li><a href="#">api</a></li>
+    <li><a href="#">github</a></li>
+  </ul>
+</nav>
+
+<main>
+  <div class="success-icon">&#10003;</div>
+  <h1>Document created</h1>
+  <p class="subtitle">Your document is live and ready to share.</p>
+
+  <div class="card">
+    <div class="card-row">
+      <div>
+        <div class="card-label">Shareable URL</div>
+        <div class="card-value url">https://draftmark.app/d/xK9m2nPq</div>
+      </div>
+      <button class="btn-copy">Copy</button>
+    </div>
+    <div class="card-row">
+      <div>
+        <div class="card-label">Magic Token (for editing)</div>
+        <div class="card-value">tok_a8f3e2b1c9d4...</div>
+      </div>
+      <button class="btn-copy">Copy</button>
+    </div>
+    <div class="card-row">
+      <div>
+        <div class="card-label">API Key (for programmatic access)</div>
+        <div class="card-value">key_7x2m9k4p1w...</div>
+      </div>
+      <button class="btn-copy">Copy</button>
+    </div>
+  </div>
+
+  <div class="warning-box">
+    <p><strong>Save these credentials now.</strong> The magic token and API key are shown only once and cannot be recovered.</p>
+  </div>
+
+  <div class="actions">
+    <a href="#" class="btn-secondary">Create another</a>
+    <a href="#" class="btn-primary">View document</a>
+  </div>
+</main>
+
+</body>
+</html>

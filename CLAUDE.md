@@ -9,8 +9,8 @@ Draftmark is a markdown sharing platform for async collaboration between humans 
 ## Current State
 
 Pre-development. The repo contains:
-- `draftmark-prd.md` — Full product requirements document (MVP spec)
-- `draftmark-v3.html` — Static landing page mockup (single-file, no build step)
+- `docs/draftmark-prd.md` — Full product requirements document (MVP spec)
+- `docs/draftmark-v3.html` — Static landing page mockup (single-file, no build step)
 
 ## Planned Tech Stack (from PRD)
 
@@ -24,7 +24,7 @@ Pre-development. The repo contains:
 
 ## Data Model
 
-Four models: Doc (slug, title, content, visibility, magic_token, api_key, views_count), Comment (doc ref, body, author), Like (doc ref, identifier for dedup), Review (doc ref, reviewer_name, dedup by identifier).
+Seven models: Doc (slug, title, content, visibility, magic_token, api_key, views_count), DocVersion (doc ref, content snapshot, version_note, version_number), Comment (doc ref, body, author, anchor_type, anchor_ref, doc_version, status, cross_ref_slug, cross_ref_line), Collection (slug, title, magic_token, api_key), CollectionDoc (collection ref, doc ref, position, label), Reaction (doc ref, emoji, identifier for dedup — one per emoji per doc per user), Review (doc ref, reviewer_name, dedup by identifier).
 
 Slugs are nanoid, 8 chars, URL-safe. Visibility is "public" or "private" (magic link only).
 
@@ -38,7 +38,7 @@ Key endpoints:
 - `PATCH /docs/:slug` — Update (requires magic_token)
 - `DELETE /docs/:slug` — Delete (requires magic_token)
 - `GET/POST /docs/:slug/comments` — List/add comments
-- `POST /docs/:slug/like` — Like a doc
+- `POST /docs/:slug/reactions` — Add a reaction (emoji: thumbs_up, check, thinking, cross)
 - `GET/POST /docs/:slug/reviews` — List/mark "done reviewing"
 
 ## Landing Page

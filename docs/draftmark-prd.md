@@ -79,7 +79,6 @@ Someone who writes plans, RFCs, or proposals in markdown and wants to share them
 **Via API:**
 ```
 POST /api/v1/docs
-Authorization: Bearer {api_key}
 
 {
   "content": "# My Plan\n...",
@@ -96,6 +95,7 @@ Authorization: Bearer {api_key}
   "api_key": "key_xxxx"
 }
 ```
+No auth required to create. The response provides both credentials for future access.
 
 The `GET /docs/:slug` response includes social data so an agent can check status in one call:
 
@@ -287,9 +287,10 @@ doc:references
 position:integer     # ordering within collection
 label:string         # optional: "main", "reference", "appendix"
 
-# Like
+# Reaction
 doc:references
-identifier:string    # hashed IP or session token (deduplication, no auth needed)
+emoji:string         # one of: "thumbs_up", "check", "thinking", "cross"
+identifier:string    # hashed IP or session token (deduplication, one per emoji per doc)
 created_at:datetime
 
 # Review  ("Done reviewing" explicit action)
@@ -310,8 +311,13 @@ https://draftmark.app/api/v1
 ```
 
 ### Authentication
-All write operations require `Authorization: Bearer {api_key}`.  
-Public docs can be read without auth.
+- `POST /docs` — no auth required (returns magic_token + api_key)
+- `PATCH /docs/:slug`, `DELETE /docs/:slug` — requires `magic_token`
+- `GET /docs/:slug` (private) — requires `api_key` header or `magic_token` in URL
+- `GET /docs/:slug` (public) — no auth required
+- `POST /docs/:slug/comments` (public docs) — no auth required
+- `POST /docs/:slug/comments` (private docs) — requires `api_key`
+- All other write operations — require `api_key` via `Authorization: Bearer {api_key}`
 
 ### Endpoints
 
@@ -324,7 +330,7 @@ Public docs can be read without auth.
 | `GET` | `/docs/:slug/comments` | List comments (filterable by `?status=open`) |
 | `POST` | `/docs/:slug/comments` | Add a comment |
 | `PATCH` | `/docs/:slug/comments/:id` | Update comment status (resolve/dismiss) |
-| `POST` | `/docs/:slug/like` | Like a doc |
+| `POST` | `/docs/:slug/reactions` | Add a reaction (emoji) |
 | `GET` | `/docs/:slug/reviews` | List who has reviewed |
 | `POST` | `/docs/:slug/reviews` | Mark as "done reviewing" |
 | `POST` | `/collections` | Create a collection |
@@ -336,12 +342,12 @@ Public docs can be read without auth.
 
 ## 9. Tech Stack
 
-- **Framework:** Ruby on Rails 8
+- **Framework:** Next.js (Node)
 - **Database:** PostgreSQL
-- **Markdown rendering:** Redcarpet + Rouge (syntax highlight)
+- **Markdown rendering:** react-markdown + rehype-highlight (syntax highlighting)
 - **Diagrams:** Mermaid.js (client-side)
 - **Auth:** No user accounts in v1. Magic tokens + API keys only
-- **Hosting:** Fly.io or Render (single dyno to start)
+- **Hosting:** Hetzner (shared instance with other Rumbo Labs projects)
 ---
 
 ## 10. Monetization (post-MVP)
@@ -359,9 +365,9 @@ Self-hosters get everything for free. Hosted version sells convenience.
 ## 11. MVP Milestones
 
 ### Week 1
-- Rails app scaffold
+- Next.js app scaffold + PostgreSQL setup
 - Doc model + slug generation
-- Markdown rendering (Redcarpet + Mermaid)
+- Markdown rendering (react-markdown + Mermaid)
 - Create via UI (paste textarea)
 - Public view at `/d/:slug`
 
@@ -398,3 +404,10 @@ Self-hosters get everything for free. Hosted version sells convenience.
 - **Edit history in v1**: Yes — append-only `doc_versions` table storing `{content, updated_at}` snapshots. No diffing UI in v1, just preserve the data.
 - **magic_token location**: Both. URL param for human sharing (`/d/:slug?token=tok_xxx`), header for API write operations (PATCH/DELETE).
 - **Webhook/polling for reviewer completion**: v2.
+- **API key for doc creation**: `POST /docs` requires no auth. The response returns both `magic_token` and `api_key`. Same behavior for UI and API creation.
+- **magic_token vs api_key roles**: `magic_token` is the owner credential — used for edit (PATCH), delete (DELETE), and viewing private docs (URL param or entered in UI prompt). `api_key` is for programmatic interaction — reading private docs via API, posting/fetching comments, reviews, likes, managing collections.
+- **Comment auth**: Public docs allow comments without any auth (UI and API). Private docs require `api_key` to comment via API.
+- **Private doc access without token in URL**: UI shows a token input prompt ("paste your token to view this document"). No content is revealed until a valid magic_token is provided.
+- **Line anchoring after edits**: Comments keep their original line number and are tagged with the doc version they were made on. No automatic re-anchoring. Accept that comments may drift after edits.
+- **Rate limiting & doc size limits**: Deferred — not in MVP.
+- **Collections**: Included in MVP.

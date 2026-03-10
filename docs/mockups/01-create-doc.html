@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mockup — Create Document | Draftmark</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist+Mono:wght@300;400;500&family=Geist:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0d0d0d;
+    --surface: #141414;
+    --border: #242424;
+    --border-light: #1e1e1e;
+    --text: #e8e6e1;
+    --muted: #5a5a5a;
+    --accent: #c8b89a;
+    --accent-dim: #8a7a66;
+    --green: #4a7c59;
+    --green-bright: #6db384;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Geist', sans-serif;
+    font-weight: 300;
+    font-size: 15px;
+    line-height: 1.6;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* NAV */
+  nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 40px;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    background: rgba(13,13,13,0.92);
+    backdrop-filter: blur(12px);
+    z-index: 100;
+  }
+
+  .logo {
+    font-family: 'Geist Mono', monospace;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+    text-decoration: none;
+    letter-spacing: -0.02em;
+  }
+
+  .logo span { color: var(--accent); }
+
+  nav ul {
+    display: flex;
+    gap: 32px;
+    list-style: none;
+  }
+
+  nav ul a {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 13px;
+    font-family: 'Geist Mono', monospace;
+    transition: color 0.2s;
+  }
+
+  nav ul a:hover { color: var(--text); }
+
+  /* MAIN */
+  main {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 48px 24px;
+  }
+
+  h1 {
+    font-family: 'Instrument Serif', serif;
+    font-size: 32px;
+    font-weight: 400;
+    margin-bottom: 8px;
+  }
+
+  .subtitle {
+    color: var(--muted);
+    font-size: 14px;
+    margin-bottom: 32px;
+  }
+
+  /* FORM */
+  .form-group {
+    margin-bottom: 20px;
+  }
+
+  label {
+    display: block;
+    font-family: 'Geist Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 8px;
+  }
+
+  input[type="text"] {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 14px;
+    color: var(--text);
+    font-family: 'Geist', sans-serif;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  input[type="text"]:focus {
+    border-color: var(--accent-dim);
+  }
+
+  input[type="text"]::placeholder {
+    color: var(--muted);
+  }
+
+  textarea {
+    width: 100%;
+    min-height: 400px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 16px;
+    color: var(--text);
+    font-family: 'Geist Mono', monospace;
+    font-size: 13px;
+    line-height: 1.7;
+    resize: vertical;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  textarea:focus {
+    border-color: var(--accent-dim);
+  }
+
+  textarea::placeholder {
+    color: var(--muted);
+  }
+
+  /* TABS */
+  .tabs {
+    display: flex; gap: 0; margin-bottom: 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .tab {
+    padding: 10px 20px; font-family: 'Geist Mono', monospace; font-size: 13px;
+    color: var(--muted); cursor: pointer; border: none; background: transparent;
+    border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.2s;
+  }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--text); border-bottom-color: var(--accent); }
+
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* PREVIEW PANE */
+  .preview-pane {
+    background: var(--surface); border: 1px solid var(--border); border-top: none;
+    border-radius: 0 0 6px 6px; padding: 24px; min-height: 400px; line-height: 1.8;
+  }
+  .preview-pane h1 { font-family: 'Instrument Serif', serif; font-size: 28px; font-weight: 400; margin: 0 0 12px; }
+  .preview-pane h2 { font-family: 'Instrument Serif', serif; font-size: 22px; font-weight: 400; margin: 24px 0 8px; color: var(--text); }
+  .preview-pane p { margin-bottom: 12px; }
+  .preview-pane ol, .preview-pane ul { padding-left: 24px; margin-bottom: 12px; }
+  .preview-pane li { margin-bottom: 4px; }
+  .preview-pane blockquote { border-left: 3px solid var(--accent-dim); padding: 8px 16px; color: var(--muted); font-style: italic; }
+  .preview-pane pre {
+    background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
+    padding: 14px; font-family: 'Geist Mono', monospace; font-size: 13px;
+    line-height: 1.7; overflow-x: auto; margin: 12px 0;
+  }
+  .preview-empty {
+    color: var(--muted); font-style: italic; text-align: center; padding: 80px 0;
+  }
+
+  /* VISIBILITY TOGGLE */
+  .visibility-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+
+  .toggle-group {
+    display: flex;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+
+  .toggle-option {
+    padding: 8px 18px;
+    font-family: 'Geist Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+    background: transparent;
+  }
+
+  .toggle-option.active {
+    background: var(--border);
+    color: var(--text);
+  }
+
+  .toggle-hint {
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  /* ACTIONS */
+  .actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: var(--bg);
+    border: none;
+    border-radius: 6px;
+    padding: 10px 28px;
+    font-family: 'Geist', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+
+  .btn-primary:hover { opacity: 0.85; }
+
+  .btn-secondary {
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 20px;
+    font-family: 'Geist', sans-serif;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-secondary:hover {
+    border-color: var(--accent-dim);
+    color: var(--text);
+  }
+
+  /* MOCKUP LABEL */
+  .mockup-label {
+    position: fixed;
+    top: 12px;
+    right: 12px;
+    background: #ff6b35;
+    color: #fff;
+    font-family: 'Geist Mono', monospace;
+    font-size: 10px;
+    font-weight: 500;
+    padding: 4px 10px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    z-index: 200;
+  }
+</style>
+</head>
+<body>
+
+<div class="mockup-label">Mockup</div>
+
+<nav>
+  <a href="#" class="logo">draft<span>mark</span></a>
+  <ul>
+    <li><a href="#">docs</a></li>
+    <li><a href="#">api</a></li>
+    <li><a href="#">github</a></li>
+  </ul>
+</nav>
+
+<main>
+  <h1>New document</h1>
+  <p class="subtitle">Paste your markdown. Get a shareable link instantly.</p>
+
+  <div class="form-group">
+    <label>Title (optional)</label>
+    <input type="text" placeholder="Extracted from first H1 if left blank">
+  </div>
+
+  <div class="form-group">
+    <label>Content</label>
+    <div class="tabs">
+      <button class="tab active">Source</button>
+      <button class="tab">Preview</button>
+    </div>
+
+    <!-- SOURCE TAB (active by default on create) -->
+    <div class="tab-content active">
+      <textarea placeholder="# My Plan
+
+## Context
+We need to redesign the API to support...
+
+## Proposal
+1. Migrate to REST v2 endpoints
+2. Add rate limiting per API key
+3. Introduce versioned responses
+
+## Open Questions
+- Should we deprecate v1 immediately?
+- What's the migration timeline?
+
+```python
+def validate_request(req):
+    if not req.api_key:
+        raise AuthError('Missing API key')
+```
+
+> Share this doc with your team for review."></textarea>
+    </div>
+
+    <!-- PREVIEW TAB -->
+    <div class="tab-content">
+      <div class="preview-pane">
+        <p class="preview-empty">Start typing markdown to see a preview here...</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="visibility-row">
+    <label style="margin-bottom: 0;">Visibility</label>
+    <div class="toggle-group">
+      <button class="toggle-option active">Public</button>
+      <button class="toggle-option">Private</button>
+    </div>
+    <span class="toggle-hint">Anyone with the link can view</span>
+  </div>
+
+  <div class="actions">
+    <button class="btn-primary">Create document</button>
+  </div>
+</main>
+
+<script>
+document.querySelectorAll('.tabs').forEach(tabBar => {
+  const contents = [];
+  let el = tabBar.nextElementSibling;
+  while (el && el.classList.contains('tab-content')) { contents.push(el); el = el.nextElementSibling; }
+  tabBar.querySelectorAll('.tab').forEach((tab, i) => {
+    tab.addEventListener('click', () => {
+      tabBar.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      contents.forEach((c, j) => c.classList.toggle('active', j === i));
+    });
+  });
+});
+</script>
+</body>
+</html>
