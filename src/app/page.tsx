@@ -18,7 +18,7 @@ export default function Home() {
             <a href="#pricing">pricing</a>
           </li>
           <li>
-            <a href="#">docs</a>
+            <Link href="/docs">docs</Link>
           </li>
         </ul>
         <div className="nav-right">
@@ -184,11 +184,11 @@ export default function Home() {
             </p>
           </div>
           <div className="feature">
-            <div className="feature-icon">[&#9678;]</div>
-            <h3>Async feedback</h3>
+            <div className="feature-icon">[#42]</div>
+            <h3>Inline comments</h3>
             <p>
-              Comments and reactions from humans or agents. Structured, not
-              noisy.
+              Click a line to leave feedback anchored to that exact spot. Like
+              GitHub PR reviews, but for any markdown doc.
             </p>
           </div>
           <div className="feature">
@@ -200,11 +200,35 @@ export default function Home() {
             </p>
           </div>
           <div className="feature">
+            <div className="feature-icon">[&#10003;]</div>
+            <h3>Done reviewing</h3>
+            <p>
+              Reviewers mark themselves done. The author — or their agent — can
+              check who has reviewed and who hasn&apos;t, in one API call.
+            </p>
+          </div>
+          <div className="feature">
+            <div className="feature-icon">[&#128209;]</div>
+            <h3>Collections</h3>
+            <p>
+              Group related docs together — an architecture plan, API spec, and
+              migration guide — with cross-document references in comments.
+            </p>
+          </div>
+          <div className="feature">
             <div className="feature-icon">[↗]</div>
             <h3>Clean share links</h3>
             <p>
               Every doc gets a clean URL at draftmark.app/d/:slug. No cruft, no
               required login.
+            </p>
+          </div>
+          <div className="feature">
+            <div className="feature-icon">[&#128077;]</div>
+            <h3>Reactions</h3>
+            <p>
+              Quick emoji reactions on any doc. No account needed. A lightweight
+              signal alongside detailed comments.
             </p>
           </div>
           <div className="feature">
@@ -241,20 +265,17 @@ export default function Home() {
               <span className="method get">GET</span>/api/v1/docs/:slug
             </div>
             <div className="endpoint">
-              <span className="method get">GET</span>
-              /api/v1/docs/:slug/comments
-            </div>
-            <div className="endpoint">
               <span className="method post">POST</span>
               /api/v1/docs/:slug/comments
             </div>
             <div className="endpoint">
-              <span className="method patch">PATCH</span>/api/v1/docs/:slug
-            </div>
-            <div className="endpoint">
-              <span className="method delete">DELETE</span>/api/v1/docs/:slug
+              <span className="method post">POST</span>
+              /api/v1/docs/:slug/reviews
             </div>
           </div>
+          <p className="api-docs-link">
+            <Link href="/docs">see full API docs &rarr;</Link>
+          </p>
         </div>
         <div className="code-block">
           <span className="code-comment"># agent creates a doc</span>
@@ -281,7 +302,11 @@ export default function Home() {
           <br />
           &nbsp;&nbsp;
           <span className="code-key">&quot;magic_token&quot;</span>:{" "}
-          <span className="code-string">&quot;tok_xxxx&quot;</span>
+          <span className="code-string">&quot;tok_xxxx&quot;</span>,
+          <br />
+          &nbsp;&nbsp;
+          <span className="code-key">&quot;api_key&quot;</span>:{" "}
+          <span className="code-string">&quot;key_xxxx&quot;</span>
           <br />
           {"}"}
           <br />
@@ -301,31 +326,28 @@ export default function Home() {
       <section className="pricing" id="pricing">
         <div className="pricing-label">// pricing</div>
         <div className="pricing-grid">
-          <div className="plan">
+          <div className="plan highlighted">
             <div className="plan-name">free</div>
             <div className="plan-price">$0</div>
-            <p className="plan-desc">For personal use and experimenting.</p>
+            <p className="plan-desc">
+              Everything you need. No credit card required.
+            </p>
             <ul className="plan-features">
               <li className="active">Unlimited public docs</li>
+              <li className="active">10 private docs</li>
+              <li className="active">Inline &amp; general comments</li>
+              <li className="active">Reactions &amp; reviews</li>
+              <li className="active">Collections</li>
               <li className="active">Mermaid + syntax highlight</li>
-              <li className="active">Comments &amp; reactions</li>
-              <li className="active">API access</li>
-              <li>Private docs</li>
-              <li>Magic link sharing</li>
+              <li className="active">Full API access</li>
+              <li className="active">Magic link sharing</li>
             </ul>
-            <a
-              href="#"
-              className="btn-ghost"
-              style={{
-                display: "inline-block",
-                fontSize: 15,
-                padding: "9px 20px",
-              }}
-            >
-              get started
+            <a href="#" className="btn-primary" style={{ display: "inline-block" }}>
+              start writing
             </a>
           </div>
-          <div className="plan highlighted">
+          <div className="plan plan-coming-soon">
+            <span className="coming-soon-badge">coming soon</span>
             <div className="plan-name">writer</div>
             <div className="plan-price">
               $6 <span>/mo</span>
@@ -336,24 +358,12 @@ export default function Home() {
             <ul className="plan-features">
               <li className="active">Everything in free</li>
               <li className="active">Unlimited private docs</li>
-              <li className="active">Magic link sharing</li>
               <li className="active">Password-protected links</li>
               <li className="active">Version history</li>
-              <li>Custom domain</li>
             </ul>
-            <a
-              href="#"
-              className="btn-primary"
-              style={{
-                display: "inline-block",
-                fontSize: 15,
-                padding: "9px 20px",
-              }}
-            >
-              start free trial
-            </a>
           </div>
-          <div className="plan">
+          <div className="plan plan-coming-soon">
+            <span className="coming-soon-badge">coming soon</span>
             <div className="plan-name">team</div>
             <div className="plan-price">
               $15 <span>/mo</span>
@@ -366,20 +376,8 @@ export default function Home() {
               <li className="active">Up to 5 members</li>
               <li className="active">Team workspace</li>
               <li className="active">Custom domain</li>
-              <li className="active">Priority support</li>
               <li className="active">Webhooks</li>
             </ul>
-            <a
-              href="#"
-              className="btn-ghost"
-              style={{
-                display: "inline-block",
-                fontSize: 15,
-                padding: "9px 20px",
-              }}
-            >
-              contact us
-            </a>
           </div>
         </div>
       </section>
@@ -389,19 +387,22 @@ export default function Home() {
           draft<span>mark</span>
         </Link>
         <p>
-          open source <span>&middot;</span> self-hostable <span>&middot;</span>{" "}
-          no VC <span>&middot;</span> no bloat
+          markdown native <span>&middot;</span> agent-friendly <span>&middot;</span>{" "}
+          no account required
         </p>
         <nav>
           <ul>
             <li>
-              <a href="#">docs</a>
+              <Link href="/docs">docs</Link>
             </li>
             <li>
-              <a href="#">privacy</a>
+              <Link href="/about">about</Link>
             </li>
             <li>
-              <a href="#">terms</a>
+              <Link href="/privacy">privacy</Link>
+            </li>
+            <li>
+              <Link href="/terms">terms</Link>
             </li>
           </ul>
         </nav>
