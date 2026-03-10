@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Draftmark — Share your thinking</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist+Mono:wght@300;400;500&family=Geist:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0d0d0d;
+    --surface: #141414;
+    --border: #242424;
+    --border-light: #1e1e1e;
+    --text: #e8e6e1;
+    --muted: #5a5a5a;
+    --accent: #c8b89a;
+    --accent-dim: #8a7a66;
+    --green: #4a7c59;
+    --green-bright: #6db384;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Geist', sans-serif;
+    font-weight: 300;
+    font-size: 15px;
+    line-height: 1.6;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* NAV */
+  nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 40px;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    background: rgba(13,13,13,0.92);
+    backdrop-filter: blur(12px);
+    z-index: 100;
+  }
+
+  .logo {
+    font-family: 'Geist Mono', monospace;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+    text-decoration: none;
+    letter-spacing: -0.02em;
+  }
+
+  .logo span { color: var(--accent); }
+
+  nav ul {
+    display: flex;
+    gap: 32px;
+    list-style: none;
+  }
+
+  nav ul a {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 13px;
+    font-family: 'Geist Mono', monospace;
+    transition: color 0.2s;
+  }
+
+  nav ul a:hover { color: var(--text); }
+
+  .nav-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+
+  .nav-cta {
+    font-family: 'Geist Mono', monospace;
+    font-size: 12px;
+    padding: 8px 16px;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text);
+    cursor: pointer;
+    text-decoration: none;
+    transition: border-color 0.2s, color 0.2s;
+    letter-spacing: 0.02em;
+  }
+
+  .nav-cta:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* HERO */
+  .hero {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 100px 40px 80px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 60px;
+    align-items: start;
+  }
+
+  .tag {
+    font-family: 'Geist Mono', monospace;
+    font-size: 11px;
+    color: var(--green-bright);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .tag::before {
+    content: '';
+    width: 6px; height: 6px;
+    background: var(--green-bright);
+    border-radius: 50%;
+    display: inline-block;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  h1 {
+    font-family: 'Instrument Serif', serif;
+    font-size: 48px;
+    line-height: 1.1;
+    font-weight: 400;
+    color: var(--text);
+    margin-bottom: 20px;
+    letter-spacing: -0.02em;
+  }
+
+  h1 em {
+    font-style: italic;
+    color: var(--accent);
+  }
+
+  .hero-desc {
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.7;
+    margin-bottom: 36px;
+    max-width: 340px;
+  }
+
+  .hero-actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .btn-primary {
+    font-family: 'Geist Mono', monospace;
+    font-size: 12px;
+    padding: 10px 20px;
+    background: var(--accent);
+    color: #0d0d0d;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    transition: background 0.2s;
+  }
+
+  .btn-primary:hover { background: #ddd0bb; }
+
+  .btn-ghost {
+    font-family: 'Geist Mono', monospace;
+    font-size: 12px;
+    padding: 10px 20px;
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    text-decoration: none;
+    transition: color 0.2s, border-color 0.2s;
+  }
+
+  .btn-ghost:hover { color: var(--text); border-color: var(--border-light); }
+
+  /* OS BADGE */
+  .oss-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'Geist Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 20px;
+  }
+
+  .oss-badge svg { width: 12px; height: 12px; fill: var(--muted); }
+
+  /* PREVIEW CARD */
+  .hero-right { padding-top: 8px; }
+
+  .doc-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .doc-card-header {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .doc-title-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .doc-title {
+    font-family: 'Geist Mono', monospace;
+    font-size: 12px;
+    color: var(--text);
+  }
+
+  .badge {
+    font-family: 'Geist Mono', monospace;
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 2px;
+    letter-spacing: 0.05em;
+  }
+
+  .badge-public { background: rgba(74,124,89,0.2); color: var(--green-bright); border: 1px solid rgba(74,124,89,0.3); }
+  .badge-private { background: rgba(90,90,90,0.2); color: var(--muted); border: 1px solid var(--border); }
+
+  .doc-actions { display: flex; gap: 6px; }
+
+  .doc-action-btn {
+    font-family: 'Geist Mono', monospace;
+    font-size: 10px;
+    padding: 3px 8px;
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: color 0.15s;
+  }
+
+  .doc-action-btn:hover { color: var(--text); }
+
+  .doc-body { padding: 20px 16px; font-size: 13px; line-height: 1.8; }
+
+  .md-h1 {
+    font-family: 'Instrument Serif', serif;
+    font-size: 20px;
+    color: var(--text);
+    margin-bottom: 10px;
+    font-weight: 400;
+  }
+
+  .md-p { color: #8a8a8a; margin-bottom: 12px; font-size: 12px; }
+
+  .md-code {
+    background: #1a1a1a;
+    border: 1px solid var(--border);
+    padding: 10px 12px;
+    font-family: 'Geist Mono', monospace;
+    font-size: 11px;
+    color: #c8b89a;
+    margin-bottom: 12px;
+    border-radius: 2px;
+  }
+
+  .md-mermaid {
+    background: #111;
+    border: 1px solid var(--border);
+    padding: 14px;
+    margin-bottom: 12px;
+    border-radius: 2px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .mermaid-label {
+    font-family: 'Geist Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    align-self: flex-start;
+  }
+
+  .mermaid-diagram {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 0;
+  }
+
+  .mermaid-node {
+    font-family: 'Geist Mono', monospace;
+    font-size: 10px;
+    padding: 4px 10px;
+    border: 1px solid #3a3a3a;
+    color: #8a8a8a;
+    border-radius: 2px;
+  }
+
+  .mermaid-node.active { border-color: var(--accent-dim); color: var(--accent); }
+  .mermaid-arrow { color: #3a3a3a; font-size: 12px; }
+
+  .doc-footer {
+    padding: 10px 16px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .doc-meta {
+    font-family: 'Geist Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    display: flex;
+    gap: 14px;
+  }
+
+  .comment-thread {
+    border-top: 1px solid var(--border);
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .comment { display: flex; gap: 10px; align-items: flex-start; }
+
+  .avatar {
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    font-family: 'Geist Mono', monospace;
+    font-size: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-weight: 500;
+  }
+
+  .avatar-a { background: #2a3a2a; color: var(--green-bright); }
+  .avatar-b { background: #1e2a1e; color: #5a9a6a; }
+  .avatar-c { background: #2a2a3a; color: #8ab4d4; }
+
+  .comment-content { font-size: 11px; color: #7a7a7a; }
+  .comment-author { color: var(--text); font-weight: 400; }
+  .comment-tag {
+    font-family: 'Geist Mono', monospace;
+    font-size: 9px;
+    padding: 1px 5px;
+    background: rgba(74,124,89,0.15);
+    color: var(--green-bright);
+    border-radius: 2px;
+    margin-left: 4px;
+  }
+
+  /* FLOW SECTION */
+  .flow {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 60px 40px;
+    border-top: 1px solid var(--border);
+  }
+
+  .flow-label {
+    font-family: 'Geist Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 36px;
+  }
+
+  .flow-steps {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+  }
+
+  .flow-step {
+    background: var(--bg);
+    padding: 24px 20px;
+    position: relative;
+  }
+
+  .step-num {
+    font-family: 'Geist Mono', monospace;
+    font-size: 10px;
+    color: var(--border);
+    margin-bottom: 12px;
+  }
+
+  .step-icon {
+    font-family: 'Geist Mono', monospace;
+    font-size: 18px;
+    margin-bottom: 12px;
+    display: block;
+  }
+
+  .flow-step h3 {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 6px;
+    font-family: 'Geist', sans-serif;
+  }
+
+  .flow-step p {
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  /* FEATURES */
+  .features {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 40px 60px;
+    border-top: 1px solid var(--border);
+    padding-top: 60px;
+  }
+
+  .features-label {
+    font-family: 'Geist Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 36px;
+  }
+
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+  }
+
+  .feature {
+    background: var(--bg);
+    padding: 28px 24px;
+    transition: background 0.2s;
+  }
+
+  .feature:hover { background: var(--surface); }
+
+  .feature-icon {
+    font-family: 'Geist Mono', monospace;
+    font-size: 11px;
+    color: var(--accent-dim);
+    margin-bottom: 16px;
+  }
+
+  .feature h3 {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 8px;
+    font-family: 'Geist', sans-serif;
+  }
+
+  .feature p { font-size: 12px; color: var(--muted); line-height: 1.6; }
+
+  /* API SNIPPET */
+  .api-section {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 40px 60px;
+    border-top: 1px solid var(--border);
+    padding-top: 60px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 48px;
+    align-items: start;
+  }
+
+  .api-label {
+    font-family: 'Geist Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+
+  .api-heading {
+    font-family: 'Instrument Serif', serif;
+    font-size: 28px;
+    font-weight: 400;
+    color: var(--text);
+    line-height: 1.2;
+    margin-bottom: 16px;
+  }
+
+  .api-heading em { font-style: italic; color: var(--accent); }
+
+  .api-desc { font-size: 13px; color: var(--muted); line-height: 1.7; margin-bottom: 20px; }
+
+  .api-endpoints {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .endpoint {
+    font-family: 'Geist Mono', monospace;
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--muted);
+  }
+
+  .method {
+    padding: 2px 6px;
+    border-radius: 2px;
+    font-size: 10px;
+    font-weight: 500;
+    min-width: 36px;
+    text-align: center;
+  }
+
+  .method.post { background: rgba(74,124,89,0.2); color: var(--green-bright); }
+  .method.get { background: rgba(138,180,212,0.15); color: #8ab4d4; }
+  .method.patch { background: rgba(200,184,154,0.15); color: var(--accent); }
+  .method.delete { background: rgba(180,80,80,0.15); color: #c47a7a; }
+
+  .code-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 20px;
+    font-family: 'Geist Mono', monospace;
+    font-size: 11px;
+    line-height: 1.8;
+    border-radius: 2px;
+  }
+
+  .code-comment { color: #444; }
+  .code-key { color: #8ab4d4; }
+  .code-string { color: var(--accent); }
+  .code-url { color: var(--green-bright); }
+  .code-method { color: #c47a7a; }
+
+  /* PRICING */
+  .pricing {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 40px 80px;
+    border-top: 1px solid var(--border);
+    padding-top: 60px;
+  }
+
+  .pricing-label {
+    font-family: 'Geist Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 36px;
+  }
+
+  .pricing-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+  }
+
+  .plan { background: var(--bg); padding: 28px 24px; }
+  .plan.highlighted { background: var(--surface); }
+
+  .plan-name {
+    font-family: 'Geist Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+
+  .plan-price {
+    font-family: 'Instrument Serif', serif;
+    font-size: 36px;
+    color: var(--text);
+    margin-bottom: 4px;
+    line-height: 1;
+  }
+
+  .plan-price span {
+    font-family: 'Geist', sans-serif;
+    font-size: 13px;
+    color: var(--muted);
+    font-weight: 300;
+  }
+
+  .plan-desc { font-size: 12px; color: var(--muted); margin-bottom: 24px; margin-top: 8px; }
+
+  .plan-features {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 24px;
+  }
+
+  .plan-features li {
+    font-family: 'Geist Mono', monospace;
+    font-size: 11px;
+    color: #6a6a6a;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .plan-features li::before { content: '—'; color: var(--border); }
+  .plan-features li.active { color: var(--text); }
+  .plan-features li.active::before { content: '✓'; color: var(--green-bright); font-size: 10px; }
+
+  /* SELF HOST */
+  .selfhost {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 40px 80px;
+    border-top: 1px solid var(--border);
+    padding-top: 40px;
+  }
+
+  .selfhost-inner {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 28px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+  }
+
+  .selfhost-left h3 {
+    font-family: 'Geist Mono', monospace;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+
+  .selfhost-left p { font-size: 12px; color: var(--muted); }
+
+  .selfhost-cmd {
+    font-family: 'Geist Mono', monospace;
+    font-size: 12px;
+    background: #0a0a0a;
+    border: 1px solid var(--border);
+    padding: 10px 16px;
+    color: var(--green-bright);
+    white-space: nowrap;
+  }
+
+  /* FOOTER */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 24px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  footer .logo { font-size: 12px; }
+
+  footer p {
+    font-family: 'Geist Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  footer p span { color: var(--border); }
+
+  footer nav ul { gap: 20px; }
+  footer nav ul a { font-size: 11px; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .hero > * { animation: fadeUp 0.5s ease both; }
+  .hero > *:last-child { animation-delay: 0.1s; }
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="#" class="logo">draft<span>mark</span></a>
+  <ul>
+    <li><a href="#how">how it works</a></li>
+    <li><a href="#features">features</a></li>
+    <li><a href="#pricing">pricing</a></li>
+    <li><a href="#">docs</a></li>
+  </ul>
+  <div class="nav-right">
+    <a href="#" class="nav-cta">get started →</a>
+  </div>
+</nav>
+
+<section class="hero">
+  <div>
+    <div class="tag">now in beta</div>
+    <h1>Share your<br><em>thinking</em><br>in markdown</h1>
+    <p class="hero-desc">Write in markdown. Render beautifully. Share with humans or agents. Collect feedback — then feed it back into your workflow.</p>
+    <div class="hero-actions">
+      <a href="#" class="btn-primary">start writing</a>
+      <a href="#" class="btn-ghost">see an example →</a>
+    </div>
+  </div>
+
+  <div>
+    <div class="doc-card">
+      <div class="doc-card-header">
+        <div class="doc-title-row">
+          <span class="doc-title">api-redesign-proposal.md</span>
+          <span class="badge badge-public">public</span>
+        </div>
+        <div class="doc-actions">
+          <button class="doc-action-btn">share</button>
+          <button class="doc-action-btn">permissions</button>
+        </div>
+      </div>
+      <div class="doc-body">
+        <div class="md-h1">API Redesign Proposal</div>
+        <p class="md-p">This document outlines the planned changes to our v2 API, including breaking changes and migration paths.</p>
+        <div class="md-code">GET /v2/deployments/:id<br>Authorization: Bearer {token}</div>
+        <div class="md-mermaid">
+          <span class="mermaid-label">flowchart</span>
+          <div class="mermaid-diagram">
+            <div class="mermaid-node">Push</div>
+            <span class="mermaid-arrow">→</span>
+            <div class="mermaid-node active">Build</div>
+            <span class="mermaid-arrow">→</span>
+            <div class="mermaid-node">Deploy</div>
+            <span class="mermaid-arrow">→</span>
+            <div class="mermaid-node">Done</div>
+          </div>
+        </div>
+      </div>
+      <div class="doc-footer">
+        <div class="doc-meta">
+          <span>↗ 12 views</span>
+          <span>♡ 3 likes</span>
+          <span>◎ 2 comments</span>
+        </div>
+        <div class="doc-meta"><span>updated 2h ago</span></div>
+      </div>
+      <div class="comment-thread">
+        <div class="comment">
+          <div class="avatar avatar-a">A</div>
+          <div class="comment-content"><span class="comment-author">alice</span> — Love the flow, but what about rate limiting on v2?</div>
+        </div>
+        <div class="comment">
+          <div class="avatar avatar-b">⚡</div>
+          <div class="comment-content">
+            <span class="comment-author">planning-agent</span><span class="comment-tag">agent</span> — Good point. Adding a rate limiting section and updating the migration guide.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="flow" id="how">
+  <div class="flow-label">// how it works</div>
+  <div class="flow-steps">
+    <div class="flow-step">
+      <div class="step-num">01</div>
+      <span class="step-icon">✍️</span>
+      <h3>Write</h3>
+      <p>Agent or human creates a markdown doc via API or UI. Gets back a shareable URL instantly.</p>
+    </div>
+    <div class="flow-step">
+      <div class="step-num">02</div>
+      <span class="step-icon">↗</span>
+      <h3>Share</h3>
+      <p>Send the link. Reviewer sees a clean rendered doc — no login required for public docs.</p>
+    </div>
+    <div class="flow-step">
+      <div class="step-num">03</div>
+      <span class="step-icon">◎</span>
+      <h3>Review</h3>
+      <p>Humans or agents leave comments. Reactions. Async, structured, no noise.</p>
+    </div>
+    <div class="flow-step">
+      <div class="step-num">04</div>
+      <span class="step-icon">⟳</span>
+      <h3>Iterate</h3>
+      <p>Fetch comments via API. Feed them back into your agent session. Continue the plan.</p>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="features" id="features">
+  <div class="features-label">// what you get</div>
+  <div class="features-grid">
+    <div class="feature">
+      <div class="feature-icon">[md]</div>
+      <h3>Rendered markdown</h3>
+      <p>Full GFM support with syntax highlighting, tables, and Mermaid diagrams out of the box.</p>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">[🔒]</div>
+      <h3>Access control</h3>
+      <p>Public or private. Magic links for private docs. No account required to view or comment on public docs.</p>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">[◎]</div>
+      <h3>Async feedback</h3>
+      <p>Comments and reactions from humans or agents. Structured, not noisy.</p>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">[⚡]</div>
+      <h3>Agent-ready API</h3>
+      <p>Every action the UI supports, the API supports too. Your agents can create, read, and comment natively.</p>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">[↗]</div>
+      <h3>Clean share links</h3>
+      <p>Every doc gets a clean URL at draftmark.app/d/:slug. No cruft, no required login.</p>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">[⌘]</div>
+      <h3>Just markdown</h3>
+      <p>No proprietary format. Paste, upload, or POST. Export anytime. You own your files.</p>
+    </div>
+  </div>
+</section>
+
+<!-- API -->
+<section class="api-section">
+  <div>
+    <div class="api-label">// api first</div>
+    <div class="api-heading">Built for<br><em>agents</em><br>and humans</div>
+    <p class="api-desc">Every action is available via a clean REST API. Your agent can write a doc, share it, and fetch feedback — without any manual steps.</p>
+    <div class="api-endpoints">
+      <div class="endpoint"><span class="method post">POST</span>/api/v1/docs</div>
+      <div class="endpoint"><span class="method get">GET</span>/api/v1/docs/:slug</div>
+      <div class="endpoint"><span class="method get">GET</span>/api/v1/docs/:slug/comments</div>
+      <div class="endpoint"><span class="method post">POST</span>/api/v1/docs/:slug/comments</div>
+      <div class="endpoint"><span class="method patch">PATCH</span>/api/v1/docs/:slug</div>
+      <div class="endpoint"><span class="method delete">DELETE</span>/api/v1/docs/:slug</div>
+    </div>
+  </div>
+  <div class="code-block">
+    <span class="code-comment"># agent creates a doc</span><br>
+    <span class="code-method">POST</span> <span class="code-url">https://draftmark.app/api/v1/docs</span><br>
+    <span class="code-key">Authorization:</span> <span class="code-string">Bearer key_xxxx</span><br><br>
+    <span class="code-comment"># returns</span><br>
+    {<br>
+    &nbsp;&nbsp;<span class="code-key">"slug"</span>: <span class="code-string">"abc123"</span>,<br>
+    &nbsp;&nbsp;<span class="code-key">"url"</span>: <span class="code-string">"draftmark.app/d/abc123"</span>,<br>
+    &nbsp;&nbsp;<span class="code-key">"magic_token"</span>: <span class="code-string">"tok_xxxx"</span><br>
+    }<br><br>
+    <span class="code-comment"># later, fetch feedback</span><br>
+    <span class="code-method">GET</span> <span class="code-url">/api/v1/docs/abc123/comments</span><br>
+    <span class="code-comment">→ feed into next agent session</span>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section class="pricing" id="pricing">
+  <div class="pricing-label">// pricing</div>
+  <div class="pricing-grid">
+    <div class="plan">
+      <div class="plan-name">free</div>
+      <div class="plan-price">$0</div>
+      <p class="plan-desc">For personal use and experimenting.</p>
+      <ul class="plan-features">
+        <li class="active">Unlimited public docs</li>
+        <li class="active">Mermaid + syntax highlight</li>
+        <li class="active">Comments & reactions</li>
+        <li class="active">API access</li>
+        <li>Private docs</li>
+        <li>Magic link sharing</li>
+      </ul>
+      <a href="#" class="btn-ghost" style="display:inline-block;font-size:12px;padding:9px 20px;">get started</a>
+    </div>
+    <div class="plan highlighted">
+      <div class="plan-name">writer</div>
+      <div class="plan-price">$6 <span>/mo</span></div>
+      <p class="plan-desc">For people who share plans and get feedback.</p>
+      <ul class="plan-features">
+        <li class="active">Everything in free</li>
+        <li class="active">Unlimited private docs</li>
+        <li class="active">Magic link sharing</li>
+        <li class="active">Password-protected links</li>
+        <li class="active">Version history</li>
+        <li>Custom domain</li>
+      </ul>
+      <a href="#" class="btn-primary" style="display:inline-block;font-size:12px;padding:9px 20px;">start free trial</a>
+    </div>
+    <div class="plan">
+      <div class="plan-name">team</div>
+      <div class="plan-price">$15 <span>/mo</span></div>
+      <p class="plan-desc">For small teams sharing docs internally.</p>
+      <ul class="plan-features">
+        <li class="active">Everything in writer</li>
+        <li class="active">Up to 5 members</li>
+        <li class="active">Team workspace</li>
+        <li class="active">Custom domain</li>
+        <li class="active">Priority support</li>
+        <li class="active">Webhooks</li>
+      </ul>
+      <a href="#" class="btn-ghost" style="display:inline-block;font-size:12px;padding:9px 20px;">contact us</a>
+    </div>
+  </div>
+</section>
+
+
+<footer>
+  <a href="#" class="logo">draft<span>mark</span></a>
+  <p>open source <span>·</span> self-hostable <span>·</span> no VC <span>·</span> no bloat</p>
+  <nav><ul>
+    <li><a href="#">docs</a></li>
+    <li><a href="#">privacy</a></li>
+    <li><a href="#">terms</a></li>
+  </ul></nav>
+</footer>
+
+</body>
+</html>
