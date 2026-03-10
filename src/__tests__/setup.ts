@@ -1,0 +1,24 @@
+import { beforeAll, afterAll, beforeEach } from "vitest";
+
+let prisma: Awaited<ReturnType<typeof getPrisma>>;
+
+async function getPrisma() {
+  const { prisma } = await import("@/lib/prisma");
+  return prisma;
+}
+
+beforeAll(async () => {
+  prisma = await getPrisma();
+  await prisma.$connect();
+});
+
+beforeEach(async () => {
+  await prisma.docVersion.deleteMany();
+  await prisma.doc.deleteMany();
+});
+
+afterAll(async () => {
+  await prisma.docVersion.deleteMany();
+  await prisma.doc.deleteMany();
+  await prisma.$disconnect();
+});

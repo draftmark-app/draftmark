@@ -1,0 +1,36 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Doc {
+  id          String       @id @default(cuid())
+  slug        String       @unique
+  title       String?
+  content     String
+  visibility  String       @default("public") // "public" | "private"
+  magicToken  String       @map("magic_token") // hashed
+  apiKey      String       @map("api_key") // hashed
+  viewsCount  Int          @default(0) @map("views_count")
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+  versions    DocVersion[]
+
+  @@map("docs")
+}
+
+model DocVersion {
+  id            String   @id @default(cuid())
+  docId         String   @map("doc_id")
+  content       String
+  versionNote   String?  @map("version_note")
+  versionNumber Int      @map("version_number")
+  createdAt     DateTime @default(now()) @map("created_at")
+  doc           Doc      @relation(fields: [docId], references: [id], onDelete: Cascade)
+
+  @@map("doc_versions")
+}

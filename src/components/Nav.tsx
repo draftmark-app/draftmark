@@ -29,8 +29,8 @@ export default function Nav({ links }: { links?: NavLink[] }) {
       </ul>
       <div className="nav-right">
         <ThemeToggle />
-        <Link href="/" className="nav-cta">
-          get started &rarr;
+        <Link href="/new" className="nav-cta">
+          start writing &rarr;
         </Link>
       </div>
     </nav>

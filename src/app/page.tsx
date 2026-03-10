@@ -28,9 +28,9 @@ export default function Home() {
             Collect feedback — then feed it back into your workflow.
           </p>
           <div className="hero-actions">
-            <a href="#" className="btn-primary">
+            <Link href="/new" className="btn-primary">
               start writing
-            </a>
+            </Link>
             <Link href="/d/example" className="btn-ghost">
               see an example &rarr;
             </Link>

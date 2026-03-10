@@ -1,18 +1,18 @@
 # Draftmark Build Plan
 
 ## Session 1 — Foundation
-- [ ] Choose and set up ORM (Prisma or Drizzle) + PostgreSQL connection
-- [ ] DB schema: Doc, DocVersion models
-- [ ] Slug generation (nanoid, 8 chars, URL-safe)
-- [ ] Magic token + API key generation (hashed storage)
-- [ ] API: `POST /api/v1/docs` (no auth, returns slug, url, magic_token, api_key)
-- [ ] API: `GET /api/v1/docs/:slug` (public: no auth, private: api_key or magic_token)
-- [ ] API: `PATCH /api/v1/docs/:slug` (requires magic_token, creates new DocVersion)
-- [ ] API: `DELETE /api/v1/docs/:slug` (requires magic_token)
-- [ ] UI: Create doc page (textarea, title, visibility toggle, Source/Preview tabs)
-- [ ] UI: Doc created success page (show URL, magic_token, api_key)
-- [ ] UI: View doc page (react-markdown + rehype-highlight, Source/Preview tabs)
-- [ ] UI: Title extraction from first H1 if blank
+- [x] Choose and set up ORM (Prisma or Drizzle) + PostgreSQL connection
+- [x] DB schema: Doc, DocVersion models
+- [x] Slug generation (nanoid, 8 chars, URL-safe)
+- [x] Magic token + API key generation (hashed storage)
+- [x] API: `POST /api/v1/docs` (no auth, returns slug, url, magic_token, api_key)
+- [x] API: `GET /api/v1/docs/:slug` (public: no auth, private: api_key or magic_token)
+- [x] API: `PATCH /api/v1/docs/:slug` (requires magic_token, creates new DocVersion)
+- [x] API: `DELETE /api/v1/docs/:slug` (requires magic_token)
+- [x] UI: Create doc page (textarea, title, visibility toggle, Source/Preview tabs)
+- [x] UI: Doc created success page (show URL, magic_token, api_key)
+- [x] UI: View doc page (react-markdown + rehype-highlight, Source/Preview tabs)
+- [x] UI: Title extraction from first H1 if blank
 
 ## Session 2 — Comments
 - [ ] DB schema: Comment model
