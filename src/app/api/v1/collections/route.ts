@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
     {
       slug: collection.slug,
       title: collection.title,
-      url: `${new URL(request.url).origin}/c/${collection.slug}`,
+      url: `${process.env.NEXT_PUBLIC_BASE_URL || new URL(request.url).origin}/c/${collection.slug}`,
       magic_token: rawMagicToken,
       api_key: rawApiKey,
     },

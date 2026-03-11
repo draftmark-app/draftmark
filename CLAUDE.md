@@ -41,10 +41,10 @@ prisma/schema.prisma          — Data models
 src/app/api/v1/docs/          — Doc CRUD API
 src/app/api/v1/docs/[slug]/   — Doc read/update/delete + comments, reactions, reviews
 src/app/api/v1/collections/   — Collection CRUD API
-src/app/new/page.tsx           — Create doc UI
-src/app/d/[slug]/page.tsx      — View doc (server component)
-src/app/d/[slug]/edit/page.tsx — Edit doc (client component)
-src/app/c/[slug]/page.tsx      — View collection
+src/app/new/page.tsx               — Create doc UI
+src/app/share/[slug]/page.tsx      — View doc (server component)
+src/app/share/[slug]/edit/page.tsx — Edit doc (client component)
+src/app/c/[slug]/page.tsx          — View collection
 src/components/                — DocView, CommentSection, ReactionsBar, ReviewsSection, etc.
 src/lib/                       — prisma, auth, tokens, slug, markdown helpers
 src/__tests__/                 — Unit tests (lib/) and integration tests (api/)
