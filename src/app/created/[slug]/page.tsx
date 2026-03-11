@@ -110,6 +110,12 @@ export default function CreatedPage() {
           <Link href={`/d/${slug}`} className="btn-primary">
             view document &rarr;
           </Link>
+          <Link
+            href={`/d/${slug}/edit?token=${encodeURIComponent(creds.magic_token)}`}
+            className="btn-ghost"
+          >
+            edit document
+          </Link>
           <Link href="/new" className="btn-ghost">
             create another
           </Link>
