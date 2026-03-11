@@ -77,7 +77,7 @@ export default function Home() {
             <div className="doc-footer">
               <div className="doc-meta">
                 <span>↗ 12 views</span>
-                <span>&hearts; 3 likes</span>
+                <span>&hearts; 3 reactions</span>
                 <span>&#9678; 2 comments</span>
               </div>
               <div className="doc-meta">
@@ -266,7 +266,7 @@ export default function Home() {
           </p>
         </div>
         <div className="code-block">
-          <span className="code-comment"># agent creates a doc (no auth needed)</span>
+          <span className="code-comment"># agent creates a public doc</span>
           <br />
           <span className="code-method">POST</span>{" "}
           <span className="code-url">https://draftmark.app/api/v1/docs</span>
@@ -322,7 +322,7 @@ export default function Home() {
             </p>
             <ul className="plan-features">
               <li className="active">Unlimited public docs</li>
-              <li className="active">10 private docs</li>
+              <li className="active">Private docs</li>
               <li className="active">Inline &amp; general comments</li>
               <li className="active">Reactions &amp; reviews</li>
               <li className="active">Collections</li>

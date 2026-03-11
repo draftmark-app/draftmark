@@ -33,9 +33,15 @@ export default function PrivacyPage() {
           </li>
         </ul>
 
+        <h2>Accounts</h2>
+        <p>
+          If you create an account, we store your email address for
+          authentication (magic link login) and to associate documents with
+          your account. We do not share your email with third parties.
+        </p>
+
         <h2>What we don&apos;t collect</h2>
         <ul>
-          <li>No user accounts or email addresses (v1).</li>
           <li>No tracking cookies or third-party analytics.</li>
           <li>No advertising or data sales.</li>
         </ul>

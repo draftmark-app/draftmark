@@ -51,7 +51,7 @@ export default function DocsPage() {
           <h2>Accounts</h2>
 
           <h3>
-            <span className="method post">POST</span> /account/register
+            <span className="method post">POST</span> /api/v1/account/register
           </h3>
           <p>
             Create an account and get an API key immediately. A verification
@@ -75,12 +75,12 @@ export default function DocsPage() {
           </div>
 
           <h3>
-            <span className="method get">GET</span> /account/api-keys
+            <span className="method get">GET</span> /api/v1/account/api-keys
           </h3>
           <p>List your account API keys. Requires authentication.</p>
 
           <h3>
-            <span className="method post">POST</span> /account/api-keys
+            <span className="method post">POST</span> /api/v1/account/api-keys
           </h3>
           <p>Create a new account API key. Returns the raw key once.</p>
           <div className="md-code">
@@ -88,12 +88,12 @@ export default function DocsPage() {
           </div>
 
           <h3>
-            <span className="method delete">DELETE</span> /account/api-keys/:id
+            <span className="method delete">DELETE</span> /api/v1/account/api-keys/:id
           </h3>
           <p>Revoke an account API key.</p>
 
           <h3>
-            <span className="method get">GET</span> /account/docs
+            <span className="method get">GET</span> /api/v1/account/docs
           </h3>
           <p>List all documents owned by your account.</p>
 
@@ -217,6 +217,8 @@ export default function DocsPage() {
             text selection comments, or general comments. Returns{" "}
             <code>409</code> if the document is no longer accepting feedback.
             Comments are automatically tagged with the current document version.
+            Set <code>author_type: &quot;agent&quot;</code> to display an agent
+            badge next to the comment.
           </p>
           <div className="md-code">
             {`// Line comment

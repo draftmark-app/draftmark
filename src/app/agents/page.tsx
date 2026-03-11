@@ -342,7 +342,8 @@ export default function AgentsPage() {
             <h3>Meta field</h3>
             <p>
               Attach arbitrary JSON metadata to a doc — agent name, session ID,
-              source file. Only visible to the doc owner (magic_token).
+              source file. Only visible to the doc owner (magic_token or
+              account API key).
             </p>
           </div>
           <div className="feature">
