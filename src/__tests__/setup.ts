@@ -20,6 +20,9 @@ beforeEach(async () => {
   await prisma.comment.deleteMany();
   await prisma.docVersion.deleteMany();
   await prisma.doc.deleteMany();
+  await prisma.accountApiKey.deleteMany();
+  await prisma.loginToken.deleteMany();
+  await prisma.user.deleteMany();
 });
 
 afterAll(async () => {
@@ -30,5 +33,8 @@ afterAll(async () => {
   await prisma.comment.deleteMany();
   await prisma.docVersion.deleteMany();
   await prisma.doc.deleteMany();
+  await prisma.accountApiKey.deleteMany();
+  await prisma.loginToken.deleteMany();
+  await prisma.user.deleteMany();
   await prisma.$disconnect();
 });

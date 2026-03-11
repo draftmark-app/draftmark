@@ -25,19 +25,37 @@ export default function EditDocPage() {
   const [loaded, setLoaded] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
 
-  useEffect(() => {
-    if (!token) {
-      setError("Magic token required. Add ?token=tok_... to the URL.");
-      return;
-    }
+  const [isAccountOwner, setIsAccountOwner] = useState(false);
 
+  useEffect(() => {
     async function loadDoc() {
-      const res = await fetch(`/api/v1/docs/${slug}?token=${encodeURIComponent(token!)}`);
+      // Try loading with magic token if present, otherwise try account ownership
+      const url = token
+        ? `/api/v1/docs/${slug}?token=${encodeURIComponent(token)}`
+        : `/api/v1/docs/${slug}`;
+
+      const res = await fetch(url);
       if (!res.ok) {
-        setError("Failed to load document. Check your magic token.");
+        if (!token) {
+          setError("You don't have access to edit this document.");
+        } else {
+          setError("Failed to load document. Check your magic token.");
+        }
         return;
       }
       const data = await res.json();
+
+      // If no magic token, verify we can PATCH (account owner)
+      if (!token) {
+        const meRes = await fetch("/api/auth/me");
+        const meData = await meRes.json();
+        if (!meData.user) {
+          setError("Sign in or provide a magic token to edit this document.");
+          return;
+        }
+        setIsAccountOwner(true);
+      }
+
       setTitle(data.title || "");
       setContent(data.content);
       setVisibility(data.visibility);
@@ -60,12 +78,17 @@ export default function EditDocPage() {
     setError("");
 
     try {
-      const res = await fetch(`/api/v1/docs/${slug}?token=${encodeURIComponent(token!)}`, {
+      const patchUrl = token
+        ? `/api/v1/docs/${slug}?token=${encodeURIComponent(token)}`
+        : `/api/v1/docs/${slug}`;
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+      if (token) headers["X-Magic-Token"] = token;
+
+      const res = await fetch(patchUrl, {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Magic-Token": token!,
-        },
+        headers,
         body: JSON.stringify({
           content,
           title: title || undefined,
@@ -83,7 +106,10 @@ export default function EditDocPage() {
         return;
       }
 
-      router.push(`/d/${slug}${visibility === "private" ? `?token=${encodeURIComponent(token!)}` : ""}`);
+      const viewUrl = token && visibility === "private"
+        ? `/d/${slug}?token=${encodeURIComponent(token)}`
+        : `/d/${slug}`;
+      router.push(viewUrl);
     } catch {
       setError("Failed to save document");
     } finally {
@@ -96,9 +122,11 @@ export default function EditDocPage() {
     setError("");
 
     try {
+      const deleteHeaders: Record<string, string> = {};
+      if (token) deleteHeaders["X-Magic-Token"] = token;
       const res = await fetch(`/api/v1/docs/${slug}`, {
         method: "DELETE",
-        headers: { "X-Magic-Token": token! },
+        headers: deleteHeaders,
       });
 
       if (!res.ok) {

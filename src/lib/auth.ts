@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { hashToken } from "./tokens";
 import { prisma } from "./prisma";
+import { getSessionFromRequest } from "./session";
 
 type AuthResult =
   | { authorized: true; doc: Awaited<ReturnType<typeof prisma.doc.findUnique>> }
@@ -79,6 +80,81 @@ export async function authorizeCollectionWithMagicToken(
   }
 
   return { authorized: true, collection };
+}
+
+const VERIFICATION_GRACE_PERIOD_MS = 24 * 60 * 60 * 1000; // 24 hours
+
+type AuthenticatedUser = {
+  id: string;
+  email: string;
+  emailVerifiedAt: Date | null;
+  createdAt: Date;
+};
+
+/**
+ * Get the authenticated user from session cookie or account API key (acct_ prefix).
+ * Returns the user or null if not authenticated.
+ */
+export async function getAuthenticatedUser(
+  request: NextRequest
+): Promise<AuthenticatedUser | null> {
+  // 1. Check account API key (acct_ prefix in Bearer header)
+  const authHeader = request.headers.get("authorization");
+  const bearerToken = authHeader?.startsWith("Bearer ")
+    ? authHeader.slice(7)
+    : null;
+
+  if (bearerToken?.startsWith("acct_")) {
+    const hashed = hashToken(bearerToken);
+    const accountKey = await prisma.accountApiKey.findUnique({
+      where: { key: hashed },
+      include: {
+        user: {
+          select: { id: true, email: true, emailVerifiedAt: true, createdAt: true },
+        },
+      },
+    });
+    if (accountKey) {
+      // Update last used timestamp (fire-and-forget)
+      prisma.accountApiKey
+        .update({ where: { id: accountKey.id }, data: { lastUsedAt: new Date() } })
+        .catch(() => {});
+      return accountKey.user;
+    }
+  }
+
+  // 2. Check session cookie
+  const session = await getSessionFromRequest(request);
+  if (session) {
+    const user = await prisma.user.findUnique({
+      where: { id: session.userId },
+      select: { id: true, email: true, emailVerifiedAt: true, createdAt: true },
+    });
+    return user;
+  }
+
+  return null;
+}
+
+/**
+ * Check if an unverified account has exceeded the 24h grace period.
+ * Returns true if the account can access private resources.
+ */
+export function canAccessPrivateResources(user: AuthenticatedUser): boolean {
+  if (user.emailVerifiedAt) return true;
+  return Date.now() - user.createdAt.getTime() < VERIFICATION_GRACE_PERIOD_MS;
+}
+
+/**
+ * Check if the authenticated user owns a doc (by userId match).
+ */
+export async function isAccountOwner(
+  request: NextRequest,
+  doc: { userId: string | null }
+): Promise<boolean> {
+  if (!doc.userId) return false;
+  const user = await getAuthenticatedUser(request);
+  return user?.id === doc.userId;
 }
 
 /**

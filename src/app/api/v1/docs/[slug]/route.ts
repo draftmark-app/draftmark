@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { authorizeWithMagicToken } from "@/lib/auth";
+import { authorizeWithMagicToken, getAuthenticatedUser, canAccessPrivateResources } from "@/lib/auth";
 import { hashToken } from "@/lib/tokens";
 import { extractTitleFromContent } from "@/lib/markdown";
 import { generateSeoSlug } from "@/lib/slug";
@@ -30,8 +30,21 @@ export async function GET(
     ? authHeader.slice(7)
     : null;
 
-  const isOwner = !!(tokenParam && doc.magicToken === hashToken(tokenParam));
-  const hasApiKey = !!(apiKey && doc.apiKey === hashToken(apiKey));
+  const isOwnerByToken = !!(tokenParam && doc.magicToken === hashToken(tokenParam));
+  const hasApiKey = !!(apiKey && !apiKey.startsWith("acct_") && doc.apiKey === hashToken(apiKey));
+
+  // Check account ownership (session cookie or acct_ API key)
+  const user = await getAuthenticatedUser(request);
+  const isAccountOwner = !!(user && doc.userId && user.id === doc.userId);
+  const isOwner = isOwnerByToken || isAccountOwner;
+
+  // Suspended account (unverified >24h) loses private doc access
+  if (doc.visibility === "private" && isAccountOwner && !isOwnerByToken && user && !canAccessPrivateResources(user)) {
+    return NextResponse.json(
+      { error: "Email verification required. Verify your email to continue accessing private documents." },
+      { status: 403 }
+    );
+  }
 
   if (doc.visibility === "private" && !isOwner && !hasApiKey) {
     return NextResponse.json(
@@ -97,10 +110,23 @@ export async function PATCH(
   { params }: { params: Promise<{ slug: string }> }
 ) {
   const { slug } = await params;
-  const auth = await authorizeWithMagicToken(request, slug);
 
-  if (!auth.authorized) {
-    return NextResponse.json({ error: auth.error }, { status: auth.status });
+  // Try magic token first, then fall back to account ownership
+  let ownerDoc: Awaited<ReturnType<typeof prisma.doc.findUnique>> = null;
+  const auth = await authorizeWithMagicToken(request, slug);
+  if (auth.authorized) {
+    ownerDoc = auth.doc;
+  } else {
+    // Check account ownership as alternative
+    const doc = await prisma.doc.findUnique({ where: { slug } });
+    if (!doc) {
+      return NextResponse.json({ error: "Document not found" }, { status: 404 });
+    }
+    const user = await getAuthenticatedUser(request);
+    if (!user || !doc.userId || user.id !== doc.userId) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status });
+    }
+    ownerDoc = doc;
   }
 
   const body = await request.json().catch(() => null);
@@ -112,7 +138,7 @@ export async function PATCH(
 
   // Get current version number
   const latestVersion = await prisma.docVersion.findFirst({
-    where: { docId: auth.doc!.id },
+    where: { docId: ownerDoc!.id },
     orderBy: { versionNumber: "desc" },
   });
   const nextVersion = (latestVersion?.versionNumber ?? 0) + 1;
@@ -163,13 +189,13 @@ export async function PATCH(
   }
 
   // Auto-extract title from content if title is being cleared or content changed
-  if (content && !title && !auth.doc!.title) {
+  if (content && !title && !ownerDoc!.title) {
     updateData.title = extractTitleFromContent(content) || null;
   }
 
   // Regenerate SEO slug if title changed and doc is public
-  const newTitle = (updateData.title as string | undefined) ?? auth.doc!.title;
-  const newVisibility = (updateData.visibility as string | undefined) ?? auth.doc!.visibility;
+  const newTitle = (updateData.title as string | undefined) ?? ownerDoc!.title;
+  const newVisibility = (updateData.visibility as string | undefined) ?? ownerDoc!.visibility;
   if ((title !== undefined || visibility !== undefined) && newTitle && newVisibility === "public") {
     updateData.seoSlug = await generateSeoSlug(newTitle, slug);
   }
@@ -208,10 +234,18 @@ export async function DELETE(
   { params }: { params: Promise<{ slug: string }> }
 ) {
   const { slug } = await params;
-  const auth = await authorizeWithMagicToken(request, slug);
 
+  // Try magic token first, then fall back to account ownership
+  const auth = await authorizeWithMagicToken(request, slug);
   if (!auth.authorized) {
-    return NextResponse.json({ error: auth.error }, { status: auth.status });
+    const doc = await prisma.doc.findUnique({ where: { slug } });
+    if (!doc) {
+      return NextResponse.json({ error: "Document not found" }, { status: 404 });
+    }
+    const user = await getAuthenticatedUser(request);
+    if (!user || !doc.userId || user.id !== doc.userId) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status });
+    }
   }
 
   await prisma.doc.delete({ where: { slug } });

@@ -9,6 +9,7 @@ export default defineConfig({
         process.env.DATABASE_URL ||
         "postgres://draftmark:draftmark@localhost:5435/draftmark_test",
       TEST_BASE_URL: process.env.TEST_BASE_URL || "http://localhost:3333",
+      JWT_SECRET: process.env.JWT_SECRET || "test-jwt-secret-for-vitest",
     },
     projects: [
       {

@@ -16,3 +16,11 @@ export function generateMagicToken(): string {
 export function generateApiKey(): string {
   return generateToken("key");
 }
+
+export function generateLoginToken(): string {
+  return generateToken("login");
+}
+
+export function generateAccountApiKey(): string {
+  return generateToken("acct");
+}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Nav from "@/components/Nav";
 import MarkdownPreview from "@/components/MarkdownPreview";
@@ -15,6 +15,14 @@ export default function NewDocPage() {
   const [reviewDeadline, setReviewDeadline] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [loggedIn, setLoggedIn] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then((r) => r.json())
+      .then((data) => setLoggedIn(!!data.user))
+      .catch(() => setLoggedIn(false));
+  }, []);
 
   async function handleCreate() {
     if (!content.trim()) {
@@ -78,7 +86,14 @@ export default function NewDocPage() {
               </button>
               <button
                 className={`vis-btn ${visibility === "private" ? "active" : ""}`}
-                onClick={() => setVisibility("private")}
+                onClick={() => {
+                  if (loggedIn === false) {
+                    setError("Sign in to create private documents");
+                    return;
+                  }
+                  setVisibility("private");
+                }}
+                title={loggedIn === false ? "Sign in required for private docs" : undefined}
               >
                 private
               </button>

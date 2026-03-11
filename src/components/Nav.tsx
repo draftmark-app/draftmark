@@ -1,3 +1,6 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import ThemeToggle from "./ThemeToggle";
 
@@ -10,6 +13,14 @@ export default function Nav({ links }: { links?: NavLink[] }) {
   ];
 
   const navLinks = links ?? defaultLinks;
+  const [loggedIn, setLoggedIn] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then((r) => r.json())
+      .then((data) => setLoggedIn(!!data.user))
+      .catch(() => setLoggedIn(false));
+  }, []);
 
   return (
     <nav>
@@ -29,9 +40,24 @@ export default function Nav({ links }: { links?: NavLink[] }) {
       </ul>
       <div className="nav-right">
         <ThemeToggle />
-        <Link href="/new" className="nav-cta">
-          start writing &rarr;
-        </Link>
+        {loggedIn === true ? (
+          <Link href="/dashboard" className="nav-cta">
+            dashboard
+          </Link>
+        ) : loggedIn === false ? (
+          <>
+            <Link href="/login" className="nav-link-muted">
+              sign in
+            </Link>
+            <Link href="/new" className="nav-cta">
+              start writing &rarr;
+            </Link>
+          </>
+        ) : (
+          <Link href="/new" className="nav-cta">
+            start writing &rarr;
+          </Link>
+        )}
       </div>
     </nav>
   );
