@@ -263,13 +263,13 @@ export default function Home() {
           </p>
         </div>
         <div className="code-block">
-          <span className="code-comment"># agent creates a doc</span>
+          <span className="code-comment"># agent creates a doc (no auth needed)</span>
           <br />
           <span className="code-method">POST</span>{" "}
           <span className="code-url">https://draftmark.app/api/v1/docs</span>
           <br />
-          <span className="code-key">Authorization:</span>{" "}
-          <span className="code-string">Bearer key_xxxx</span>
+          <span className="code-key">Content-Type:</span>{" "}
+          <span className="code-string">application/json</span>
           <br />
           <br />
           <span className="code-comment"># returns</span>

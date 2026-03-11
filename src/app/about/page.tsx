@@ -29,16 +29,8 @@ export default function AboutPage() {
 
         <h2>Rumbo Labs</h2>
         <p>
-          Draftmark is a{" "}
-          <a
-            href="https://rumbolabs.com"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Rumbo Labs
-          </a>{" "}
-          project — a small studio focused on building practical tools for
-          content and developer teams.
+          Draftmark is a Rumbo Labs project — a small studio focused on
+          building practical tools for content and developer teams.
         </p>
       </main>
     </>

@@ -75,17 +75,25 @@ export default function DocsPage() {
   "review_complete": true,
   "review_expired": false,
   "accepting_feedback": true,
-  "views_count": 42,
   "comments_count": 3,
   "reviews_count": 3,
   "reviews": [...],
-  "meta": { "agent": "claude-code" },
   ...
 }`}
           </div>
           <p>
             <code>review_complete</code>, <code>review_expired</code>, and{" "}
             <code>accepting_feedback</code> are computed fields (not stored).
+          </p>
+          <p>
+            <code>meta</code> and <code>views_count</code> are owner-only fields —
+            they are only included when you authenticate with the{" "}
+            <code>magic_token</code> via <code>?token=</code>.
+          </p>
+          <p>
+            Add <code>?format=raw</code> to get just the markdown content as{" "}
+            <code>text/markdown</code> — useful for agents that only need the
+            document body.
           </p>
 
           <h3>
@@ -145,6 +153,23 @@ export default function DocsPage() {
             Omit <code>anchor_type</code> and <code>anchor_ref</code> for a
             general comment.
           </p>
+
+          <h3>
+            <span className="method post">POST</span>{" "}
+            /docs/:slug/comments/batch
+          </h3>
+          <p>
+            Create multiple comments in one request. Accepts up to 50 comments.
+            Same auth and feedback rules as single comment creation.
+          </p>
+          <div className="md-code">
+            {`{
+  "comments": [
+    { "body": "Issue on line 12", "author": "agent", "anchor_type": "line", "anchor_ref": 12 },
+    { "body": "Overall looks good", "author": "agent" }
+  ]
+}`}
+          </div>
 
           <h3>
             <span className="method patch">PATCH</span>{" "}
