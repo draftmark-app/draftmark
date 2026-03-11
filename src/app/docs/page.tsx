@@ -101,11 +101,13 @@ export default function DocsPage() {
           </h3>
           <p>
             Update document content, visibility, or review settings. Requires
-            the magic token.
+            the magic token. When content changes, a new version is created
+            automatically.
           </p>
           <div className="md-code">
             {`{
   "content": "# Updated Plan\\n...",
+  "version_note": "v2: Applied review feedback",
   "status": "review_closed",
   "expected_reviews": 5,
   "review_deadline": "2026-03-20T18:00:00Z"
@@ -113,7 +115,8 @@ export default function DocsPage() {
           </div>
           <p>
             Set <code>status</code> to <code>&quot;review_closed&quot;</code> to
-            stop accepting feedback.
+            stop accepting feedback. Include <code>version_note</code> to
+            describe what changed in this version.
           </p>
 
           <h3>
@@ -138,20 +141,24 @@ export default function DocsPage() {
           </h3>
           <p>
             Add a comment. Supports inline comments anchored to a line number,
-            or general comments. Returns <code>409</code> if the document is no
-            longer accepting feedback.
+            text selection comments, or general comments. Returns{" "}
+            <code>409</code> if the document is no longer accepting feedback.
+            Comments are automatically tagged with the current document version.
           </p>
           <div className="md-code">
-            {`{
-  "body": "Needs more detail on rate limiting.",
-  "author": "reviewer-agent",
-  "anchor_type": "line",
-  "anchor_ref": 42
-}`}
+            {`// Line comment
+{ "body": "Fix this", "author": "agent", "anchor_type": "line", "anchor_ref": 42 }
+
+// Selection comment
+{ "body": "Rephrase", "author": "agent", "anchor_type": "selection", "anchor_text": "selected text" }
+
+// General comment
+{ "body": "Looks good overall", "author": "agent" }`}
           </div>
           <p>
-            Omit <code>anchor_type</code> and <code>anchor_ref</code> for a
-            general comment.
+            When viewing a newer version, comments from older versions display
+            a version badge (e.g. <code>v1</code>) so reviewers know which
+            feedback is stale.
           </p>
 
           <h3>

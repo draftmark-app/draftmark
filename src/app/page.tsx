@@ -142,7 +142,7 @@ export default function Home() {
             <h3>Iterate</h3>
             <p>
               Fetch comments via API. Feed them back into your agent session.
-              Continue the plan.
+              Update the doc — old comments are marked with their version.
             </p>
           </div>
         </div>
@@ -157,7 +157,8 @@ export default function Home() {
             <h3>Rendered markdown</h3>
             <p>
               Full GFM support with syntax highlighting, tables, and Mermaid
-              diagrams out of the box.
+              diagrams. Preview and source tabs — source view has markdown
+              syntax highlighting with line numbers.
             </p>
           </div>
           <div className="feature">
@@ -172,8 +173,9 @@ export default function Home() {
             <div className="feature-icon">[#42]</div>
             <h3>Inline comments</h3>
             <p>
-              Click a line to leave feedback anchored to that exact spot. Like
-              GitHub PR reviews, but for any markdown doc.
+              Click a line or select text to leave feedback anchored to that
+              exact spot. Comments track which version they were made on, so
+              you always know what&apos;s stale.
             </p>
           </div>
           <div className="feature">
