@@ -1,39 +1,42 @@
-FROM node:22-slim AS base
+FROM node:22-alpine AS base
 
+# --- Dependencies ---
+FROM base AS deps
+RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
-RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y openssl && \
-    rm -rf /var/lib/apt/lists /var/cache/apt/archives
-
-# Install dependencies
-FROM base AS deps
-COPY package.json package-lock.json ./
-RUN npm ci --omit=dev
-
-# Build
-FROM base AS build
 COPY package.json package-lock.json ./
 RUN npm ci
+
+# --- Build ---
+FROM base AS builder
+WORKDIR /app
+
+COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+
 RUN npx prisma generate
 RUN npm run build
 
-# Production
-FROM base
-LABEL org.opencontainers.image.source=https://github.com/rumbo-labs/draftmark
+# --- Runtime ---
+FROM base AS runner
+WORKDIR /app
+LABEL org.opencontainers.image.source=https://github.com/draftmark-app/draftmark
 
-RUN groupadd --system --gid 1001 nodejs && \
-    useradd nextjs --uid 1001 --gid 1001 --create-home --shell /bin/bash
+ENV NODE_ENV=production
+ENV HOSTNAME=0.0.0.0
+ENV PORT=3000
 
-COPY --from=deps --chown=nextjs:nodejs /app/node_modules ./node_modules
-COPY --from=build --chown=nextjs:nodejs /app/.next ./.next
-COPY --from=build --chown=nextjs:nodejs /app/public ./public
-COPY --from=build --chown=nextjs:nodejs /app/package.json ./package.json
-COPY --from=build --chown=nextjs:nodejs /app/prisma ./prisma
-COPY --from=build --chown=nextjs:nodejs /app/src/generated ./src/generated
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
 
-USER 1001:1001
+COPY --from=builder /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
+COPY --from=builder --chown=nextjs:nodejs /app/src/generated ./src/generated
+
+USER nextjs
 
 EXPOSE 3000
-CMD ["npm", "start"]
+CMD ["node", "server.js"]

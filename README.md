@@ -104,6 +104,45 @@ npm run test:watch # Watch mode
 
 Tests use a separate database on port 5435 (configured in `docker-compose.yml`).
 
+## Deployment
+
+Deployed to Hetzner via [Kamal](https://kamal-deploy.org) with Docker.
+
+### Prerequisites
+
+- Kamal installed (`gem install kamal`)
+- SSH access to the server (`~/.ssh/id_ed25519`)
+- GitHub CLI authenticated (`gh auth login`)
+- DB password set: `export DRAFTMARK_DATABASE_PASSWORD="your-secure-password"`
+- DNS pointing `draftmark.app` to the server (Cloudflare, Full Strict SSL)
+
+### First deploy
+
+```bash
+kamal setup    # Creates Postgres accessory + deploys app
+```
+
+### Subsequent deploys
+
+```bash
+kamal deploy   # Builds, pushes to GHCR, deploys with zero-downtime
+```
+
+### Useful commands
+
+```bash
+kamal app logs -f          # Tail app logs
+kamal app exec -i "sh"     # Shell into container
+kamal accessory logs db    # Tail Postgres logs
+```
+
+### Infrastructure
+
+- **Server**: Hetzner (shared with PixelVault and ContentVitals)
+- **Registry**: GitHub Container Registry (ghcr.io)
+- **Database**: Postgres 17 accessory (port 5436 on host)
+- **SSL**: Auto-provisioned via Let's Encrypt through Kamal proxy
+
 ## License
 
 Proprietary. All rights reserved.
