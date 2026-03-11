@@ -1723,6 +1723,36 @@ footer nav ul a { font-size: 14px; }
   margin: 0;
 }
 
+/* SOURCE VIEW MARKDOWN FORMATTING */
+.md-heading { font-family: inherit; font-size: inherit; }
+.md-heading-text { font-weight: 700; }
+.md-h1 .md-heading-text { color: var(--accent); }
+.md-h2 .md-heading-text { color: var(--accent); }
+.md-h3 .md-heading-text, .md-h4 .md-heading-text, .md-h5 .md-heading-text, .md-h6 .md-heading-text { color: var(--accent-dim); }
+.md-heading-marker { color: var(--accent-dim); font-weight: 400; }
+
+.md-bold { font-weight: 700; color: var(--text); }
+.md-italic { font-style: italic; color: var(--text); }
+.md-marker { color: var(--muted); opacity: 0.5; font-weight: 400; font-style: normal; }
+
+.md-inline-code { color: var(--code-key); }
+.md-inline-code .md-marker { color: var(--muted); opacity: 0.4; }
+
+.md-code-fence { color: var(--muted); }
+.md-code-lang { color: var(--accent); margin-left: 1px; }
+.md-code-line { color: var(--code-key); opacity: 0.85; }
+
+.md-link { color: var(--accent); }
+.md-link-url { color: var(--muted); opacity: 0.7; }
+
+.md-list-marker { color: var(--accent-dim); font-weight: 600; }
+.md-blockquote-marker { color: var(--accent-dim); font-weight: 600; margin-right: 2px; }
+.md-blockquote { color: var(--muted); }
+
+.md-hr { color: var(--border); }
+.md-table-sep { color: var(--muted); opacity: 0.5; }
+.md-table-row { color: var(--text); }
+
 /* INLINE COMMENT FORM */
 .inline-comment-form {
   margin-left: 56px;
@@ -2135,6 +2165,12 @@ footer nav ul a { font-size: 14px; }
   border: 1px solid var(--badge-public-border);
 }
 
+.badge-version {
+  background: var(--surface);
+  color: var(--muted);
+  border: 1px solid var(--border);
+}
+
 /* REVIEW SETTINGS */
 .review-settings {
   display: flex;
@@ -2251,6 +2287,13 @@ footer nav ul a { font-size: 14px; }
   gap: 12px;
 }
 
+.selection-comments-heading {
+  font-size: 13px;
+  color: var(--muted);
+  font-weight: 400;
+  margin-bottom: 4px;
+}
+
 .selection-comment-item {
   border-left: 2px solid var(--accent-dim);
   padding-left: 12px;
@@ -2271,4 +2314,18 @@ footer nav ul a { font-size: 14px; }
 .selection-comment-content p {
   margin: 4px 0 0;
   color: var(--doc-comment-body);
+}
+
+/* Version badge for comments from older versions */
+.comment-version-badge {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 11px;
+  padding: 0 5px;
+  border-radius: 2px;
+}
+
+.comment-version-stale {
+  background: rgba(200, 160, 80, 0.15);
+  color: #c8a050;
+  border: 1px solid rgba(200, 160, 80, 0.25);
 }

@@ -18,13 +18,14 @@ type Comment = {
 
 type Props = {
   slug: string;
+  currentVersion: number;
   reviewerName: string;
   setReviewerName: (name: string) => void;
   persistReviewerName: (name: string) => void;
   onInlineCommentsLoaded?: (comments: Comment[]) => void;
 };
 
-export default function CommentSection({ slug, reviewerName, setReviewerName, persistReviewerName, onInlineCommentsLoaded }: Props) {
+export default function CommentSection({ slug, currentVersion, reviewerName, setReviewerName, persistReviewerName, onInlineCommentsLoaded }: Props) {
   const [comments, setComments] = useState<Comment[]>([]);
   const [body, setBody] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -90,6 +91,11 @@ export default function CommentSection({ slug, reviewerName, setReviewerName, pe
               <span className="comment-author">{c.author}</span>
               {c.status !== "open" && (
                 <span className="comment-tag">{c.status}</span>
+              )}
+              {c.doc_version != null && c.doc_version < currentVersion && (
+                <span className="comment-version-badge comment-version-stale">
+                  v{c.doc_version}
+                </span>
               )}
               <span className="doc-view-comment-time">
                 {getTimeAgo(new Date(c.created_at))}

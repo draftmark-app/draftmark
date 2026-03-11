@@ -26,9 +26,16 @@ export default async function DocPage({ params, searchParams }: Props) {
     where: { slug },
     include: {
       _count: { select: { comments: true, reviews: true } },
+      versions: {
+        orderBy: { versionNumber: "desc" as const },
+        take: 1,
+        select: { versionNumber: true },
+      },
     },
   });
   if (!doc) notFound();
+
+  const currentVersion = doc.versions[0]?.versionNumber ?? 1;
 
   // Increment view count (fire and forget)
   prisma.doc.update({
@@ -69,6 +76,7 @@ export default async function DocPage({ params, searchParams }: Props) {
         viewsCount: doc.viewsCount,
         commentsCount: doc._count.comments,
         reviewsCount: doc._count.reviews,
+        currentVersion,
         createdAt: doc.createdAt.toISOString(),
         updatedAt: doc.updatedAt.toISOString(),
       }} />

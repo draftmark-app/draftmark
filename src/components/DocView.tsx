@@ -20,6 +20,7 @@ type DocData = {
   viewsCount: number;
   commentsCount: number;
   reviewsCount: number;
+  currentVersion: number;
   createdAt: string;
   updatedAt: string;
 };
@@ -66,6 +67,7 @@ export default function DocView({ doc }: { doc: DocData }) {
           <span className={`badge badge-${doc.visibility}`}>
             {doc.visibility}
           </span>
+          <span className="badge badge-version">v{doc.currentVersion}</span>
           {!acceptingFeedback && (
             <span className="badge badge-closed">
               {doc.status === "review_closed" ? "review closed" : "review expired"}
@@ -132,6 +134,11 @@ export default function DocView({ doc }: { doc: DocData }) {
                       {c.status !== "open" && (
                         <span className="comment-tag">{c.status}</span>
                       )}
+                      {c.doc_version != null && c.doc_version < doc.currentVersion && (
+                        <span className="comment-version-badge comment-version-stale">
+                          v{c.doc_version}
+                        </span>
+                      )}
                       <span className="doc-view-comment-time">
                         {getTimeAgo(new Date(c.created_at))}
                       </span>
@@ -144,15 +151,47 @@ export default function DocView({ doc }: { doc: DocData }) {
           )}
         </div>
       ) : (
-        <LineNumberedMarkdown
-          content={doc.content}
-          slug={doc.slug}
-          inlineComments={inlineComments}
-          reviewerName={reviewerName}
-          setReviewerName={setReviewerName}
-          persistReviewerName={persistReviewerName}
-          onCommentPosted={handleCommentPosted}
-        />
+        <>
+          <LineNumberedMarkdown
+            content={doc.content}
+            slug={doc.slug}
+            currentVersion={doc.currentVersion}
+            inlineComments={inlineComments}
+            reviewerName={reviewerName}
+            setReviewerName={setReviewerName}
+            persistReviewerName={persistReviewerName}
+            onCommentPosted={handleCommentPosted}
+          />
+          {selectionComments.length > 0 && (
+            <div className="selection-comments-list">
+              <h4 className="selection-comments-heading">selection comments</h4>
+              {selectionComments.map((c) => (
+                <div key={c.id} className="selection-comment-item">
+                  <div className="selection-comment-quote-display">
+                    &ldquo;{c.anchor_text}&rdquo;
+                  </div>
+                  <div className="selection-comment-content">
+                    <div className="doc-view-comment-header">
+                      <span className="comment-author">{c.author}</span>
+                      {c.status !== "open" && (
+                        <span className="comment-tag">{c.status}</span>
+                      )}
+                      {c.doc_version != null && c.doc_version < doc.currentVersion && (
+                        <span className="comment-version-badge comment-version-stale">
+                          v{c.doc_version}
+                        </span>
+                      )}
+                      <span className="doc-view-comment-time">
+                        {getTimeAgo(new Date(c.created_at))}
+                      </span>
+                    </div>
+                    <p>{c.body}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </>
       )}
 
       <ReactionsBar slug={doc.slug} />
@@ -160,6 +199,7 @@ export default function DocView({ doc }: { doc: DocData }) {
       <CommentSection
         key={refreshKey}
         slug={doc.slug}
+        currentVersion={doc.currentVersion}
         reviewerName={reviewerName}
         setReviewerName={setReviewerName}
         persistReviewerName={persistReviewerName}
