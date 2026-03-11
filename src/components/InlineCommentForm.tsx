@@ -5,6 +5,9 @@ import { useState } from "react";
 type Props = {
   slug: string;
   lineNumber: number;
+  reviewerName: string;
+  setReviewerName: (name: string) => void;
+  persistReviewerName: (name: string) => void;
   onPosted: () => void;
   onCancel: () => void;
 };
@@ -12,11 +15,13 @@ type Props = {
 export default function InlineCommentForm({
   slug,
   lineNumber,
+  reviewerName,
+  setReviewerName,
+  persistReviewerName,
   onPosted,
   onCancel,
 }: Props) {
   const [body, setBody] = useState("");
-  const [author, setAuthor] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -29,13 +34,14 @@ export default function InlineCommentForm({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         body: body.trim(),
-        author: author.trim() || undefined,
+        author: reviewerName.trim() || undefined,
         anchor_type: "line",
         anchor_ref: lineNumber,
       }),
     });
 
     if (res.ok) {
+      persistReviewerName(reviewerName);
       onPosted();
     }
     setSubmitting(false);
@@ -51,8 +57,8 @@ export default function InlineCommentForm({
       </div>
       <input
         type="text"
-        value={author}
-        onChange={(e) => setAuthor(e.target.value)}
+        value={reviewerName}
+        onChange={(e) => setReviewerName(e.target.value)}
         placeholder="name (optional)"
         className="comment-author-input"
       />

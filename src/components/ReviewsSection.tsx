@@ -11,12 +11,14 @@ type Review = {
 
 type Props = {
   slug: string;
+  reviewerName: string;
+  setReviewerName: (name: string) => void;
+  persistReviewerName: (name: string) => void;
 };
 
-export default function ReviewsSection({ slug }: Props) {
+export default function ReviewsSection({ slug, reviewerName, setReviewerName, persistReviewerName }: Props) {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [hasReviewed, setHasReviewed] = useState(false);
-  const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
 
   const getIdentifier = () => {
@@ -52,7 +54,7 @@ export default function ReviewsSection({ slug }: Props) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         identifier,
-        reviewer_name: name.trim() || "anonymous",
+        reviewer_name: reviewerName.trim() || "anonymous",
       }),
     });
 
@@ -60,7 +62,7 @@ export default function ReviewsSection({ slug }: Props) {
       const data = await res.json();
       setReviews((prev) => [...prev, data]);
       setHasReviewed(true);
-      setName("");
+      persistReviewerName(reviewerName);
     }
 
     setLoading(false);
@@ -84,8 +86,8 @@ export default function ReviewsSection({ slug }: Props) {
         <div className="review-form">
           <input
             type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
+            value={reviewerName}
+            onChange={(e) => setReviewerName(e.target.value)}
             placeholder="your name (optional)"
             className="comment-author-input"
           />

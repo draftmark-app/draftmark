@@ -18,13 +18,15 @@ type Comment = {
 
 type Props = {
   slug: string;
+  reviewerName: string;
+  setReviewerName: (name: string) => void;
+  persistReviewerName: (name: string) => void;
   onInlineCommentsLoaded?: (comments: Comment[]) => void;
 };
 
-export default function CommentSection({ slug, onInlineCommentsLoaded }: Props) {
+export default function CommentSection({ slug, reviewerName, setReviewerName, persistReviewerName, onInlineCommentsLoaded }: Props) {
   const [comments, setComments] = useState<Comment[]>([]);
   const [body, setBody] = useState("");
-  const [author, setAuthor] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
@@ -59,12 +61,13 @@ export default function CommentSection({ slug, onInlineCommentsLoaded }: Props) 
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         body: body.trim(),
-        author: author.trim() || undefined,
+        author: reviewerName.trim() || undefined,
       }),
     });
 
     if (res.ok) {
       setBody("");
+      persistReviewerName(reviewerName);
       fetchComments();
     } else {
       const data = await res.json().catch(() => null);
@@ -109,8 +112,8 @@ export default function CommentSection({ slug, onInlineCommentsLoaded }: Props) 
       <form onSubmit={handleSubmit} className="comment-form">
         <input
           type="text"
-          value={author}
-          onChange={(e) => setAuthor(e.target.value)}
+          value={reviewerName}
+          onChange={(e) => setReviewerName(e.target.value)}
           placeholder="name (optional)"
           className="comment-author-input"
         />

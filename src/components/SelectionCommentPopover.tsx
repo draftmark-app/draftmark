@@ -5,12 +5,18 @@ import { useState, useEffect, useCallback, useRef } from "react";
 type Props = {
   containerRef: React.RefObject<HTMLElement | null>;
   slug: string;
+  reviewerName: string;
+  setReviewerName: (name: string) => void;
+  persistReviewerName: (name: string) => void;
   onCommentPosted: () => void;
 };
 
 export default function SelectionCommentPopover({
   containerRef,
   slug,
+  reviewerName,
+  setReviewerName,
+  persistReviewerName,
   onCommentPosted,
 }: Props) {
   const [selectedText, setSelectedText] = useState("");
@@ -18,7 +24,6 @@ export default function SelectionCommentPopover({
   const [showForm, setShowForm] = useState(false);
   const [buttonPos, setButtonPos] = useState({ top: 0, left: 0 });
   const [body, setBody] = useState("");
-  const [author, setAuthor] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const formRef = useRef<HTMLDivElement>(null);
 
@@ -98,7 +103,7 @@ export default function SelectionCommentPopover({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         body: body.trim(),
-        author: author.trim() || undefined,
+        author: reviewerName.trim() || undefined,
         anchor_type: "selection",
         anchor_text: selectedText,
       }),
@@ -106,7 +111,7 @@ export default function SelectionCommentPopover({
 
     if (res.ok) {
       setBody("");
-      setAuthor("");
+      persistReviewerName(reviewerName);
       setShowForm(false);
       setSelectedText("");
       window.getSelection()?.removeAllRanges();
@@ -150,8 +155,8 @@ export default function SelectionCommentPopover({
           <form onSubmit={handleSubmit}>
             <input
               type="text"
-              value={author}
-              onChange={(e) => setAuthor(e.target.value)}
+              value={reviewerName}
+              onChange={(e) => setReviewerName(e.target.value)}
               placeholder="name (optional)"
               className="comment-author-input"
             />

@@ -7,6 +7,7 @@ import CommentSection from "./CommentSection";
 import ReactionsBar from "./ReactionsBar";
 import ReviewsSection from "./ReviewsSection";
 import SelectionCommentPopover from "./SelectionCommentPopover";
+import { useReviewerName } from "@/lib/useReviewerName";
 
 type DocData = {
   slug: string;
@@ -40,6 +41,7 @@ export default function DocView({ doc }: { doc: DocData }) {
   const [inlineComments, setInlineComments] = useState<InlineComment[]>([]);
   const [refreshKey, setRefreshKey] = useState(0);
   const previewRef = useRef<HTMLDivElement>(null);
+  const { name: reviewerName, setName: setReviewerName, persistName: persistReviewerName } = useReviewerName();
 
   const timeAgo = getTimeAgo(new Date(doc.createdAt));
   const reviewExpired = doc.reviewDeadline ? new Date() > new Date(doc.reviewDeadline) : false;
@@ -111,6 +113,9 @@ export default function DocView({ doc }: { doc: DocData }) {
             <SelectionCommentPopover
               containerRef={previewRef}
               slug={doc.slug}
+              reviewerName={reviewerName}
+              setReviewerName={setReviewerName}
+              persistReviewerName={persistReviewerName}
               onCommentPosted={handleCommentPosted}
             />
           )}
@@ -143,6 +148,9 @@ export default function DocView({ doc }: { doc: DocData }) {
           content={doc.content}
           slug={doc.slug}
           inlineComments={inlineComments}
+          reviewerName={reviewerName}
+          setReviewerName={setReviewerName}
+          persistReviewerName={persistReviewerName}
           onCommentPosted={handleCommentPosted}
         />
       )}
@@ -152,10 +160,18 @@ export default function DocView({ doc }: { doc: DocData }) {
       <CommentSection
         key={refreshKey}
         slug={doc.slug}
+        reviewerName={reviewerName}
+        setReviewerName={setReviewerName}
+        persistReviewerName={persistReviewerName}
         onInlineCommentsLoaded={handleInlineCommentsLoaded}
       />
 
-      <ReviewsSection slug={doc.slug} />
+      <ReviewsSection
+        slug={doc.slug}
+        reviewerName={reviewerName}
+        setReviewerName={setReviewerName}
+        persistReviewerName={persistReviewerName}
+      />
     </div>
   );
 }

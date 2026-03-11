@@ -17,6 +17,9 @@ type Props = {
   content: string;
   slug: string;
   inlineComments: InlineComment[];
+  reviewerName: string;
+  setReviewerName: (name: string) => void;
+  persistReviewerName: (name: string) => void;
   onCommentPosted: () => void;
 };
 
@@ -24,6 +27,9 @@ export default function LineNumberedMarkdown({
   content,
   slug,
   inlineComments,
+  reviewerName,
+  setReviewerName,
+  persistReviewerName,
   onCommentPosted,
 }: Props) {
   const [activeLine, setActiveLine] = useState<number | null>(null);
@@ -82,6 +88,9 @@ export default function LineNumberedMarkdown({
               <InlineCommentForm
                 slug={slug}
                 lineNumber={lineNum}
+                reviewerName={reviewerName}
+                setReviewerName={setReviewerName}
+                persistReviewerName={persistReviewerName}
                 onPosted={() => {
                   setActiveLine(null);
                   onCommentPosted();
