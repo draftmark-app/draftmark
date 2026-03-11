@@ -29,6 +29,7 @@ type InlineComment = {
   id: string;
   body: string;
   author: string;
+  author_type: string;
   anchor_type: string | null;
   anchor_ref: number | null;
   anchor_text: string | null;

@@ -53,6 +53,7 @@ model Comment {
   anchorRef    Int?     @map("anchor_ref") // line number, null for general/selection
   anchorText   String?  @map("anchor_text") // selected text quote for selection comments
   docVersion   Int?     @map("doc_version") // version of doc when comment was made
+  authorType   String   @default("human") @map("author_type") // "human" | "agent"
   status       String   @default("open") // "open", "resolved", "dismissed"
   crossRefSlug String?  @map("cross_ref_slug")
   crossRefLine Int?     @map("cross_ref_line")
@@ -78,6 +79,7 @@ model Review {
   id           String   @id @default(cuid())
   docId        String   @map("doc_id")
   reviewerName String   @default("anonymous") @map("reviewer_name")
+  reviewerType String   @default("human") @map("reviewer_type") // "human" | "agent"
   identifier   String   // for dedup — one review per doc per identifier
   createdAt    DateTime @default(now()) @map("created_at")
   doc          Doc      @relation(fields: [docId], references: [id], onDelete: Cascade)

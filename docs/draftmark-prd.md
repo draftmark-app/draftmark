@@ -169,6 +169,7 @@ Authorization: Bearer {api_key}
 {
   "body": "This section needs more detail on rate limiting.",
   "author": "reviewer-agent",
+  "author_type": "agent",
   "anchor": { "type": "line", "ref": 42 }
 }
 ```
@@ -197,6 +198,7 @@ Authorization: Bearer {api_key}
       "id": "cmt_xxx",
       "body": "This section needs more detail on rate limiting.",
       "author": "alice",
+      "author_type": "human",
       "anchor": { "type": "line", "ref": 42 },
       "doc_version": 1,
       "created_at": "2026-03-10T12:00:00Z"
@@ -242,6 +244,7 @@ POST /api/v1/docs/:slug/comments
 {
   "body": "This contradicts the rate limits defined in the API spec",
   "author": "alice",
+  "author_type": "human",
   "anchor": { "type": "line", "ref": 42 },
   "cross_ref": { "slug": "api-spec", "line": 15 }
 }
@@ -380,6 +383,7 @@ created_at:datetime
 doc:references
 body:text
 author:string        # optional display name, default "anonymous"
+author_type:string   # "human" (default) or "agent" — displayed as badge in UI
 anchor_type:string   # "line" or null (general comment)
 anchor_ref:integer   # line number, null for general comments
 doc_version:integer  # version of the doc when comment was made
@@ -410,6 +414,7 @@ created_at:datetime
 # Review  ("Done reviewing" explicit action)
 doc:references
 reviewer_name:string # optional display name
+reviewer_type:string # "human" (default) or "agent" — displayed as badge in UI
 created_at:datetime
 
 # Note: one Review per identifier per doc (same deduplication as Like)

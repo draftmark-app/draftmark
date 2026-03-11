@@ -5,6 +5,7 @@ import { useState, useEffect, useCallback } from "react";
 type Review = {
   id: string;
   reviewer_name: string;
+  reviewer_type: string;
   identifier: string;
   created_at: string;
 };
@@ -77,6 +78,9 @@ export default function ReviewsSection({ slug, reviewerName, setReviewerName, pe
           {reviews.map((r) => (
             <span key={r.id} className="review-badge" title={`Reviewed ${new Date(r.created_at).toLocaleDateString()}`}>
               {r.reviewer_name}
+              {r.reviewer_type === "agent" && (
+                <span className="badge-agent badge-agent-inline">agent</span>
+              )}
             </span>
           ))}
         </div>

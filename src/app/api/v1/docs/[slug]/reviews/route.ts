@@ -45,6 +45,7 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
     reviews: reviews.map((r) => ({
       id: r.id,
       reviewer_name: r.reviewerName,
+      reviewer_type: r.reviewerType,
       identifier: r.identifier,
       created_at: r.createdAt.toISOString(),
     })),
@@ -89,6 +90,7 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
     create: {
       docId: doc.id,
       reviewerName: body.reviewer_name || "anonymous",
+      reviewerType: body.reviewer_type === "agent" ? "agent" : "human",
       identifier: body.identifier,
     },
   });
@@ -97,6 +99,7 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
     {
       id: review.id,
       reviewer_name: review.reviewerName,
+      reviewer_type: review.reviewerType,
       identifier: review.identifier,
       created_at: review.createdAt.toISOString(),
     },

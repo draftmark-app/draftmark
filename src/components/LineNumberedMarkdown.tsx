@@ -7,6 +7,7 @@ type InlineComment = {
   id: string;
   body: string;
   author: string;
+  author_type: string;
   anchor_ref: number | null;
   doc_version: number | null;
   status: string;
@@ -88,6 +89,9 @@ export default function LineNumberedMarkdown({
                 <div key={c.id} className="inline-comment">
                   <div className="inline-comment-header">
                     <span className="comment-author">{c.author}</span>
+                    {c.author_type === "agent" && (
+                      <span className="badge-agent">agent</span>
+                    )}
                     {c.status !== "open" && (
                       <span className="comment-tag">{c.status}</span>
                     )}

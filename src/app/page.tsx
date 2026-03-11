@@ -9,6 +9,7 @@ export default function Home() {
           { href: "#how", label: "how it works", anchor: true },
           { href: "#features", label: "features", anchor: true },
           { href: "#pricing", label: "pricing", anchor: true },
+          { href: "/agents", label: "for agents" },
           { href: "/docs", label: "docs" },
         ]}
       />
