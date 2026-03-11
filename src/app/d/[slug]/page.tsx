@@ -22,7 +22,12 @@ export default async function DocPage({ params, searchParams }: Props) {
   const { slug } = await params;
   const { token } = await searchParams;
 
-  const doc = await prisma.doc.findUnique({ where: { slug } });
+  const doc = await prisma.doc.findUnique({
+    where: { slug },
+    include: {
+      _count: { select: { comments: true, reviews: true } },
+    },
+  });
   if (!doc) notFound();
 
   // Increment view count (fire and forget)
@@ -59,6 +64,8 @@ export default async function DocPage({ params, searchParams }: Props) {
         content: doc.content,
         visibility: doc.visibility,
         viewsCount: doc.viewsCount,
+        commentsCount: doc._count.comments,
+        reviewsCount: doc._count.reviews,
         createdAt: doc.createdAt.toISOString(),
         updatedAt: doc.updatedAt.toISOString(),
       }} />

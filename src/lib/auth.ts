@@ -6,6 +6,10 @@ type AuthResult =
   | { authorized: true; doc: Awaited<ReturnType<typeof prisma.doc.findUnique>> }
   | { authorized: false; error: string; status: number };
 
+type CollectionAuthResult =
+  | { authorized: true; collection: Awaited<ReturnType<typeof prisma.collection.findUnique>> }
+  | { authorized: false; error: string; status: number };
+
 export async function authorizeWithMagicToken(
   request: NextRequest,
   slug: string
@@ -51,4 +55,28 @@ export async function authorizeWithApiKey(
   }
 
   return { authorized: true, doc };
+}
+
+export async function authorizeCollectionWithMagicToken(
+  request: NextRequest,
+  slug: string
+): Promise<CollectionAuthResult> {
+  const magicToken =
+    request.headers.get("x-magic-token") ||
+    new URL(request.url).searchParams.get("token");
+
+  if (!magicToken) {
+    return { authorized: false, error: "Magic token required", status: 401 };
+  }
+
+  const collection = await prisma.collection.findUnique({ where: { slug } });
+  if (!collection) {
+    return { authorized: false, error: "Collection not found", status: 404 };
+  }
+
+  if (collection.magicToken !== hashToken(magicToken)) {
+    return { authorized: false, error: "Invalid magic token", status: 403 };
+  }
+
+  return { authorized: true, collection };
 }

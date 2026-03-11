@@ -18,7 +18,11 @@ model Doc {
   viewsCount  Int          @default(0) @map("views_count")
   createdAt   DateTime     @default(now()) @map("created_at")
   updatedAt   DateTime     @updatedAt @map("updated_at")
-  versions    DocVersion[]
+  versions       DocVersion[]
+  comments       Comment[]
+  reactions      Reaction[]
+  reviews        Review[]
+  collectionDocs CollectionDoc[]
 
   @@map("docs")
 }
@@ -33,4 +37,72 @@ model DocVersion {
   doc           Doc      @relation(fields: [docId], references: [id], onDelete: Cascade)
 
   @@map("doc_versions")
+}
+
+model Comment {
+  id           String   @id @default(cuid())
+  docId        String   @map("doc_id")
+  body         String
+  author       String   @default("anonymous")
+  anchorType   String?  @map("anchor_type") // "line" or null (general comment)
+  anchorRef    Int?     @map("anchor_ref") // line number, null for general
+  docVersion   Int?     @map("doc_version") // version of doc when comment was made
+  status       String   @default("open") // "open", "resolved", "dismissed"
+  crossRefSlug String?  @map("cross_ref_slug")
+  crossRefLine Int?     @map("cross_ref_line")
+  createdAt    DateTime @default(now()) @map("created_at")
+  doc          Doc      @relation(fields: [docId], references: [id], onDelete: Cascade)
+
+  @@map("comments")
+}
+
+model Reaction {
+  id         String   @id @default(cuid())
+  docId      String   @map("doc_id")
+  emoji      String   // "thumbs_up" | "check" | "thinking" | "cross"
+  identifier String   // for dedup — one per emoji per doc per identifier
+  createdAt  DateTime @default(now()) @map("created_at")
+  doc        Doc      @relation(fields: [docId], references: [id], onDelete: Cascade)
+
+  @@unique([docId, emoji, identifier])
+  @@map("reactions")
+}
+
+model Review {
+  id           String   @id @default(cuid())
+  docId        String   @map("doc_id")
+  reviewerName String   @default("anonymous") @map("reviewer_name")
+  identifier   String   // for dedup — one review per doc per identifier
+  createdAt    DateTime @default(now()) @map("created_at")
+  doc          Doc      @relation(fields: [docId], references: [id], onDelete: Cascade)
+
+  @@unique([docId, identifier])
+  @@map("reviews")
+}
+
+model Collection {
+  id         String          @id @default(cuid())
+  slug       String          @unique
+  title      String
+  magicToken String          @map("magic_token") // hashed
+  apiKey     String          @map("api_key") // hashed
+  createdAt  DateTime        @default(now()) @map("created_at")
+  updatedAt  DateTime        @updatedAt @map("updated_at")
+  docs       CollectionDoc[]
+
+  @@map("collections")
+}
+
+model CollectionDoc {
+  id           String     @id @default(cuid())
+  collectionId String     @map("collection_id")
+  docId        String     @map("doc_id")
+  position     Int        @default(0)
+  label        String?
+  createdAt    DateTime   @default(now()) @map("created_at")
+  collection   Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  doc          Doc        @relation(fields: [docId], references: [id], onDelete: Cascade)
+
+  @@unique([collectionId, docId])
+  @@map("collection_docs")
 }

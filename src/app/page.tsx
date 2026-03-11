@@ -31,7 +31,7 @@ export default function Home() {
             <Link href="/new" className="btn-primary">
               start writing
             </Link>
-            <Link href="/d/example" className="btn-ghost">
+            <Link href="/example" className="btn-ghost">
               see an example &rarr;
             </Link>
           </div>
@@ -111,7 +111,7 @@ export default function Home() {
         <div className="flow-steps">
           <div className="flow-step">
             <div className="step-num">01</div>
-            <span className="step-icon">&#9997;&#65039;</span>
+            <span className="step-icon">/</span>
             <h3>Write</h3>
             <p>
               Agent or human creates a markdown doc via API or UI. Gets back a
@@ -327,9 +327,9 @@ export default function Home() {
               <li className="active">Full API access</li>
               <li className="active">Magic link sharing</li>
             </ul>
-            <a href="#" className="btn-primary" style={{ display: "inline-block" }}>
+            <Link href="/new" className="btn-primary" style={{ display: "inline-block" }}>
               start writing
-            </a>
+            </Link>
           </div>
           <div className="plan plan-coming-soon">
             <span className="coming-soon-badge">coming soon</span>

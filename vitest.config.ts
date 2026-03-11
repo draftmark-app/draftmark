@@ -24,6 +24,7 @@ export default defineConfig({
           name: "integration",
           include: ["src/__tests__/api/**/*.test.ts"],
           setupFiles: ["./src/__tests__/setup.ts"],
+          fileParallelism: false,
         },
         resolve: {
           alias: { "@": path.resolve(__dirname, "./src") },

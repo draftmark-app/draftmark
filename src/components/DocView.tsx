@@ -1,7 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import MarkdownPreview from "./MarkdownPreview";
+import LineNumberedMarkdown from "./LineNumberedMarkdown";
+import CommentSection from "./CommentSection";
+import ReactionsBar from "./ReactionsBar";
+import ReviewsSection from "./ReviewsSection";
 
 type DocData = {
   slug: string;
@@ -9,14 +13,36 @@ type DocData = {
   content: string;
   visibility: string;
   viewsCount: number;
+  commentsCount: number;
+  reviewsCount: number;
   createdAt: string;
   updatedAt: string;
 };
 
+type InlineComment = {
+  id: string;
+  body: string;
+  author: string;
+  anchor_ref: number | null;
+  doc_version: number | null;
+  status: string;
+  created_at: string;
+};
+
 export default function DocView({ doc }: { doc: DocData }) {
   const [activeTab, setActiveTab] = useState<"preview" | "source">("preview");
+  const [inlineComments, setInlineComments] = useState<InlineComment[]>([]);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const timeAgo = getTimeAgo(new Date(doc.createdAt));
+
+  const handleInlineCommentsLoaded = useCallback((comments: InlineComment[]) => {
+    setInlineComments(comments);
+  }, []);
+
+  const handleCommentPosted = useCallback(() => {
+    setRefreshKey((k) => k + 1);
+  }, []);
 
   return (
     <div className="doc-view">
@@ -29,8 +55,13 @@ export default function DocView({ doc }: { doc: DocData }) {
         </div>
         <div className="doc-view-meta">
           <span>{timeAgo}</span>
-          <span>{doc.viewsCount} views</span>
         </div>
+      </div>
+
+      <div className="stats-bar">
+        <span>{doc.viewsCount} views</span>
+        <span>{doc.commentsCount} comments</span>
+        <span>{doc.reviewsCount} reviews</span>
       </div>
 
       <div className="tab-bar">
@@ -53,8 +84,23 @@ export default function DocView({ doc }: { doc: DocData }) {
           <MarkdownPreview content={doc.content} />
         </div>
       ) : (
-        <pre className="doc-view-source">{doc.content}</pre>
+        <LineNumberedMarkdown
+          content={doc.content}
+          slug={doc.slug}
+          inlineComments={inlineComments}
+          onCommentPosted={handleCommentPosted}
+        />
       )}
+
+      <ReactionsBar slug={doc.slug} />
+
+      <CommentSection
+        key={refreshKey}
+        slug={doc.slug}
+        onInlineCommentsLoaded={handleInlineCommentsLoaded}
+      />
+
+      <ReviewsSection slug={doc.slug} />
     </div>
   );
 }
