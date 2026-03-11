@@ -105,9 +105,9 @@ export default async function DocPage({ params, searchParams }: Props) {
         isOwner={isOwner}
         editUrl={
           hasValidToken
-            ? `/d/${slug}/edit?token=${encodeURIComponent(token!)}`
+            ? `/share/${slug}/edit?token=${encodeURIComponent(token!)}`
             : isAccountOwner
-              ? `/d/${slug}/edit`
+              ? `/share/${slug}/edit`
               : undefined
         }
       />
@@ -117,7 +117,7 @@ export default async function DocPage({ params, searchParams }: Props) {
 
 function TokenPromptForm({ slug }: { slug: string }) {
   return (
-    <form className="token-form" action={`/d/${slug}`} method="get">
+    <form className="token-form" action={`/share/${slug}`} method="get">
       <input
         type="text"
         name="token"

@@ -207,7 +207,7 @@ export default function Home() {
             <div className="feature-icon">[↗]</div>
             <h3>Clean share links</h3>
             <p>
-              Every doc gets a clean URL at draftmark.app/d/:slug. No cruft, no
+              Every doc gets a clean URL at draftmark.app/share/:slug. No cruft, no
               required login.
             </p>
           </div>
@@ -284,7 +284,7 @@ export default function Home() {
           <br />
           &nbsp;&nbsp;<span className="code-key">&quot;url&quot;</span>:{" "}
           <span className="code-string">
-            &quot;draftmark.app/d/abc123&quot;
+            &quot;draftmark.app/share/abc123&quot;
           </span>
           ,
           <br />

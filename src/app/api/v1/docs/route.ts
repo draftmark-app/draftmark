@@ -105,7 +105,7 @@ export async function POST(request: NextRequest) {
   return NextResponse.json(
     {
       slug: doc.slug,
-      url: `${new URL(request.url).origin}/d/${doc.slug}`,
+      url: `${new URL(request.url).origin}/share/${doc.slug}`,
       magic_token: rawMagicToken,
       api_key: rawApiKey,
     },

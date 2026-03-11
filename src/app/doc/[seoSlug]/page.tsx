@@ -153,7 +153,7 @@ export default async function SEODocPage({ params }: Props) {
           <SeoComments comments={doc.comments} totalCount={doc._count.comments} />
 
           <footer className="seo-footer">
-            <Link href={`/d/${doc.slug}`} className="btn-ghost">
+            <Link href={`/share/${doc.slug}`} className="btn-ghost">
               join the conversation &rarr;
             </Link>
             <Link href="/" className="btn-ghost">

@@ -99,7 +99,7 @@ export default function DashboardPage() {
               {docs.map((doc) => (
                 <Link
                   key={doc.slug}
-                  href={`/d/${doc.slug}`}
+                  href={`/share/${doc.slug}`}
                   className="dashboard-doc-card"
                 >
                   <div className="dashboard-doc-title">

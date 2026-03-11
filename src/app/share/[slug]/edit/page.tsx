@@ -107,8 +107,8 @@ export default function EditDocPage() {
       }
 
       const viewUrl = token && visibility === "private"
-        ? `/d/${slug}?token=${encodeURIComponent(token)}`
-        : `/d/${slug}`;
+        ? `/share/${slug}?token=${encodeURIComponent(token)}`
+        : `/share/${slug}`;
       router.push(viewUrl);
     } catch {
       setError("Failed to save document");

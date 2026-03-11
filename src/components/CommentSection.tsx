@@ -108,7 +108,7 @@ export default function CommentSection({ slug, currentVersion, reviewerName, set
             <p>{c.body}</p>
             {c.cross_ref_slug && (
               <a
-                href={`/d/${c.cross_ref_slug}`}
+                href={`/share/${c.cross_ref_slug}`}
                 className="comment-cross-ref"
               >
                 → {c.cross_ref_slug}

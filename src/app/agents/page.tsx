@@ -171,7 +171,7 @@ export default function AgentsPage() {
               <br />
               &nbsp;&nbsp;<span className="code-key">&quot;url&quot;</span>:{" "}
               <span className="code-string">
-                &quot;draftmark.app/d/abc123&quot;
+                &quot;draftmark.app/share/abc123&quot;
               </span>
               ,
               <br />
@@ -411,7 +411,7 @@ export default function AgentsPage() {
             </div>
           </div>
           <div className="agents-example-divider">
-            <span>human reviews at draftmark.app/d/abc123</span>
+            <span>human reviews at draftmark.app/share/abc123</span>
           </div>
           <div className="agents-example-step">
             <div className="agents-example-label">session 2</div>

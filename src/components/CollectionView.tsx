@@ -51,7 +51,7 @@ export default function CollectionView({
           {docs.map((doc, i) => (
             <Link
               key={doc.slug}
-              href={`/d/${doc.slug}`}
+              href={`/share/${doc.slug}`}
               className="collection-doc-card"
             >
               <div className="collection-doc-card-header">

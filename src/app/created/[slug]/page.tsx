@@ -59,7 +59,7 @@ export default function CreatedPage() {
 
         <div className="cred-cards">
           <div className="cred-card">
-            <div className="cred-label">Document URL</div>
+            <div className="cred-label">Shareable Link</div>
             <div className="cred-value">
               <code>{creds.url}</code>
               <button
@@ -107,11 +107,11 @@ export default function CreatedPage() {
         </div>
 
         <div className="success-actions">
-          <Link href={`/d/${slug}`} className="btn-primary">
+          <Link href={`/share/${slug}`} className="btn-primary">
             view document &rarr;
           </Link>
           <Link
-            href={`/d/${slug}/edit?token=${encodeURIComponent(creds.magic_token)}`}
+            href={`/share/${slug}/edit?token=${encodeURIComponent(creds.magic_token)}`}
             className="btn-ghost"
           >
             edit document
