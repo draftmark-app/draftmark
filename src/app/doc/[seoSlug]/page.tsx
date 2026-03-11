@@ -17,6 +17,19 @@ async function getDoc(seoSlug: string) {
     where: { seoSlug },
     include: {
       _count: { select: { comments: true, reviews: true } },
+      reactions: true,
+      comments: {
+        where: { status: "open", anchorType: null },
+        orderBy: { createdAt: "desc" },
+        take: 10,
+        select: {
+          id: true,
+          body: true,
+          author: true,
+          authorType: true,
+          createdAt: true,
+        },
+      },
     },
   });
   if (!doc || doc.visibility !== "public") return null;
@@ -136,9 +149,12 @@ export default async function SEODocPage({ params }: Props) {
             </ReactMarkdown>
           </div>
 
+          <SeoReactions reactions={doc.reactions} />
+          <SeoComments comments={doc.comments} totalCount={doc._count.comments} />
+
           <footer className="seo-footer">
-            <Link href={`/d/${doc.slug}`} className="btn-primary">
-              leave feedback
+            <Link href={`/d/${doc.slug}`} className="btn-ghost">
+              join the conversation &rarr;
             </Link>
             <Link href="/" className="btn-ghost">
               what is draftmark? &rarr;
@@ -154,5 +170,83 @@ export default async function SEODocPage({ params }: Props) {
         </footer>
       </div>
     </>
+  );
+}
+
+const EMOJI_LABELS: Record<string, string> = {
+  thumbs_up: "\uD83D\uDC4D",
+  check: "\u2705",
+  thinking: "\uD83E\uDD14",
+  cross: "\u274C",
+};
+
+function SeoReactions({
+  reactions,
+}: {
+  reactions: { emoji: string }[];
+}) {
+  if (reactions.length === 0) return null;
+
+  const counts: Record<string, number> = {};
+  for (const r of reactions) {
+    counts[r.emoji] = (counts[r.emoji] || 0) + 1;
+  }
+
+  return (
+    <div className="seo-reactions">
+      {Object.entries(counts).map(([emoji, count]) => (
+        <span key={emoji} className="seo-reaction-pill">
+          {EMOJI_LABELS[emoji] || emoji} {count}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+function SeoComments({
+  comments,
+  totalCount,
+}: {
+  comments: {
+    id: string;
+    body: string;
+    author: string;
+    authorType: string;
+    createdAt: Date;
+  }[];
+  totalCount: number;
+}) {
+  if (totalCount === 0) return null;
+
+  return (
+    <div className="seo-comments">
+      <h3 className="seo-comments-heading">
+        {totalCount} comment{totalCount !== 1 ? "s" : ""}
+      </h3>
+      {comments.map((c) => (
+        <div key={c.id} className="seo-comment">
+          <div className="seo-comment-header">
+            <span className="seo-comment-author">
+              {c.author}
+              {c.authorType === "agent" && (
+                <span className="seo-agent-badge">agent</span>
+              )}
+            </span>
+            <span className="seo-comment-time">
+              {c.createdAt.toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+              })}
+            </span>
+          </div>
+          <p className="seo-comment-body">{c.body}</p>
+        </div>
+      ))}
+      {totalCount > comments.length && (
+        <p className="seo-comments-more">
+          +{totalCount - comments.length} more
+        </p>
+      )}
+    </div>
   );
 }

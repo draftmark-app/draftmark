@@ -2530,11 +2530,92 @@ footer nav ul a { font-size: 14px; }
   color: var(--muted);
 }
 
+/* SEO page read-only reactions */
+.seo-reactions {
+  display: flex;
+  gap: 8px;
+  margin-top: 32px;
+  flex-wrap: wrap;
+}
+
+.seo-reaction-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 4px 12px;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+/* SEO page read-only comments */
+.seo-comments {
+  margin-top: 32px;
+}
+
+.seo-comments-heading {
+  font-size: 0.95rem;
+  font-weight: 500;
+  margin-bottom: 16px;
+  color: var(--muted);
+}
+
+.seo-comment {
+  padding: 12px 0;
+  border-top: 1px solid var(--border-light);
+}
+
+.seo-comment-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.seo-comment-author {
+  font-size: 0.85rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.seo-agent-badge {
+  font-size: 0.7rem;
+  font-weight: 400;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: var(--agent-tag-bg);
+  color: var(--green-bright);
+}
+
+.seo-comment-time {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.seo-comment-body {
+  font-size: 0.88rem;
+  color: var(--doc-comment-body);
+  line-height: 1.5;
+}
+
+.seo-comments-more {
+  padding-top: 12px;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
 .seo-footer {
   margin-top: 48px;
   padding-top: 24px;
   border-top: 1px solid var(--border);
   text-align: center;
+  display: flex;
+  gap: 16px;
+  justify-content: center;
 }
 
 .seo-cta {
