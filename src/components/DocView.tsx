@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useRef } from "react";
+import Link from "next/link";
 import MarkdownPreview from "./MarkdownPreview";
 import LineNumberedMarkdown from "./LineNumberedMarkdown";
 import CommentSection from "./CommentSection";
@@ -38,7 +39,13 @@ type InlineComment = {
   created_at: string;
 };
 
-export default function DocView({ doc }: { doc: DocData }) {
+type DocViewProps = {
+  doc: DocData;
+  isOwner?: boolean;
+  editUrl?: string;
+};
+
+export default function DocView({ doc, isOwner, editUrl }: DocViewProps) {
   const [activeTab, setActiveTab] = useState<"preview" | "source">("preview");
   const [inlineComments, setInlineComments] = useState<InlineComment[]>([]);
   const [refreshKey, setRefreshKey] = useState(0);
@@ -76,6 +83,11 @@ export default function DocView({ doc }: { doc: DocData }) {
           )}
           {acceptingFeedback && reviewComplete && (
             <span className="badge badge-complete">review complete</span>
+          )}
+          {isOwner && editUrl && (
+            <Link href={editUrl} className="btn-ghost btn-small doc-edit-btn">
+              edit
+            </Link>
           )}
         </div>
         <div className="doc-view-meta">

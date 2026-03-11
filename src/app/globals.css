@@ -3133,3 +3133,9 @@ footer nav ul a { font-size: 14px; }
   font-size: 0.78rem;
   color: var(--muted);
 }
+
+/* ========== Doc Edit Button ========== */
+
+.doc-edit-btn {
+  margin-left: auto;
+}

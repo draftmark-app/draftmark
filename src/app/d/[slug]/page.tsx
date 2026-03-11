@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { getSession } from "@/lib/session";
 import Nav from "@/components/Nav";
 import DocView from "@/components/DocView";
 
@@ -58,43 +59,58 @@ export default async function DocPage({ params, searchParams }: Props) {
     data: { viewsCount: { increment: 1 } },
   }).catch(() => {});
 
-  // Private doc without token — show token prompt
-  if (doc.visibility === "private") {
-    const { hashToken } = await import("@/lib/tokens");
-    if (!token || doc.magicToken !== hashToken(token)) {
-      return (
-        <>
-          <Nav />
-          <div className="doc-view">
-            <div className="token-prompt">
-              <h1>This document is private</h1>
-              <p>Paste your magic token to view this document.</p>
-              <TokenPromptForm slug={slug} />
-            </div>
+  // Check access: magic token or account ownership
+  const { hashToken } = await import("@/lib/tokens");
+  const hasValidToken = !!(token && doc.magicToken === hashToken(token));
+
+  const session = await getSession();
+  const isAccountOwner = !!(session && doc.userId && session.userId === doc.userId);
+  const isOwner = hasValidToken || isAccountOwner;
+
+  // Private doc without access — show token prompt
+  if (doc.visibility === "private" && !isOwner) {
+    return (
+      <>
+        <Nav />
+        <div className="doc-view">
+          <div className="token-prompt">
+            <h1>This document is private</h1>
+            <p>Paste your magic token to view this document.</p>
+            <TokenPromptForm slug={slug} />
           </div>
-        </>
-      );
-    }
+        </div>
+      </>
+    );
   }
 
   return (
     <>
       <Nav />
-      <DocView doc={{
-        slug: doc.slug,
-        title: doc.title,
-        content: doc.content,
-        visibility: doc.visibility,
-        status: doc.status,
-        expectedReviews: doc.expectedReviews,
-        reviewDeadline: doc.reviewDeadline?.toISOString() ?? null,
-        viewsCount: doc.viewsCount,
-        commentsCount: doc._count.comments,
-        reviewsCount: doc._count.reviews,
-        currentVersion,
-        createdAt: doc.createdAt.toISOString(),
-        updatedAt: doc.updatedAt.toISOString(),
-      }} />
+      <DocView
+        doc={{
+          slug: doc.slug,
+          title: doc.title,
+          content: doc.content,
+          visibility: doc.visibility,
+          status: doc.status,
+          expectedReviews: doc.expectedReviews,
+          reviewDeadline: doc.reviewDeadline?.toISOString() ?? null,
+          viewsCount: doc.viewsCount,
+          commentsCount: doc._count.comments,
+          reviewsCount: doc._count.reviews,
+          currentVersion,
+          createdAt: doc.createdAt.toISOString(),
+          updatedAt: doc.updatedAt.toISOString(),
+        }}
+        isOwner={isOwner}
+        editUrl={
+          hasValidToken
+            ? `/d/${slug}/edit?token=${encodeURIComponent(token!)}`
+            : isAccountOwner
+              ? `/d/${slug}/edit`
+              : undefined
+        }
+      />
     </>
   );
 }
