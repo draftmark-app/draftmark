@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { hashToken } from "@/lib/tokens";
+import { checkAcceptingFeedback } from "@/lib/auth";
 
 type RouteContext = { params: Promise<{ slug: string }> };
 
@@ -67,6 +68,10 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
       { status: 401 }
     );
   }
+
+  // Check if doc is accepting feedback
+  const feedbackCheck = checkAcceptingFeedback(doc);
+  if (feedbackCheck) return feedbackCheck;
 
   const body = await request.json().catch(() => null);
   if (!body || !body.emoji || !body.identifier) {

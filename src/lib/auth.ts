@@ -1,4 +1,4 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { hashToken } from "./tokens";
 import { prisma } from "./prisma";
 
@@ -79,4 +79,29 @@ export async function authorizeCollectionWithMagicToken(
   }
 
   return { authorized: true, collection };
+}
+
+/**
+ * Check if a doc is currently accepting feedback (comments, reactions, reviews).
+ * Returns null if accepting, or a NextResponse with 409 if not.
+ */
+export function checkAcceptingFeedback(doc: {
+  status: string;
+  reviewDeadline: Date | null;
+}): NextResponse | null {
+  if (doc.status === "review_closed") {
+    return NextResponse.json(
+      { error: "This document is no longer accepting feedback (review closed)" },
+      { status: 409 }
+    );
+  }
+
+  if (doc.reviewDeadline && new Date() > doc.reviewDeadline) {
+    return NextResponse.json(
+      { error: "This document is no longer accepting feedback (review deadline passed)" },
+      { status: 409 }
+    );
+  }
+
+  return null;
 }

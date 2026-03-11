@@ -2121,3 +2121,53 @@ footer nav ul a { font-size: 14px; }
   align-items: center;
   gap: 4px;
 }
+
+/* REVIEW LIFECYCLE BADGES */
+.badge-closed {
+  background: var(--method-delete-bg);
+  color: var(--method-delete-color);
+  border: 1px solid var(--method-delete-color);
+}
+
+.badge-complete {
+  background: var(--badge-public-bg);
+  color: var(--green-bright);
+  border: 1px solid var(--badge-public-border);
+}
+
+/* REVIEW SETTINGS */
+.review-settings {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.review-setting-input {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 13px;
+  padding: 8px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--foreground);
+  border-radius: 2px;
+  flex: 1;
+  min-width: 180px;
+}
+
+.review-setting-input::placeholder {
+  color: var(--muted);
+}
+
+.review-status-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.review-setting-label {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 13px;
+  color: var(--muted);
+}

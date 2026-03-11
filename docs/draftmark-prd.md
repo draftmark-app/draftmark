@@ -54,6 +54,7 @@ None of these are designed for the **agent → human → agent** handoff pattern
 - Notifications / webhooks (v2)
 - ~~Inline / line-anchored comments~~ → moved to v1
 - MCP server integration (v2)
+- CLI tool (v2 — wraps `.draftmark.json` convention)
 
 ---
 
@@ -96,6 +97,20 @@ POST /api/v1/docs
 }
 ```
 No auth required to create. The response provides both credentials for future access.
+
+**Optional metadata:**
+```json
+POST /api/v1/docs
+{
+  "content": "# My Plan\n...",
+  "meta": {
+    "agent": "claude-code",
+    "session_id": "abc123",
+    "source_file": "docs/architecture.md"
+  }
+}
+```
+The `meta` field is optional, free-form JSONB. It is not rendered — just stored and returned in API responses. Useful for agents to track which tool/session created a doc and what local file it maps to.
 
 The `GET /docs/:slug` response includes social data so an agent can check status in one call:
 
@@ -233,7 +248,102 @@ POST /api/v1/docs/:slug/comments
 ```
 Cross-references render as clickable links that jump to the exact line in the referenced doc.
 
-### 6.6 Reactions
+### 6.6 Review Lifecycle
+
+Documents have a review lifecycle that determines whether feedback is still being accepted.
+
+**Status:** `open` (default) → `review_closed`
+
+When a doc is `review_closed`, new comments, reactions, and reviews are rejected (API returns `409 Conflict`). Existing feedback remains visible.
+
+**Three mechanisms to complete a review:**
+
+1. **Explicit close** — The doc owner calls `PATCH /docs/:slug` with `status: "review_closed"`. This is the manual "I'm done collecting feedback" signal.
+
+2. **Threshold-based** — On creation (or update), set `expected_reviews: N`. When `reviews_count >= expected_reviews`, the API returns `review_complete: true` in the doc response. This does NOT auto-close the doc — it's a signal the agent can act on (close it, or keep collecting).
+
+3. **Time-based** — On creation (or update), set `review_deadline` (ISO 8601 timestamp). After the deadline, the doc automatically stops accepting new feedback (same behavior as `review_closed`). The API returns `review_expired: true`.
+
+**API changes:**
+
+Creation with review settings:
+```
+POST /api/v1/docs
+{
+  "content": "# My Plan\n...",
+  "visibility": "public",
+  "expected_reviews": 3,
+  "review_deadline": "2026-03-15T18:00:00Z"
+}
+```
+
+Doc response includes review lifecycle fields:
+```json
+{
+  "slug": "abc123",
+  "status": "open",
+  "expected_reviews": 3,
+  "review_deadline": "2026-03-15T18:00:00Z",
+  "review_complete": true,
+  "review_expired": false,
+  "reviews_count": 3,
+  ...
+}
+```
+
+Closing a review:
+```
+PATCH /api/v1/docs/:slug
+Authorization: Bearer {magic_token}
+
+{
+  "status": "review_closed"
+}
+```
+
+**Computed fields (not stored, derived on read):**
+- `review_complete`: `true` when `expected_reviews` is set and `reviews_count >= expected_reviews`
+- `review_expired`: `true` when `review_deadline` is set and `now > review_deadline`
+- `accepting_feedback`: `true` when `status != "review_closed"` and not expired
+
+### 6.7 Cross-Session Context (`.draftmark.json`)
+
+Agents lose context between sessions. To bridge this gap, agents write a `.draftmark.json` file in the project root after creating a doc. Any future session can discover it and pick up where the previous one left off.
+
+**File format:**
+```json
+{
+  "docs": [
+    {
+      "slug": "abc12345",
+      "url": "https://draftmark.app/d/abc12345",
+      "api_key": "key_xxxx",
+      "source_file": "docs/architecture.md",
+      "created_at": "2026-03-11T10:00:00Z",
+      "expected_reviews": 3,
+      "review_deadline": "2026-03-15T18:00:00Z"
+    }
+  ]
+}
+```
+
+**Convention:**
+1. Agent creates doc via `POST /docs`
+2. Agent writes/appends to `.draftmark.json` with slug, api_key, and source_file
+3. Later session: agent reads `.draftmark.json`, polls `GET /docs/:slug`, checks review status
+4. Agent acts on feedback (`review_complete`, `review_expired`, new comments)
+
+**Security:**
+- Stores `api_key` (read-level credential) but **not** `magic_token` (owner credential)
+- `.draftmark.json` should be added to `.gitignore` since it contains credentials
+- Closing a review still requires the `magic_token`, which the agent must retrieve from memory or environment
+
+**Design notes:**
+- This is a convention, not a platform feature — any agent that knows to look for `.draftmark.json` can participate
+- Agent-agnostic: works with Claude Code, Cursor, Copilot, custom scripts, etc.
+- A CLI tool (`draftmark push`, `draftmark status`) may wrap this convention in v2
+
+### 6.8 Reactions
 
 - Simple emoji reactions on the doc (👍 ✅ 🤔 ❌)
 - No account required
@@ -245,13 +355,17 @@ Cross-references render as clickable links that jump to the exact line in the re
 
 ```ruby
 # Doc
-slug:string          # nanoid, 8 chars, URL-safe
-title:string         # optional, extracted from H1 if blank
-content:text         # raw markdown
-visibility:string    # "public" | "private"
-magic_token:string   # owner management token (hashed)
-api_key:string       # for programmatic access (hashed)
-views_count:integer  # incremented on each web view
+slug:string              # nanoid, 8 chars, URL-safe
+title:string             # optional, extracted from H1 if blank
+content:text             # raw markdown
+visibility:string        # "public" | "private"
+status:string            # "open" (default) | "review_closed"
+magic_token:string       # owner management token (hashed)
+api_key:string           # for programmatic access (hashed)
+views_count:integer      # incremented on each web view
+expected_reviews:integer # optional — threshold for review_complete signal
+review_deadline:datetime # optional — after this time, feedback is rejected
+meta:jsonb               # optional — free-form metadata (agent, session_id, source_file, etc.)
 created_at:datetime
 updated_at:datetime
 
@@ -325,7 +439,7 @@ https://draftmark.app/api/v1
 |---|---|---|
 | `POST` | `/docs` | Create a document |
 | `GET` | `/docs/:slug` | Get doc (markdown + metadata, includes review status) |
-| `PATCH` | `/docs/:slug` | Update content (requires magic_token) |
+| `PATCH` | `/docs/:slug` | Update content, status, review settings (requires magic_token) |
 | `DELETE` | `/docs/:slug` | Delete doc (requires magic_token) |
 | `GET` | `/docs/:slug/comments` | List comments (filterable by `?status=open`) |
 | `POST` | `/docs/:slug/comments` | Add a comment |
@@ -403,7 +517,7 @@ Self-hosters get everything for free. Hosted version sells convenience.
 - **Anonymous comments & spam prevention**: No email required. Name field is optional (defaults to "anonymous"). Spam prevention via rate limiting by IP + honeypot field. Add Cloudflare Turnstile if spam becomes a problem.
 - **Edit history in v1**: Yes — append-only `doc_versions` table storing `{content, updated_at}` snapshots. No diffing UI in v1, just preserve the data.
 - **magic_token location**: Both. URL param for human sharing (`/d/:slug?token=tok_xxx`), header for API write operations (PATCH/DELETE).
-- **Webhook/polling for reviewer completion**: v2.
+- **Review completion**: Three mechanisms — explicit close (`status: "review_closed"`), threshold-based (`expected_reviews` count), and time-based (`review_deadline`). Webhooks/callbacks deferred to v2; agents poll `GET /docs/:slug` and check `review_complete` / `review_expired` / `accepting_feedback` computed fields.
 - **API key for doc creation**: `POST /docs` requires no auth. The response returns both `magic_token` and `api_key`. Same behavior for UI and API creation.
 - **magic_token vs api_key roles**: `magic_token` is the owner credential — used for edit (PATCH), delete (DELETE), and viewing private docs (URL param or entered in UI prompt). `api_key` is for programmatic interaction — reading private docs via API, posting/fetching comments, reviews, likes, managing collections.
 - **Comment auth**: Public docs allow comments without any auth (UI and API). Private docs require `api_key` to comment via API.

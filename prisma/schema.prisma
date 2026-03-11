@@ -12,10 +12,14 @@ model Doc {
   slug        String       @unique
   title       String?
   content     String
-  visibility  String       @default("public") // "public" | "private"
-  magicToken  String       @map("magic_token") // hashed
-  apiKey      String       @map("api_key") // hashed
-  viewsCount  Int          @default(0) @map("views_count")
+  visibility      String    @default("public") // "public" | "private"
+  status          String    @default("open") // "open" | "review_closed"
+  magicToken      String    @map("magic_token") // hashed
+  apiKey          String    @map("api_key") // hashed
+  viewsCount      Int       @default(0) @map("views_count")
+  expectedReviews Int?      @map("expected_reviews")
+  reviewDeadline  DateTime? @map("review_deadline")
+  meta            Json?     @db.JsonB
   createdAt   DateTime     @default(now()) @map("created_at")
   updatedAt   DateTime     @updatedAt @map("updated_at")
   versions       DocVersion[]

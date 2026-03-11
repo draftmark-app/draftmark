@@ -14,7 +14,15 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const { content, visibility = "public", title, version_note } = body;
+  const {
+    content,
+    visibility = "public",
+    title,
+    version_note,
+    expected_reviews,
+    review_deadline,
+    meta,
+  } = body;
 
   if (visibility !== "public" && visibility !== "private") {
     return NextResponse.json(
@@ -28,6 +36,24 @@ export async function POST(request: NextRequest) {
   const rawApiKey = generateApiKey();
   const resolvedTitle = title || extractTitleFromContent(content) || null;
 
+  // Validate optional review lifecycle fields
+  if (expected_reviews !== undefined && (!Number.isInteger(expected_reviews) || expected_reviews < 1)) {
+    return NextResponse.json(
+      { error: "expected_reviews must be a positive integer" },
+      { status: 400 }
+    );
+  }
+
+  if (review_deadline !== undefined) {
+    const deadline = new Date(review_deadline);
+    if (isNaN(deadline.getTime())) {
+      return NextResponse.json(
+        { error: "review_deadline must be a valid ISO 8601 date" },
+        { status: 400 }
+      );
+    }
+  }
+
   const doc = await prisma.doc.create({
     data: {
       slug,
@@ -36,6 +62,9 @@ export async function POST(request: NextRequest) {
       visibility,
       magicToken: hashToken(rawMagicToken),
       apiKey: hashToken(rawApiKey),
+      expectedReviews: expected_reviews ?? null,
+      reviewDeadline: review_deadline ? new Date(review_deadline) : null,
+      meta: meta ?? undefined,
       versions: {
         create: {
           content,

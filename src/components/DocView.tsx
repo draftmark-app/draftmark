@@ -12,6 +12,9 @@ type DocData = {
   title: string | null;
   content: string;
   visibility: string;
+  status: string;
+  expectedReviews: number | null;
+  reviewDeadline: string | null;
   viewsCount: number;
   commentsCount: number;
   reviewsCount: number;
@@ -35,6 +38,9 @@ export default function DocView({ doc }: { doc: DocData }) {
   const [refreshKey, setRefreshKey] = useState(0);
 
   const timeAgo = getTimeAgo(new Date(doc.createdAt));
+  const reviewExpired = doc.reviewDeadline ? new Date() > new Date(doc.reviewDeadline) : false;
+  const acceptingFeedback = doc.status !== "review_closed" && !reviewExpired;
+  const reviewComplete = doc.expectedReviews != null && doc.reviewsCount >= doc.expectedReviews;
 
   const handleInlineCommentsLoaded = useCallback((comments: InlineComment[]) => {
     setInlineComments(comments);
@@ -52,6 +58,14 @@ export default function DocView({ doc }: { doc: DocData }) {
           <span className={`badge badge-${doc.visibility}`}>
             {doc.visibility}
           </span>
+          {!acceptingFeedback && (
+            <span className="badge badge-closed">
+              {doc.status === "review_closed" ? "review closed" : "review expired"}
+            </span>
+          )}
+          {acceptingFeedback && reviewComplete && (
+            <span className="badge badge-complete">review complete</span>
+          )}
         </div>
         <div className="doc-view-meta">
           <span>{timeAgo}</span>
@@ -61,7 +75,12 @@ export default function DocView({ doc }: { doc: DocData }) {
       <div className="stats-bar">
         <span>{doc.viewsCount} views</span>
         <span>{doc.commentsCount} comments</span>
-        <span>{doc.reviewsCount} reviews</span>
+        <span>
+          {doc.reviewsCount}{doc.expectedReviews != null ? `/${doc.expectedReviews}` : ""} reviews
+        </span>
+        {doc.reviewDeadline && (
+          <span>deadline: {new Date(doc.reviewDeadline).toLocaleDateString()}</span>
+        )}
       </div>
 
       <div className="tab-bar">

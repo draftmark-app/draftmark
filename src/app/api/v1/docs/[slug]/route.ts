@@ -47,18 +47,32 @@ export async function GET(
     reactionCounts[r.emoji] = (reactionCounts[r.emoji] || 0) + 1;
   }
 
+  // Computed review lifecycle fields
+  const reviewsCount = doc.reviews.length;
+  const reviewComplete = doc.expectedReviews != null && reviewsCount >= doc.expectedReviews;
+  const reviewExpired = doc.reviewDeadline != null && new Date() > doc.reviewDeadline;
+  const acceptingFeedback = doc.status !== "review_closed" && !reviewExpired;
+
   return NextResponse.json({
     slug: doc.slug,
     title: doc.title,
     content: doc.content,
     visibility: doc.visibility,
+    status: doc.status,
+    expected_reviews: doc.expectedReviews,
+    review_deadline: doc.reviewDeadline?.toISOString() ?? null,
+    review_complete: reviewComplete,
+    review_expired: reviewExpired,
+    accepting_feedback: acceptingFeedback,
     views_count: doc.viewsCount,
     reactions_count: reactionCounts,
     comments_count: doc._count.comments,
+    reviews_count: reviewsCount,
     reviews: doc.reviews.map((r) => ({
       reviewer_name: r.reviewerName,
       reviewed_at: r.createdAt.toISOString(),
     })),
+    meta: doc.meta,
     created_at: doc.createdAt.toISOString(),
     updated_at: doc.updatedAt.toISOString(),
   });
@@ -80,7 +94,7 @@ export async function PATCH(
     return NextResponse.json({ error: "Request body required" }, { status: 400 });
   }
 
-  const { content, title, visibility, version_note } = body;
+  const { content, title, visibility, version_note, status, expected_reviews, review_deadline } = body;
 
   // Get current version number
   const latestVersion = await prisma.docVersion.findFirst({
@@ -100,6 +114,38 @@ export async function PATCH(
       );
     }
     updateData.visibility = visibility;
+  }
+  if (status !== undefined) {
+    if (status !== "open" && status !== "review_closed") {
+      return NextResponse.json(
+        { error: "Status must be 'open' or 'review_closed'" },
+        { status: 400 }
+      );
+    }
+    updateData.status = status;
+  }
+  if (expected_reviews !== undefined) {
+    if (expected_reviews !== null && (!Number.isInteger(expected_reviews) || expected_reviews < 1)) {
+      return NextResponse.json(
+        { error: "expected_reviews must be a positive integer or null" },
+        { status: 400 }
+      );
+    }
+    updateData.expectedReviews = expected_reviews;
+  }
+  if (review_deadline !== undefined) {
+    if (review_deadline !== null) {
+      const deadline = new Date(review_deadline);
+      if (isNaN(deadline.getTime())) {
+        return NextResponse.json(
+          { error: "review_deadline must be a valid ISO 8601 date or null" },
+          { status: 400 }
+        );
+      }
+      updateData.reviewDeadline = deadline;
+    } else {
+      updateData.reviewDeadline = null;
+    }
   }
 
   // Auto-extract title from content if title is being cleared or content changed
@@ -129,6 +175,9 @@ export async function PATCH(
     title: doc.title,
     content: doc.content,
     visibility: doc.visibility,
+    status: doc.status,
+    expected_reviews: doc.expectedReviews,
+    review_deadline: doc.reviewDeadline?.toISOString() ?? null,
     updated_at: doc.updatedAt.toISOString(),
   });
 }

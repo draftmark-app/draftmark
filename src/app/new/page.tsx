@@ -11,6 +11,8 @@ export default function NewDocPage() {
   const [content, setContent] = useState("");
   const [visibility, setVisibility] = useState<"public" | "private">("public");
   const [activeTab, setActiveTab] = useState<"source" | "preview">("source");
+  const [expectedReviews, setExpectedReviews] = useState("");
+  const [reviewDeadline, setReviewDeadline] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
@@ -31,6 +33,8 @@ export default function NewDocPage() {
           content,
           visibility,
           title: title || undefined,
+          expected_reviews: expectedReviews ? parseInt(expectedReviews) : undefined,
+          review_deadline: reviewDeadline || undefined,
         }),
       });
 
@@ -96,6 +100,24 @@ export default function NewDocPage() {
           value={title}
           onChange={(e) => setTitle(e.target.value)}
         />
+
+        <div className="review-settings">
+          <input
+            type="number"
+            className="review-setting-input"
+            placeholder="Expected reviews (optional)"
+            value={expectedReviews}
+            onChange={(e) => setExpectedReviews(e.target.value)}
+            min="1"
+          />
+          <input
+            type="datetime-local"
+            className="review-setting-input"
+            placeholder="Review deadline (optional)"
+            value={reviewDeadline}
+            onChange={(e) => setReviewDeadline(e.target.value)}
+          />
+        </div>
 
         <div className="tab-bar">
           <button

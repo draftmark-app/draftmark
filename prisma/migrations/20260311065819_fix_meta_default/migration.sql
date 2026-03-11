@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "docs" ALTER COLUMN "meta" DROP DEFAULT;

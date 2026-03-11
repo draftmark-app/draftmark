@@ -16,6 +16,9 @@ export default function EditDocPage() {
   const [content, setContent] = useState("");
   const [visibility, setVisibility] = useState<"public" | "private">("public");
   const [versionNote, setVersionNote] = useState("");
+  const [docStatus, setDocStatus] = useState("open");
+  const [expectedReviews, setExpectedReviews] = useState("");
+  const [reviewDeadline, setReviewDeadline] = useState("");
   const [activeTab, setActiveTab] = useState<"source" | "preview">("source");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -38,6 +41,9 @@ export default function EditDocPage() {
       setTitle(data.title || "");
       setContent(data.content);
       setVisibility(data.visibility);
+      setDocStatus(data.status || "open");
+      setExpectedReviews(data.expected_reviews?.toString() || "");
+      setReviewDeadline(data.review_deadline ? data.review_deadline.slice(0, 16) : "");
       setLoaded(true);
     }
 
@@ -65,6 +71,9 @@ export default function EditDocPage() {
           title: title || undefined,
           visibility,
           version_note: versionNote || undefined,
+          status: docStatus,
+          expected_reviews: expectedReviews ? parseInt(expectedReviews) : null,
+          review_deadline: reviewDeadline ? new Date(reviewDeadline).toISOString() : null,
         }),
       });
 
@@ -173,6 +182,39 @@ export default function EditDocPage() {
           value={versionNote}
           onChange={(e) => setVersionNote(e.target.value)}
         />
+
+        <div className="review-settings">
+          <div className="review-status-toggle">
+            <span className="review-setting-label">Review status:</span>
+            <button
+              className={`vis-btn ${docStatus === "open" ? "active" : ""}`}
+              onClick={() => setDocStatus("open")}
+            >
+              open
+            </button>
+            <button
+              className={`vis-btn ${docStatus === "review_closed" ? "active" : ""}`}
+              onClick={() => setDocStatus("review_closed")}
+            >
+              closed
+            </button>
+          </div>
+          <input
+            type="number"
+            className="review-setting-input"
+            placeholder="Expected reviews (optional)"
+            value={expectedReviews}
+            onChange={(e) => setExpectedReviews(e.target.value)}
+            min="1"
+          />
+          <input
+            type="datetime-local"
+            className="review-setting-input"
+            placeholder="Review deadline (optional)"
+            value={reviewDeadline}
+            onChange={(e) => setReviewDeadline(e.target.value)}
+          />
+        </div>
 
         <div className="tab-bar">
           <button
