@@ -19,22 +19,91 @@ export default function DocsPage() {
 
         <section>
           <h2>Authentication</h2>
-          <p>
-            Two credentials are returned when you create a document:
-          </p>
+          <p>Three levels of auth, depending on what you need:</p>
           <ul>
             <li>
-              <strong>magic_token</strong> — Owner credential for edit (PATCH),
-              delete (DELETE), and viewing private docs. Pass via{" "}
-              <code>X-Magic-Token</code> header or <code>?token=</code> URL param.
+              <strong>Account API key</strong> (<code>acct_...</code>) — Account-level
+              credential for creating and managing docs. Required for private docs.
+              Pass via <code>Authorization: Bearer {"<acct_key>"}</code>.
             </li>
             <li>
-              <strong>api_key</strong> — Programmatic access for reading private
-              docs, posting comments, reactions, and reviews. Pass via{" "}
-              <code>Authorization: Bearer {"<api_key>"}</code>.
+              <strong>magic_token</strong> (<code>tok_...</code>) — Per-doc owner
+              credential for edit (PATCH), delete (DELETE), and viewing private docs.
+              Pass via <code>X-Magic-Token</code> header or <code>?token=</code> URL param.
+            </li>
+            <li>
+              <strong>api_key</strong> (<code>key_...</code>) — Per-doc programmatic
+              access for reading private docs, posting comments, reactions, and reviews.
+              Pass via <code>Authorization: Bearer {"<api_key>"}</code>.
             </li>
           </ul>
-          <p>Public docs can be read without auth. No account required to create docs.</p>
+          <p>
+            Public docs can be created without an account and read without auth.
+            Private docs require an account (sign in or register via API).
+          </p>
+          <p>
+            If you own a doc via your account, you can GET, PATCH, and DELETE it
+            using your <code>acct_</code> key — no magic token needed.
+          </p>
+        </section>
+
+        <section>
+          <h2>Accounts</h2>
+
+          <h3>
+            <span className="method post">POST</span> /account/register
+          </h3>
+          <p>
+            Create an account and get an API key immediately. A verification
+            email is sent — verify within 24 hours to keep private doc access.
+            Public docs always work regardless of verification status.
+          </p>
+          <div className="md-code">
+            {`{
+  "email": "agent@team.com",
+  "name": "my-agent"  // optional key label
+}`}
+          </div>
+          <p>Response:</p>
+          <div className="md-code">
+            {`{
+  "api_key": "acct_...",
+  "email": "agent@team.com",
+  "verified": false,
+  "message": "Account created. Verify within 24 hours..."
+}`}
+          </div>
+
+          <h3>
+            <span className="method get">GET</span> /account/api-keys
+          </h3>
+          <p>List your account API keys. Requires authentication.</p>
+
+          <h3>
+            <span className="method post">POST</span> /account/api-keys
+          </h3>
+          <p>Create a new account API key. Returns the raw key once.</p>
+          <div className="md-code">
+            {`{ "name": "ci-pipeline" }`}
+          </div>
+
+          <h3>
+            <span className="method delete">DELETE</span> /account/api-keys/:id
+          </h3>
+          <p>Revoke an account API key.</p>
+
+          <h3>
+            <span className="method get">GET</span> /account/docs
+          </h3>
+          <p>List all documents owned by your account.</p>
+
+          <h3>Email verification</h3>
+          <p>
+            New accounts have a <strong>24-hour grace period</strong> with full access.
+            After 24 hours, unverified accounts can still create and manage public docs
+            but lose access to private doc features. Click the link in the verification
+            email to verify permanently.
+          </p>
         </section>
 
         <section>
@@ -43,7 +112,11 @@ export default function DocsPage() {
           <h3>
             <span className="method post">POST</span> /docs
           </h3>
-          <p>Create a new document. Returns the slug, URL, magic token, and API key.</p>
+          <p>
+            Create a new document. Returns the slug, URL, magic token, and API key.
+            Public docs need no auth. Private docs require an account API key
+            (<code>acct_...</code>) or active session.
+          </p>
           <div className="md-code">
             {`{
   "content": "# My Plan\\n...",
@@ -87,8 +160,8 @@ export default function DocsPage() {
           </p>
           <p>
             <code>meta</code> and <code>views_count</code> are owner-only fields —
-            they are only included when you authenticate with the{" "}
-            <code>magic_token</code> via <code>?token=</code>.
+            visible when you authenticate with <code>magic_token</code> via{" "}
+            <code>?token=</code> or with your account API key if you own the doc.
           </p>
           <p>
             Add <code>?format=raw</code> to get just the markdown content as{" "}
@@ -101,8 +174,8 @@ export default function DocsPage() {
           </h3>
           <p>
             Update document content, visibility, or review settings. Requires
-            the magic token. When content changes, a new version is created
-            automatically.
+            the magic token or account ownership. When content changes, a new
+            version is created automatically.
           </p>
           <div className="md-code">
             {`{
@@ -122,7 +195,7 @@ export default function DocsPage() {
           <h3>
             <span className="method delete">DELETE</span> /docs/:slug
           </h3>
-          <p>Delete a document and all its comments, reactions, and reviews. Requires the magic token.</p>
+          <p>Delete a document and all its comments, reactions, and reviews. Requires the magic token or account ownership.</p>
         </section>
 
         <section>

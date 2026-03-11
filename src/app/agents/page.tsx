@@ -78,16 +78,50 @@ export default function AgentsPage() {
         <div className="agents-section-label">// the loop</div>
         <div className="agents-steps">
           <div className="agents-step">
+            <div className="step-num">00</div>
+            <h3>Register once</h3>
+            <p>
+              One API call creates an account and returns an{" "}
+              <code>acct_</code> key immediately. No email verification needed
+              upfront — you get a 24-hour grace period with full access. Verify
+              the email to keep private doc access permanently.
+            </p>
+            <div className="agents-code">
+              <span className="code-method">POST</span>{" "}
+              <span className="code-url">/api/v1/account/register</span>
+              <br />
+              <br />
+              {"{"}
+              <br />
+              &nbsp;&nbsp;<span className="code-key">&quot;email&quot;</span>:{" "}
+              <span className="code-string">
+                &quot;agent@team.com&quot;
+              </span>
+              <br />
+              {"}"}
+              <br />
+              <br />
+              <span className="code-comment">
+                {"→"} {"{"} &quot;api_key&quot;: &quot;acct_...&quot;, &quot;verified&quot;: false {"}"}
+              </span>
+            </div>
+          </div>
+
+          <div className="agents-step">
             <div className="step-num">01</div>
             <h3>Agent creates a doc</h3>
             <p>
-              Your agent POSTs markdown to the API. No auth needed. Gets back a
-              slug, a shareable URL, a magic_token (for edits), and an api_key
-              (for reading feedback on private docs).
+              Your agent POSTs markdown with the <code>acct_</code> key.
+              Public docs work without auth too. Gets back a slug, shareable
+              URL, a magic_token (for sharing edit access), and a per-doc
+              api_key (for reviewers).
             </p>
             <div className="agents-code">
               <span className="code-method">POST</span>{" "}
               <span className="code-url">/api/v1/docs</span>
+              <br />
+              <span className="code-key">Authorization:</span>{" "}
+              <span className="code-string">Bearer acct_xxxx</span>
               <br />
               <br />
               {"{"}
@@ -100,7 +134,7 @@ export default function AgentsPage() {
               <br />
               &nbsp;&nbsp;
               <span className="code-key">&quot;visibility&quot;</span>:{" "}
-              <span className="code-string">&quot;public&quot;</span>,
+              <span className="code-string">&quot;private&quot;</span>,
               <br />
               &nbsp;&nbsp;
               <span className="code-key">&quot;expected_reviews&quot;</span>:{" "}
@@ -120,7 +154,7 @@ export default function AgentsPage() {
             <div className="step-num">02</div>
             <h3>Share the link</h3>
             <p>
-              The agent stores the api_key in{" "}
+              The agent stores the <code>acct_</code> key and doc info in{" "}
               <code>.draftmark.json</code> so future sessions can find it. The
               shareable URL goes to Slack, a PR comment, or wherever your team
               lives.
@@ -142,7 +176,7 @@ export default function AgentsPage() {
               ,
               <br />
               &nbsp;&nbsp;<span className="code-key">&quot;api_key&quot;</span>:{" "}
-              <span className="code-string">&quot;key_xxxx&quot;</span>
+              <span className="code-string">&quot;acct_xxxx&quot;</span>
               <br />
               {"}"}
             </div>
@@ -198,15 +232,15 @@ export default function AgentsPage() {
             <p>
               In the next session, the agent reads{" "}
               <code>.draftmark.json</code>, fetches comments via API, and
-              incorporates the feedback. It can also check review status and
-              close the review when done.
+              incorporates the feedback. Account ownership means no magic token
+              needed — the <code>acct_</code> key handles everything.
             </p>
             <div className="agents-code">
               <span className="code-method">GET</span>{" "}
               <span className="code-url">/api/v1/docs/abc123/comments</span>
               <br />
               <span className="code-key">Authorization:</span>{" "}
-              <span className="code-string">Bearer key_xxxx</span>
+              <span className="code-string">Bearer acct_xxxx</span>
               <br />
               <br />
               <span className="code-comment">
@@ -221,8 +255,8 @@ export default function AgentsPage() {
               <span className="code-method">PATCH</span>{" "}
               <span className="code-url">/api/v1/docs/abc123</span>
               <br />
-              <span className="code-key">X-Magic-Token:</span>{" "}
-              <span className="code-string">tok_xxxx</span>
+              <span className="code-key">Authorization:</span>{" "}
+              <span className="code-string">Bearer acct_xxxx</span>
               <br />
               <br />
               {"{"}
@@ -323,9 +357,18 @@ export default function AgentsPage() {
             <div className="feature-icon">[&#128274;]</div>
             <h3>Private docs</h3>
             <p>
-              Create with <code>visibility: &quot;private&quot;</code>. Only
-              accessible with the api_key or magic_token. Perfect for internal
-              plans and sensitive reviews.
+              Create with <code>visibility: &quot;private&quot;</code> using your{" "}
+              <code>acct_</code> key. Only accessible by the owner and those
+              with the per-doc api_key. Perfect for internal plans.
+            </p>
+          </div>
+          <div className="feature">
+            <div className="feature-icon">[&#128273;]</div>
+            <h3>One key, all docs</h3>
+            <p>
+              Register once, get an <code>acct_</code> API key. Create, read,
+              update, and delete all your docs with a single credential. No
+              need to track per-doc magic tokens.
             </p>
           </div>
         </div>
@@ -336,6 +379,20 @@ export default function AgentsPage() {
         <div className="agents-section-label">// example: claude code</div>
         <div className="agents-example">
           <div className="agents-example-step">
+            <div className="agents-example-label">setup (once)</div>
+            <div className="agents-code">
+              <span className="code-method">POST</span>{" "}
+              <span className="code-url">/api/v1/account/register</span>
+              <br />
+              <span className="code-comment">
+                # {"→"} acct_xxxx — store in .env or secrets
+              </span>
+            </div>
+          </div>
+          <div className="agents-example-divider">
+            <span>human clicks verification link in email</span>
+          </div>
+          <div className="agents-example-step">
             <div className="agents-example-label">session 1</div>
             <div className="agents-code">
               <span className="code-comment">
@@ -345,12 +402,11 @@ export default function AgentsPage() {
               <span className="code-method">POST</span>{" "}
               <span className="code-url">/api/v1/docs</span>
               <br />
-              <span className="code-comment">
-                # saves slug + api_key to .draftmark.json
-              </span>
+              <span className="code-key">Authorization:</span>{" "}
+              <span className="code-string">Bearer acct_xxxx</span>
               <br />
               <span className="code-comment">
-                # posts the link to the PR
+                # saves slug to .draftmark.json, posts link to PR
               </span>
             </div>
           </div>
@@ -366,6 +422,9 @@ export default function AgentsPage() {
               <br />
               <span className="code-method">GET</span>{" "}
               <span className="code-url">/api/v1/docs/abc123/comments</span>
+              <br />
+              <span className="code-key">Authorization:</span>{" "}
+              <span className="code-string">Bearer acct_xxxx</span>
               <br />
               <span className="code-comment">
                 # processes feedback, updates the plan
