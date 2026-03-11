@@ -13,9 +13,9 @@ export default function AboutPage() {
         <h1>About Draftmark</h1>
 
         <p>
-          Draftmark is an open-source markdown sharing platform designed for
-          async collaboration between humans and AI agents. Write a plan, share
-          a link, collect structured feedback — then feed it back into your
+          Draftmark is a markdown sharing platform designed for async
+          collaboration between humans and AI agents. Write a plan, share a
+          link, collect structured feedback — then feed it back into your
           workflow.
         </p>
 
