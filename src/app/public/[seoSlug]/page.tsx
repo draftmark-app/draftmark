@@ -50,7 +50,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     .replace(/[*_`~\[\]]/g, "")
     .trim()
     .slice(0, 160);
-  const url = `${BASE_URL}/doc/${seoSlug}`;
+  const url = `${BASE_URL}/public/${seoSlug}`;
 
   return {
     title: `${title} — Draftmark`,
@@ -91,7 +91,7 @@ export default async function SEODocPage({ params }: Props) {
     headline: doc.title || "Untitled",
     datePublished: doc.createdAt.toISOString(),
     dateModified: doc.updatedAt.toISOString(),
-    url: `${BASE_URL}/doc/${seoSlug}`,
+    url: `${BASE_URL}/public/${seoSlug}`,
     publisher: {
       "@type": "Organization",
       name: "Draftmark",

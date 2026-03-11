@@ -21,7 +21,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   });
 
   const docRoutes: MetadataRoute.Sitemap = publicDocs.map((doc) => ({
-    url: `${BASE_URL}/doc/${doc.seoSlug}`,
+    url: `${BASE_URL}/public/${doc.seoSlug}`,
     lastModified: doc.updatedAt,
     changeFrequency: "weekly" as const,
     priority: 0.8,

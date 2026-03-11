@@ -29,7 +29,7 @@ export async function generateMetadata({ params }: Props) {
       follow: true,
     },
     alternates: doc.visibility === "public" && doc.seoSlug
-      ? { canonical: `/doc/${doc.seoSlug}` }
+      ? { canonical: `/public/${doc.seoSlug}` }
       : undefined,
   };
 }
