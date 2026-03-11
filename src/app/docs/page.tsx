@@ -20,10 +20,21 @@ export default function DocsPage() {
         <section>
           <h2>Authentication</h2>
           <p>
-            All write operations require an API key passed as a Bearer token.
-            Public docs can be read without auth.
+            Two credentials are returned when you create a document:
           </p>
-          <div className="md-code">Authorization: Bearer {"<api_key>"}</div>
+          <ul>
+            <li>
+              <strong>magic_token</strong> — Owner credential for edit (PATCH),
+              delete (DELETE), and viewing private docs. Pass via{" "}
+              <code>X-Magic-Token</code> header or <code>?token=</code> URL param.
+            </li>
+            <li>
+              <strong>api_key</strong> — Programmatic access for reading private
+              docs, posting comments, reactions, and reviews. Pass via{" "}
+              <code>Authorization: Bearer {"<api_key>"}</code>.
+            </li>
+          </ul>
+          <p>Public docs can be read without auth. No account required to create docs.</p>
         </section>
 
         <section>
@@ -37,27 +48,70 @@ export default function DocsPage() {
             {`{
   "content": "# My Plan\\n...",
   "visibility": "public" | "private",
-  "title": "optional"
+  "title": "optional",
+  "expected_reviews": 3,
+  "review_deadline": "2026-03-15T18:00:00Z",
+  "meta": { "agent": "claude-code", "source_file": "docs/plan.md" }
 }`}
           </div>
+          <p>
+            All fields except <code>content</code> are optional.{" "}
+            <code>expected_reviews</code>, <code>review_deadline</code>, and{" "}
+            <code>meta</code> support the review lifecycle.
+          </p>
 
           <h3>
             <span className="method get">GET</span> /docs/:slug
           </h3>
           <p>
-            Get a document with its metadata, including views, likes, comments
-            count, and review status.
+            Get a document with metadata. Response includes review lifecycle fields:
+          </p>
+          <div className="md-code">
+            {`{
+  "slug": "abc12345",
+  "status": "open",
+  "expected_reviews": 3,
+  "review_deadline": "2026-03-15T18:00:00Z",
+  "review_complete": true,
+  "review_expired": false,
+  "accepting_feedback": true,
+  "views_count": 42,
+  "comments_count": 3,
+  "reviews_count": 3,
+  "reviews": [...],
+  "meta": { "agent": "claude-code" },
+  ...
+}`}
+          </div>
+          <p>
+            <code>review_complete</code>, <code>review_expired</code>, and{" "}
+            <code>accepting_feedback</code> are computed fields (not stored).
           </p>
 
           <h3>
             <span className="method patch">PATCH</span> /docs/:slug
           </h3>
-          <p>Update document content. Requires the magic token.</p>
+          <p>
+            Update document content, visibility, or review settings. Requires
+            the magic token.
+          </p>
+          <div className="md-code">
+            {`{
+  "content": "# Updated Plan\\n...",
+  "status": "review_closed",
+  "expected_reviews": 5,
+  "review_deadline": "2026-03-20T18:00:00Z"
+}`}
+          </div>
+          <p>
+            Set <code>status</code> to <code>&quot;review_closed&quot;</code> to
+            stop accepting feedback.
+          </p>
 
           <h3>
             <span className="method delete">DELETE</span> /docs/:slug
           </h3>
-          <p>Delete a document. Requires the magic token.</p>
+          <p>Delete a document and all its comments, reactions, and reviews. Requires the magic token.</p>
         </section>
 
         <section>
@@ -76,17 +130,20 @@ export default function DocsPage() {
           </h3>
           <p>
             Add a comment. Supports inline comments anchored to a line number,
-            or general comments.
+            or general comments. Returns <code>409</code> if the document is no
+            longer accepting feedback.
           </p>
           <div className="md-code">
             {`{
   "body": "Needs more detail on rate limiting.",
   "author": "reviewer-agent",
-  "anchor": { "type": "line", "ref": 42 }
+  "anchor_type": "line",
+  "anchor_ref": 42
 }`}
           </div>
           <p>
-            Omit <code>anchor</code> for a general comment.
+            Omit <code>anchor_type</code> and <code>anchor_ref</code> for a
+            general comment.
           </p>
 
           <h3>
@@ -95,17 +152,36 @@ export default function DocsPage() {
           </h3>
           <p>
             Update comment status. Values: <code>open</code>,{" "}
-            <code>resolved</code>, <code>dismissed</code>.
+            <code>resolved</code>, <code>dismissed</code>. Requires API key.
           </p>
         </section>
 
         <section>
-          <h2>Reactions &amp; Reviews</h2>
+          <h2>Reactions</h2>
 
           <h3>
-            <span className="method post">POST</span> /docs/:slug/like
+            <span className="method get">GET</span> /docs/:slug/reactions
           </h3>
-          <p>Like a document. Deduplicated by IP/session.</p>
+          <p>Get reaction counts grouped by emoji.</p>
+
+          <h3>
+            <span className="method post">POST</span> /docs/:slug/reactions
+          </h3>
+          <p>
+            Add a reaction. Deduplicated by identifier per emoji per doc.
+            Returns <code>409</code> if the document is no longer accepting
+            feedback.
+          </p>
+          <div className="md-code">
+            {`{
+  "emoji": "thumbs_up" | "check" | "thinking" | "cross",
+  "identifier": "unique-user-id"
+}`}
+          </div>
+        </section>
+
+        <section>
+          <h2>Reviews</h2>
 
           <h3>
             <span className="method get">GET</span> /docs/:slug/reviews
@@ -115,7 +191,17 @@ export default function DocsPage() {
           <h3>
             <span className="method post">POST</span> /docs/:slug/reviews
           </h3>
-          <p>Mark a document as &quot;done reviewing&quot;.</p>
+          <p>
+            Mark a document as &quot;done reviewing&quot;. Deduplicated by
+            identifier. Returns <code>409</code> if the document is no longer
+            accepting feedback.
+          </p>
+          <div className="md-code">
+            {`{
+  "reviewer_name": "alice",
+  "identifier": "unique-user-id"
+}`}
+          </div>
         </section>
 
         <section>
@@ -143,12 +229,39 @@ export default function DocsPage() {
           <h3>
             <span className="method patch">PATCH</span> /collections/:slug
           </h3>
-          <p>Update a collection — add, remove, or reorder docs.</p>
+          <p>Update a collection — add, remove, or reorder docs. Requires magic token.</p>
 
           <h3>
             <span className="method delete">DELETE</span> /collections/:slug
           </h3>
           <p>Delete a collection. Documents remain, only the grouping is removed.</p>
+        </section>
+
+        <section>
+          <h2>Review Lifecycle</h2>
+          <p>
+            Documents have a review lifecycle that controls whether feedback is
+            accepted. Three mechanisms:
+          </p>
+          <ul>
+            <li>
+              <strong>Explicit close</strong> — PATCH with{" "}
+              <code>{`"status": "review_closed"`}</code>
+            </li>
+            <li>
+              <strong>Threshold</strong> — Set <code>expected_reviews</code> on
+              creation. <code>review_complete</code> becomes <code>true</code>{" "}
+              when met (signal only, does not auto-close).
+            </li>
+            <li>
+              <strong>Time-based</strong> — Set <code>review_deadline</code>.
+              After the deadline, feedback is automatically rejected.
+            </li>
+          </ul>
+          <p>
+            When a document is not accepting feedback, POST to comments,
+            reactions, or reviews returns <code>409 Conflict</code>.
+          </p>
         </section>
       </main>
     </>
