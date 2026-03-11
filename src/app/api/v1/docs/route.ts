@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { generateSlug } from "@/lib/slug";
+import { generateSlug, generateSeoSlug } from "@/lib/slug";
 import { generateMagicToken, generateApiKey, hashToken } from "@/lib/tokens";
 import { extractTitleFromContent } from "@/lib/markdown";
 
@@ -54,9 +54,15 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  // Generate SEO-friendly slug from title for public docs
+  const seoSlug = resolvedTitle && visibility === "public"
+    ? await generateSeoSlug(resolvedTitle, slug)
+    : null;
+
   const doc = await prisma.doc.create({
     data: {
       slug,
+      seoSlug,
       title: resolvedTitle,
       content,
       visibility,

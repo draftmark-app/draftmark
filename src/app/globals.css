@@ -1211,6 +1211,154 @@ footer nav ul a { font-size: 14px; }
   .cred-value { flex-direction: column; }
   .cred-value code { font-size: 12px; }
   .success-actions { flex-direction: column; }
+
+  /* Doc view title row — wrap badges */
+  .doc-view-title-row {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .doc-view-title {
+    width: 100%;
+  }
+
+  /* Stats bar — wrap on narrow screens */
+  .stats-bar {
+    flex-wrap: wrap;
+    gap: 8px 16px;
+  }
+
+  /* Source view — horizontal scroll for long lines */
+  .lined-content {
+    font-size: 13px;
+  }
+
+  .line-number {
+    min-width: 30px;
+    padding-right: 10px;
+    font-size: 12px;
+  }
+
+  .inline-comment {
+    margin-left: 40px;
+    padding: 6px 10px;
+  }
+
+  .inline-comment-form {
+    margin-left: 40px;
+  }
+
+  /* Selection comment popover — fit mobile */
+  .selection-comment-form {
+    width: calc(100vw - 48px);
+    max-width: 300px;
+    left: 12px !important;
+  }
+
+  /* Markdown body — tables scroll */
+  .markdown-body table {
+    display: block;
+    overflow-x: auto;
+  }
+
+  .markdown-body pre {
+    font-size: 13px;
+  }
+
+  /* Static pages (docs, about, privacy, terms) */
+  .static-page {
+    padding: 40px 20px 60px;
+  }
+
+  .static-page h1 {
+    font-size: 28px;
+  }
+
+  .static-page .md-code {
+    font-size: 12px;
+    overflow-x: auto;
+  }
+
+  /* Collection view */
+  .collection-view {
+    padding: 30px 16px;
+  }
+
+  .collection-title {
+    font-size: 28px;
+  }
+
+  .collection-doc-card {
+    padding: 16px;
+  }
+
+  .collection-doc-stats {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  /* Edit page */
+  .create-editor {
+    min-height: 300px;
+    font-size: 13px;
+  }
+
+  /* Review settings */
+  .review-settings {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .review-setting-input {
+    min-width: unset;
+  }
+
+  /* Reactions — wrap */
+  .reactions-bar {
+    flex-wrap: wrap;
+  }
+
+  /* Review form */
+  .review-form {
+    flex-wrap: wrap;
+  }
+
+  /* Comment form */
+  .comment-author-input {
+    max-width: none;
+  }
+
+  /* Success page */
+  .success-page {
+    padding: 40px 20px;
+  }
+
+  .success-page h1 {
+    font-size: 28px;
+  }
+
+  /* Delete modal */
+  .delete-confirm-box {
+    padding: 24px 20px;
+  }
+
+  .delete-confirm-actions {
+    flex-direction: column-reverse;
+  }
+
+  /* SEO page */
+  .seo-page {
+    padding: 0 20px;
+  }
+
+  .seo-title {
+    font-size: 28px;
+  }
+
+  .seo-meta {
+    flex-wrap: wrap;
+    gap: 8px 16px;
+  }
 }
 
 /* CREATE PAGE */
@@ -2328,4 +2476,120 @@ footer nav ul a { font-size: 14px; }
   background: rgba(200, 160, 80, 0.15);
   color: #c8a050;
   border: 1px solid rgba(200, 160, 80, 0.25);
+}
+
+/* SEO LANDING PAGE */
+.seo-page {
+  max-width: 780px;
+  margin: 0 auto;
+  padding: 0 40px;
+}
+
+.seo-nav {
+  padding: 20px 0;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 40px;
+}
+
+.seo-article {
+  margin-bottom: 60px;
+}
+
+.seo-header {
+  margin-bottom: 32px;
+}
+
+.seo-title {
+  font-family: var(--font-instrument-serif), serif;
+  font-size: 36px;
+  font-weight: 400;
+  color: var(--text);
+  margin-bottom: 12px;
+  line-height: 1.2;
+}
+
+.seo-meta {
+  display: flex;
+  gap: 16px;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.seo-footer {
+  margin-top: 48px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+  text-align: center;
+}
+
+.seo-cta {
+  margin-top: 12px;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.seo-cta a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.seo-cta a:hover {
+  color: var(--text);
+}
+
+.seo-site-footer {
+  padding: 24px 0;
+  border-top: 1px solid var(--border);
+  text-align: center;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.seo-site-footer a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+/* Small phones */
+@media (max-width: 480px) {
+  h1 { font-size: 32px; }
+
+  .flow-steps {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-actions {
+    flex-direction: column;
+  }
+
+  .doc-view-title {
+    font-size: 24px;
+  }
+
+  .tab {
+    padding: 8px 14px;
+    font-size: 12px;
+  }
+
+  .lined-content {
+    font-size: 12px;
+  }
+
+  .line-number {
+    min-width: 24px;
+    padding-right: 8px;
+  }
+
+  .inline-comment {
+    margin-left: 32px;
+  }
+
+  .inline-comment-form {
+    margin-left: 32px;
+  }
+
+  .token-form {
+    flex-direction: column;
+  }
 }

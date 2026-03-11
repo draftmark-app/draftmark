@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { authorizeWithMagicToken } from "@/lib/auth";
 import { hashToken } from "@/lib/tokens";
 import { extractTitleFromContent } from "@/lib/markdown";
+import { generateSeoSlug } from "@/lib/slug";
 
 export async function GET(
   request: NextRequest,
@@ -164,6 +165,13 @@ export async function PATCH(
   // Auto-extract title from content if title is being cleared or content changed
   if (content && !title && !auth.doc!.title) {
     updateData.title = extractTitleFromContent(content) || null;
+  }
+
+  // Regenerate SEO slug if title changed and doc is public
+  const newTitle = (updateData.title as string | undefined) ?? auth.doc!.title;
+  const newVisibility = (updateData.visibility as string | undefined) ?? auth.doc!.visibility;
+  if ((title !== undefined || visibility !== undefined) && newTitle && newVisibility === "public") {
+    updateData.seoSlug = await generateSeoSlug(newTitle, slug);
   }
 
   const doc = await prisma.doc.update({

@@ -20,10 +20,27 @@ const instrumentSerif = Instrument_Serif({
   style: ["normal", "italic"],
 });
 
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://draftmark.app";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(BASE_URL),
   title: "Draftmark — Share your thinking",
   description:
     "Write in markdown. Render beautifully. Share with humans or agents. Collect feedback — then feed it back into your workflow.",
+  openGraph: {
+    siteName: "Draftmark",
+    type: "website",
+    title: "Draftmark — Share your thinking",
+    description:
+      "Write in markdown. Render beautifully. Share with humans or agents. Collect feedback — then feed it back into your workflow.",
+    url: BASE_URL,
+  },
+  twitter: {
+    card: "summary",
+    title: "Draftmark — Share your thinking",
+    description:
+      "Markdown sharing for async collaboration between humans and AI agents.",
+  },
 };
 
 export default function RootLayout({

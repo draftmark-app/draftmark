@@ -12,9 +12,24 @@ export async function generateMetadata({ params }: Props) {
   const { slug } = await params;
   const doc = await prisma.doc.findUnique({ where: { slug } });
   if (!doc) return { title: "Not found — Draftmark" };
+
+  const title = doc.title || "Untitled";
+  const description = doc.content
+    .replace(/^#.*\n/gm, "")
+    .replace(/[*_`~\[\]]/g, "")
+    .trim()
+    .slice(0, 160);
+
   return {
-    title: `${doc.title || "Untitled"} — Draftmark`,
-    description: doc.content.slice(0, 160),
+    title: `${title} — Draftmark`,
+    description,
+    robots: {
+      index: doc.visibility === "public",
+      follow: true,
+    },
+    alternates: doc.visibility === "public" && doc.seoSlug
+      ? { canonical: `/doc/${doc.seoSlug}` }
+      : undefined,
   };
 }
 

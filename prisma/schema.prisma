@@ -10,6 +10,7 @@ datasource db {
 model Doc {
   id          String       @id @default(cuid())
   slug        String       @unique
+  seoSlug     String?      @unique @map("seo_slug")
   title       String?
   content     String
   visibility      String    @default("public") // "public" | "private"
