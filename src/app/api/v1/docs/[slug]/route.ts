@@ -9,7 +9,14 @@ export async function GET(
   { params }: { params: Promise<{ slug: string }> }
 ) {
   const { slug } = await params;
-  const doc = await prisma.doc.findUnique({ where: { slug } });
+  const doc = await prisma.doc.findUnique({
+    where: { slug },
+    include: {
+      reactions: true,
+      reviews: { select: { reviewerName: true, createdAt: true } },
+      _count: { select: { comments: true } },
+    },
+  });
 
   if (!doc) {
     return NextResponse.json({ error: "Document not found" }, { status: 404 });
@@ -34,12 +41,24 @@ export async function GET(
     }
   }
 
+  // Aggregate reaction counts
+  const reactionCounts: Record<string, number> = {};
+  for (const r of doc.reactions) {
+    reactionCounts[r.emoji] = (reactionCounts[r.emoji] || 0) + 1;
+  }
+
   return NextResponse.json({
     slug: doc.slug,
     title: doc.title,
     content: doc.content,
     visibility: doc.visibility,
     views_count: doc.viewsCount,
+    reactions_count: reactionCounts,
+    comments_count: doc._count.comments,
+    reviews: doc.reviews.map((r) => ({
+      reviewer_name: r.reviewerName,
+      reviewed_at: r.createdAt.toISOString(),
+    })),
     created_at: doc.createdAt.toISOString(),
     updated_at: doc.updatedAt.toISOString(),
   });

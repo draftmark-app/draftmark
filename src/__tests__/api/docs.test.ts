@@ -35,6 +35,8 @@ async function createTestDoc(
   return { doc, rawMagicToken, rawApiKey };
 }
 
+const BASE_URL = "http://localhost:3333";
+
 describe("Doc CRUD", () => {
   describe("create", () => {
     it("creates a doc with slug, hashed tokens, and version", async () => {
@@ -158,6 +160,43 @@ describe("Doc CRUD", () => {
       });
 
       expect(updated.visibility).toBe("private");
+    });
+  });
+
+  describe("GET /docs/:slug social data", () => {
+    it("returns reactions_count, comments_count, and reviews", async () => {
+      const { doc, rawApiKey } = await createTestDoc();
+
+      // Add a reaction
+      await prisma.reaction.create({
+        data: { docId: doc.id, emoji: "thumbs_up", identifier: "user-1" },
+      });
+      await prisma.reaction.create({
+        data: { docId: doc.id, emoji: "thumbs_up", identifier: "user-2" },
+      });
+      await prisma.reaction.create({
+        data: { docId: doc.id, emoji: "check", identifier: "user-1" },
+      });
+
+      // Add a comment
+      await prisma.comment.create({
+        data: { docId: doc.id, body: "Great doc!", author: "alice" },
+      });
+
+      // Add a review
+      await prisma.review.create({
+        data: { docId: doc.id, reviewerName: "bob", identifier: "user-2" },
+      });
+
+      const res = await fetch(`${BASE_URL}/api/v1/docs/${doc.slug}`);
+      expect(res.status).toBe(200);
+      const data = await res.json();
+
+      expect(data.reactions_count).toEqual({ thumbs_up: 2, check: 1 });
+      expect(data.comments_count).toBe(1);
+      expect(data.reviews).toHaveLength(1);
+      expect(data.reviews[0].reviewer_name).toBe("bob");
+      expect(data.reviews[0].reviewed_at).toBeDefined();
     });
   });
 
