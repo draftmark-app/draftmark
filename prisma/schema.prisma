@@ -48,8 +48,9 @@ model Comment {
   docId        String   @map("doc_id")
   body         String
   author       String   @default("anonymous")
-  anchorType   String?  @map("anchor_type") // "line" or null (general comment)
-  anchorRef    Int?     @map("anchor_ref") // line number, null for general
+  anchorType   String?  @map("anchor_type") // "line" | "selection" | null (general comment)
+  anchorRef    Int?     @map("anchor_ref") // line number, null for general/selection
+  anchorText   String?  @map("anchor_text") // selected text quote for selection comments
   docVersion   Int?     @map("doc_version") // version of doc when comment was made
   status       String   @default("open") // "open", "resolved", "dismissed"
   crossRefSlug String?  @map("cross_ref_slug")

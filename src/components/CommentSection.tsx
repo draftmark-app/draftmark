@@ -8,6 +8,7 @@ type Comment = {
   author: string;
   anchor_type: string | null;
   anchor_ref: number | null;
+  anchor_text: string | null;
   doc_version: number | null;
   status: string;
   cross_ref_slug: string | null;
@@ -34,7 +35,7 @@ export default function CommentSection({ slug, onInlineCommentsLoaded }: Props) 
       setComments(data.comments);
       if (onInlineCommentsLoaded) {
         onInlineCommentsLoaded(
-          data.comments.filter((c: Comment) => c.anchor_type === "line")
+          data.comments.filter((c: Comment) => c.anchor_type === "line" || c.anchor_type === "selection")
         );
       }
     }
@@ -44,7 +45,7 @@ export default function CommentSection({ slug, onInlineCommentsLoaded }: Props) 
     fetchComments();
   }, [fetchComments]);
 
-  const generalComments = comments.filter((c) => !c.anchor_type);
+  const generalComments = comments.filter((c) => !c.anchor_type || c.anchor_type === null);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

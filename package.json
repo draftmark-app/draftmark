@@ -7,8 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "vitest run",
-    "test:watch": "vitest"
+    "test": "DATABASE_URL=postgres://draftmark:draftmark@localhost:5435/draftmark_test vitest run",
+    "test:watch": "DATABASE_URL=postgres://draftmark:draftmark@localhost:5435/draftmark_test vitest",
+    "test:server": "DATABASE_URL=postgres://draftmark:draftmark@localhost:5435/draftmark_test next dev --port 3333"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.4.2",

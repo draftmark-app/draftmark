@@ -2171,3 +2171,104 @@ footer nav ul a { font-size: 14px; }
   font-size: 13px;
   color: var(--muted);
 }
+
+/* SELECTION COMMENTS */
+.selection-comment-btn {
+  position: absolute;
+  transform: translateX(-50%);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 12px;
+  padding: 4px 12px;
+  background: var(--text);
+  color: var(--bg);
+  border: none;
+  cursor: pointer;
+  z-index: 10;
+  white-space: nowrap;
+}
+
+.selection-comment-btn:hover {
+  opacity: 0.9;
+}
+
+.selection-comment-form {
+  position: absolute;
+  z-index: 10;
+  width: 300px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.selection-comment-form form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.selection-comment-quote {
+  font-size: 13px;
+  color: var(--muted);
+  font-style: italic;
+  border-left: 2px solid var(--accent-dim);
+  padding-left: 8px;
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.selection-comment-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.selection-comment-cancel {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 12px;
+  color: var(--muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+.selection-comment-cancel:hover {
+  color: var(--text);
+}
+
+/* Selection comments display in preview */
+.selection-comments-list {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.selection-comment-item {
+  border-left: 2px solid var(--accent-dim);
+  padding-left: 12px;
+}
+
+.selection-comment-quote-display {
+  font-size: 13px;
+  color: var(--muted);
+  font-style: italic;
+  margin-bottom: 4px;
+  line-height: 1.4;
+}
+
+.selection-comment-content {
+  font-size: 14px;
+}
+
+.selection-comment-content p {
+  margin: 4px 0 0;
+  color: var(--doc-comment-body);
+}

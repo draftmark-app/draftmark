@@ -31,7 +31,7 @@ async function createTestDoc(
   return { doc, rawMagicToken, rawApiKey };
 }
 
-const BASE_URL = "http://localhost:3333";
+const BASE_URL = process.env.TEST_BASE_URL || "http://localhost:3333";
 
 describe("Agent DX Improvements", () => {
   describe("Response filtering — owner vs reviewer", () => {

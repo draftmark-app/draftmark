@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import MarkdownPreview from "./MarkdownPreview";
 import LineNumberedMarkdown from "./LineNumberedMarkdown";
 import CommentSection from "./CommentSection";
 import ReactionsBar from "./ReactionsBar";
 import ReviewsSection from "./ReviewsSection";
+import SelectionCommentPopover from "./SelectionCommentPopover";
 
 type DocData = {
   slug: string;
@@ -26,7 +27,9 @@ type InlineComment = {
   id: string;
   body: string;
   author: string;
+  anchor_type: string | null;
   anchor_ref: number | null;
+  anchor_text: string | null;
   doc_version: number | null;
   status: string;
   created_at: string;
@@ -36,11 +39,14 @@ export default function DocView({ doc }: { doc: DocData }) {
   const [activeTab, setActiveTab] = useState<"preview" | "source">("preview");
   const [inlineComments, setInlineComments] = useState<InlineComment[]>([]);
   const [refreshKey, setRefreshKey] = useState(0);
+  const previewRef = useRef<HTMLDivElement>(null);
 
   const timeAgo = getTimeAgo(new Date(doc.createdAt));
   const reviewExpired = doc.reviewDeadline ? new Date() > new Date(doc.reviewDeadline) : false;
   const acceptingFeedback = doc.status !== "review_closed" && !reviewExpired;
   const reviewComplete = doc.expectedReviews != null && doc.reviewsCount >= doc.expectedReviews;
+
+  const selectionComments = inlineComments.filter((c) => c.anchor_type === "selection");
 
   const handleInlineCommentsLoaded = useCallback((comments: InlineComment[]) => {
     setInlineComments(comments);
@@ -99,8 +105,38 @@ export default function DocView({ doc }: { doc: DocData }) {
       </div>
 
       {activeTab === "preview" ? (
-        <div className="doc-view-body">
+        <div className="doc-view-body" ref={previewRef} style={{ position: "relative" }}>
           <MarkdownPreview content={doc.content} />
+          {acceptingFeedback && (
+            <SelectionCommentPopover
+              containerRef={previewRef}
+              slug={doc.slug}
+              onCommentPosted={handleCommentPosted}
+            />
+          )}
+          {selectionComments.length > 0 && (
+            <div className="selection-comments-list">
+              {selectionComments.map((c) => (
+                <div key={c.id} className="selection-comment-item">
+                  <div className="selection-comment-quote-display">
+                    &ldquo;{c.anchor_text}&rdquo;
+                  </div>
+                  <div className="selection-comment-content">
+                    <div className="doc-view-comment-header">
+                      <span className="comment-author">{c.author}</span>
+                      {c.status !== "open" && (
+                        <span className="comment-tag">{c.status}</span>
+                      )}
+                      <span className="doc-view-comment-time">
+                        {getTimeAgo(new Date(c.created_at))}
+                      </span>
+                    </div>
+                    <p>{c.body}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       ) : (
         <LineNumberedMarkdown

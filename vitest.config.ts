@@ -7,7 +7,8 @@ export default defineConfig({
     env: {
       DATABASE_URL:
         process.env.DATABASE_URL ||
-        "postgres://draftmark:draftmark@localhost:5434/draftmark_development",
+        "postgres://draftmark:draftmark@localhost:5435/draftmark_test",
+      TEST_BASE_URL: process.env.TEST_BASE_URL || "http://localhost:3333",
     },
     projects: [
       {

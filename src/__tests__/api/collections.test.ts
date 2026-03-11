@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { generateSlug } from "@/lib/slug";
 import { generateMagicToken, generateApiKey, hashToken } from "@/lib/tokens";
 
-const BASE_URL = "http://localhost:3333";
+const BASE_URL = process.env.TEST_BASE_URL || "http://localhost:3333";
 
 async function createTestDoc(overrides: { visibility?: string } = {}) {
   const slug = generateSlug();
