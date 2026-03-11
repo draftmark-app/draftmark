@@ -46,6 +46,14 @@ export default function PrivacyPage() {
           original tokens — if lost, you&apos;ll need to generate new ones.
         </p>
 
+        <h2>Public content &amp; search engines</h2>
+        <p>
+          Public documents are indexed by search engines via our sitemap and
+          SEO landing pages. If you delete a public document or change it to
+          private, we remove it from our sitemap immediately. However, search
+          engine caches may retain content for some time after deletion.
+        </p>
+
         <h2>Data retention</h2>
         <p>
           Documents and comments are stored until you delete them. Deleted

@@ -25,6 +25,29 @@ export default function TermsPage() {
           rights to your documents, comments, or other content. You can export
           or delete your data at any time.
         </p>
+        <p>
+          By creating content on Draftmark, you grant us a limited license to
+          host, display, and render your content as part of the service — for
+          example, rendering your markdown as HTML and serving it to viewers.
+        </p>
+
+        <h2>Public content</h2>
+        <p>
+          Documents set to &quot;public&quot; are accessible to anyone with the
+          link. Public documents also get a search-engine-optimized page that
+          may be indexed by Google and other search engines.
+        </p>
+        <p>
+          You are responsible for the content you make public. Do not publish
+          sensitive, confidential, or personally identifiable information in
+          public documents. If you need to restrict access, use the
+          &quot;private&quot; visibility setting with magic links.
+        </p>
+        <p>
+          Comments, reactions, and reviews left on public documents are also
+          publicly visible. Commenters are identified by the name they choose
+          to provide.
+        </p>
 
         <h2>Acceptable use</h2>
         <p>Don&apos;t use Draftmark to:</p>
