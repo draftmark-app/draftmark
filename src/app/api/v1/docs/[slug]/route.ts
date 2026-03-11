@@ -22,23 +22,29 @@ export async function GET(
     return NextResponse.json({ error: "Document not found" }, { status: 404 });
   }
 
-  if (doc.visibility === "private") {
-    // Check for magic_token in URL or api_key in header
-    const tokenParam = new URL(request.url).searchParams.get("token");
-    const authHeader = request.headers.get("authorization");
-    const apiKey = authHeader?.startsWith("Bearer ")
-      ? authHeader.slice(7)
-      : null;
+  // Determine access level: owner (magic_token) vs reviewer (api_key/public)
+  const tokenParam = new URL(request.url).searchParams.get("token");
+  const authHeader = request.headers.get("authorization");
+  const apiKey = authHeader?.startsWith("Bearer ")
+    ? authHeader.slice(7)
+    : null;
 
-    const validToken = tokenParam && doc.magicToken === hashToken(tokenParam);
-    const validKey = apiKey && doc.apiKey === hashToken(apiKey);
+  const isOwner = !!(tokenParam && doc.magicToken === hashToken(tokenParam));
+  const hasApiKey = !!(apiKey && doc.apiKey === hashToken(apiKey));
 
-    if (!validToken && !validKey) {
-      return NextResponse.json(
-        { error: "This document is private. Provide a valid token or API key." },
-        { status: 401 }
-      );
-    }
+  if (doc.visibility === "private" && !isOwner && !hasApiKey) {
+    return NextResponse.json(
+      { error: "This document is private. Provide a valid token or API key." },
+      { status: 401 }
+    );
+  }
+
+  // Support ?format=raw to return just the markdown content
+  const format = new URL(request.url).searchParams.get("format");
+  if (format === "raw") {
+    return new Response(doc.content, {
+      headers: { "Content-Type": "text/markdown; charset=utf-8" },
+    });
   }
 
   // Aggregate reaction counts
@@ -53,7 +59,8 @@ export async function GET(
   const reviewExpired = doc.reviewDeadline != null && new Date() > doc.reviewDeadline;
   const acceptingFeedback = doc.status !== "review_closed" && !reviewExpired;
 
-  return NextResponse.json({
+  // Base response for all access levels (reviewer-safe)
+  const response: Record<string, unknown> = {
     slug: doc.slug,
     title: doc.title,
     content: doc.content,
@@ -64,7 +71,6 @@ export async function GET(
     review_complete: reviewComplete,
     review_expired: reviewExpired,
     accepting_feedback: acceptingFeedback,
-    views_count: doc.viewsCount,
     reactions_count: reactionCounts,
     comments_count: doc._count.comments,
     reviews_count: reviewsCount,
@@ -72,10 +78,17 @@ export async function GET(
       reviewer_name: r.reviewerName,
       reviewed_at: r.createdAt.toISOString(),
     })),
-    meta: doc.meta,
     created_at: doc.createdAt.toISOString(),
     updated_at: doc.updatedAt.toISOString(),
-  });
+  };
+
+  // Owner-only fields (visible only with magic_token)
+  if (isOwner) {
+    response.views_count = doc.viewsCount;
+    response.meta = doc.meta;
+  }
+
+  return NextResponse.json(response);
 }
 
 export async function PATCH(

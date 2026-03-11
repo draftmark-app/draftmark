@@ -8,7 +8,7 @@ Draftmark is a markdown sharing platform for async collaboration between humans 
 
 ## Current State
 
-MVP complete. All core features implemented with 73 tests (14 unit + 59 integration).
+MVP complete. All core features implemented.
 
 ## Tech Stack
 
@@ -64,10 +64,11 @@ Base: `/api/v1`. Auth via `Authorization: Bearer {api_key}` for read ops on priv
 
 Key endpoints:
 - `POST /docs` — Create doc (accepts content, visibility, expected_reviews, review_deadline, meta)
-- `GET /docs/:slug` — Get doc with metadata (includes computed fields: review_complete, review_expired, accepting_feedback)
+- `GET /docs/:slug` — Get doc with metadata (includes computed fields: review_complete, review_expired, accepting_feedback). Owner-only fields (meta, views_count) require `?token=` magic_token. Supports `?format=raw` to return raw markdown as `text/markdown`.
 - `PATCH /docs/:slug` — Update content, status, review settings (requires magic_token)
 - `DELETE /docs/:slug` — Delete (requires magic_token)
 - `GET/POST /docs/:slug/comments` — List/add comments (409 if review closed/expired)
+- `POST /docs/:slug/comments/batch` — Batch create comments (max 50, same auth as single comment)
 - `POST /docs/:slug/reactions` — Add reaction (409 if review closed/expired)
 - `GET/POST /docs/:slug/reviews` — List/mark reviewed (409 if review closed/expired)
 - `POST /collections` — Create collection

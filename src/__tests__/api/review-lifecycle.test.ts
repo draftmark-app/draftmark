@@ -80,7 +80,8 @@ describe("Review Lifecycle", () => {
       expect(res.status).toBe(201);
       const data = await res.json();
 
-      const getRes = await fetch(`${BASE_URL}/api/v1/docs/${data.slug}`);
+      // meta is owner-only, so use magic_token to access it
+      const getRes = await fetch(`${BASE_URL}/api/v1/docs/${data.slug}?token=${data.magic_token}`);
       const doc = await getRes.json();
       expect(doc.meta).toEqual({ agent: "claude-code", source_file: "docs/plan.md" });
     });
