@@ -1,7 +1,9 @@
 import Nav from "@/components/Nav";
 
 export const metadata = {
-  title: "Privacy Policy — Draftmark",
+  title: "Privacy Policy",
+  description:
+    "Draftmark privacy policy. What data we collect, how we use it, and your rights.",
 };
 
 export default function PrivacyPage() {

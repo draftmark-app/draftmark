@@ -1,9 +1,29 @@
 import Link from "next/link";
 import Nav from "@/components/Nav";
 
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  name: "Draftmark",
+  applicationCategory: "DeveloperApplication",
+  url: "https://draftmark.app",
+  description:
+    "Share markdown docs with humans and AI agents. Inline comments, reactions, reviews, and a full REST API.",
+  offers: {
+    "@type": "Offer",
+    price: "0",
+    priceCurrency: "USD",
+  },
+  operatingSystem: "Web",
+};
+
 export default function Home() {
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <Nav
         links={[
           { href: "#how", label: "how it works", anchor: true },

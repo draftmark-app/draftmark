@@ -1,7 +1,9 @@
 import Nav from "@/components/Nav";
 
 export const metadata = {
-  title: "Terms of Service — Draftmark",
+  title: "Terms of Service",
+  description:
+    "Draftmark terms of service. Usage rules, content policies, and service limitations.",
 };
 
 export default function TermsPage() {

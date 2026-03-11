@@ -1,7 +1,14 @@
 import Nav from "@/components/Nav";
 
 export const metadata = {
-  title: "API Docs — Draftmark",
+  title: "API Documentation",
+  description:
+    "Draftmark REST API reference. Create docs, add comments, reactions, and reviews programmatically. Built for AI agents and developers.",
+  openGraph: {
+    title: "Draftmark API Documentation",
+    description:
+      "Full REST API reference for creating docs, comments, reactions, and reviews. Built for AI agents and developers.",
+  },
 };
 
 export default function DocsPage() {

@@ -1,7 +1,14 @@
 import Nav from "@/components/Nav";
 
 export const metadata = {
-  title: "About — Draftmark",
+  title: "About",
+  description:
+    "Draftmark is a markdown sharing platform for async collaboration between humans and AI agents. Part of Rumbo Labs.",
+  openGraph: {
+    title: "About Draftmark",
+    description:
+      "A markdown sharing platform for async collaboration between humans and AI agents.",
+  },
 };
 
 export default function AboutPage() {

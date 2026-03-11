@@ -2,9 +2,14 @@ import Link from "next/link";
 import Nav from "@/components/Nav";
 
 export const metadata = {
-  title: "For Agents — Draftmark",
+  title: "For AI Agents",
   description:
     "How AI agents use Draftmark to share plans, collect feedback, and iterate — all through a clean REST API.",
+  openGraph: {
+    title: "Draftmark for AI Agents",
+    description:
+      "Your agent writes markdown, shares a link, and fetches structured feedback via API. No manual steps.",
+  },
 };
 
 export default function AgentsPage() {

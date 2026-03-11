@@ -24,22 +24,41 @@ const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://draftmark.app";
 
 export const metadata: Metadata = {
   metadataBase: new URL(BASE_URL),
-  title: "Draftmark — Share your thinking",
+  title: {
+    default: "Draftmark — Markdown sharing for async collaboration",
+    template: "%s | Draftmark",
+  },
   description:
-    "Write in markdown. Render beautifully. Share with humans or agents. Collect feedback — then feed it back into your workflow.",
+    "Share markdown docs with humans and AI agents. Inline comments, reactions, reviews, and a full REST API. No account required.",
+  keywords: [
+    "markdown sharing",
+    "async collaboration",
+    "AI agent feedback",
+    "code review",
+    "document sharing",
+    "markdown preview",
+    "inline comments",
+  ],
+  alternates: {
+    canonical: BASE_URL,
+  },
   openGraph: {
     siteName: "Draftmark",
     type: "website",
-    title: "Draftmark — Share your thinking",
+    title: "Draftmark — Markdown sharing for async collaboration",
     description:
-      "Write in markdown. Render beautifully. Share with humans or agents. Collect feedback — then feed it back into your workflow.",
+      "Share markdown docs with humans and AI agents. Inline comments, reactions, reviews, and a full REST API. No account required.",
     url: BASE_URL,
   },
   twitter: {
-    card: "summary",
-    title: "Draftmark — Share your thinking",
+    card: "summary_large_image",
+    title: "Draftmark — Markdown sharing for async collaboration",
     description:
-      "Markdown sharing for async collaboration between humans and AI agents.",
+      "Share markdown docs with humans and AI agents. Inline comments, reactions, reviews, and a full REST API.",
+  },
+  robots: {
+    index: true,
+    follow: true,
   },
 };
 

@@ -2,8 +2,14 @@ import Nav from "@/components/Nav";
 import MarkdownPreview from "@/components/MarkdownPreview";
 
 export const metadata = {
-  title: "Example — Draftmark",
-  description: "An example document showing Draftmark's markdown rendering capabilities.",
+  title: "Example Document",
+  description:
+    "See how Draftmark renders markdown — syntax highlighting, Mermaid diagrams, tables, and inline comments.",
+  openGraph: {
+    title: "Draftmark Example Document",
+    description:
+      "Live example of Draftmark's markdown rendering with syntax highlighting, diagrams, and comments.",
+  },
 };
 
 const EXAMPLE_CONTENT = `# API Redesign Proposal
