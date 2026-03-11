@@ -32,6 +32,12 @@ export default function AboutPage() {
           Draftmark is a Rumbo Labs project — a small studio focused on
           building practical tools for content and developer teams.
         </p>
+
+        <h2>Contact</h2>
+        <p>
+          Reach out at{" "}
+          <a href="mailto:hello@draftmark.app">hello@draftmark.app</a>.
+        </p>
       </main>
     </>
   );

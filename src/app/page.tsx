@@ -375,8 +375,7 @@ export default function Home() {
           draft<span>mark</span>
         </Link>
         <p>
-          markdown native <span>&middot;</span> agent-friendly <span>&middot;</span>{" "}
-          no account required
+          <a href="mailto:hello@draftmark.app" style={{ color: "inherit", textDecoration: "none" }}>hello@draftmark.app</a>
         </p>
         <nav>
           <ul>
