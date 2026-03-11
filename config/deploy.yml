@@ -10,7 +10,8 @@ proxy:
   ssl: true
   host: draftmark.app
   app_port: 3000
-  healthcheck_path: /up
+  healthcheck:
+    path: /up
 
 registry:
   server: ghcr.io
