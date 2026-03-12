@@ -69,12 +69,14 @@ export default function ExploreList({
       {docs.map((doc) => {
         const title = doc.title || "Untitled";
         const snippet = getSnippet(doc.content);
-        const linkSlug = doc.seoSlug || doc.slug;
+        const href = doc.seoSlug
+          ? `/public/${doc.seoSlug}`
+          : `/share/${doc.slug}`;
 
         return (
           <Link
             key={doc.slug}
-            href={`/share/${linkSlug}`}
+            href={href}
             className="explore-card"
           >
             <div className="explore-card-title">{title}</div>
