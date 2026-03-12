@@ -65,6 +65,7 @@ Base: `/api/v1`. Auth via `Authorization: Bearer {api_key}` for read ops on priv
 Key endpoints:
 - `POST /docs` — Create doc (accepts content, visibility, expected_reviews, review_deadline, meta)
 - `GET /docs/:slug` — Get doc with metadata (includes computed fields: review_complete, review_expired, accepting_feedback). Owner-only fields (meta, views_count) require `?token=` magic_token. Supports `?format=raw` to return raw markdown as `text/markdown`.
+- `GET /share/:slug.md` — Raw markdown shortcut (rewrites to API via middleware `x-format` header). Agents can `curl https://draftmark.app/share/abc123.md` directly.
 - `PATCH /docs/:slug` — Update content, status, review settings (requires magic_token)
 - `DELETE /docs/:slug` — Delete (requires magic_token)
 - `GET/POST /docs/:slug/comments` — List/add comments (409 if review closed/expired). Accepts `author_type: "agent"` to display agent badge.

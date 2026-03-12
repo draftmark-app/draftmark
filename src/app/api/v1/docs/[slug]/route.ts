@@ -53,8 +53,8 @@ export async function GET(
     );
   }
 
-  // Support ?format=raw to return just the markdown content
-  const format = new URL(request.url).searchParams.get("format");
+  // Support ?format=raw or /share/{slug}.md (via middleware x-format header)
+  const format = new URL(request.url).searchParams.get("format") || request.headers.get("x-format");
   if (format === "raw") {
     return new Response(doc.content, {
       headers: { "Content-Type": "text/markdown; charset=utf-8" },

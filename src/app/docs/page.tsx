@@ -173,8 +173,21 @@ export default function DocsPage() {
           <p>
             Add <code>?format=raw</code> to get just the markdown content as{" "}
             <code>text/markdown</code> — useful for agents that only need the
-            document body.
+            document body. Or use the shorthand:
           </p>
+
+          <h3>
+            <span className="method get">GET</span> /share/:slug.md
+          </h3>
+          <p>
+            Returns the raw markdown content directly as{" "}
+            <code>text/markdown</code>. No JSON, no parsing — just the
+            document body. Equivalent to <code>GET /docs/:slug?format=raw</code>.
+          </p>
+          <div className="md-code">
+            {`curl https://draftmark.app/share/abc123.md
+# → returns raw markdown`}
+          </div>
 
           <h3>
             <span className="method patch">PATCH</span> /docs/:slug

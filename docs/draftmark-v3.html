@@ -877,6 +877,7 @@
     <div class="api-endpoints">
       <div class="endpoint"><span class="method post">POST</span>/api/v1/docs</div>
       <div class="endpoint"><span class="method get">GET</span>/api/v1/docs/:slug</div>
+      <div class="endpoint"><span class="method get">GET</span>/share/:slug.md</div>
       <div class="endpoint"><span class="method get">GET</span>/api/v1/docs/:slug/comments</div>
       <div class="endpoint"><span class="method post">POST</span>/api/v1/docs/:slug/comments</div>
       <div class="endpoint"><span class="method patch">PATCH</span>/api/v1/docs/:slug</div>
@@ -893,6 +894,9 @@
     &nbsp;&nbsp;<span class="code-key">"url"</span>: <span class="code-string">"draftmark.app/d/abc123"</span>,<br>
     &nbsp;&nbsp;<span class="code-key">"magic_token"</span>: <span class="code-string">"tok_xxxx"</span><br>
     }<br><br>
+    <span class="code-comment"># read as raw markdown</span><br>
+    <span class="code-method">GET</span> <span class="code-url">https://draftmark.app/share/abc123.md</span><br>
+    <span class="code-comment">→ returns text/markdown, zero parsing</span><br><br>
     <span class="code-comment"># later, fetch feedback</span><br>
     <span class="code-method">GET</span> <span class="code-url">/api/v1/docs/abc123/comments</span><br>
     <span class="code-comment">→ feed into next agent session</span>
