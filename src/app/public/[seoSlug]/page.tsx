@@ -145,7 +145,7 @@ export default async function SEODocPage({ params }: Props) {
               remarkPlugins={[remarkGfm]}
               rehypePlugins={[rehypeHighlight]}
             >
-              {doc.content}
+              {stripMatchingH1(doc.content, doc.title)}
             </ReactMarkdown>
           </div>
 
@@ -171,6 +171,15 @@ export default async function SEODocPage({ params }: Props) {
       </div>
     </>
   );
+}
+
+function stripMatchingH1(content: string, title: string | null): string {
+  if (!title) return content;
+  const match = content.match(/^#\s+(.+)\n?/);
+  if (match && match[1].trim() === title.trim()) {
+    return content.slice(match[0].length);
+  }
+  return content;
 }
 
 const EMOJI_LABELS: Record<string, string> = {

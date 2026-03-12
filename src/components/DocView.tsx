@@ -59,6 +59,16 @@ export default function DocView({ doc, isOwner, editUrl }: DocViewProps) {
 
   const selectionComments = inlineComments.filter((c) => c.anchor_type === "selection");
 
+  // Strip first H1 from content if it matches the displayed title (avoids duplication)
+  const displayContent = (() => {
+    if (!doc.title) return doc.content;
+    const match = doc.content.match(/^#\s+(.+)\n?/);
+    if (match && match[1].trim() === doc.title.trim()) {
+      return doc.content.slice(match[0].length);
+    }
+    return doc.content;
+  })();
+
   const handleInlineCommentsLoaded = useCallback((comments: InlineComment[]) => {
     setInlineComments(comments);
   }, []);
@@ -123,7 +133,7 @@ export default function DocView({ doc, isOwner, editUrl }: DocViewProps) {
 
       {activeTab === "preview" ? (
         <div className="doc-view-body" ref={previewRef} style={{ position: "relative" }}>
-          <MarkdownPreview content={doc.content} />
+          <MarkdownPreview content={displayContent} />
           {acceptingFeedback && (
             <SelectionCommentPopover
               containerRef={previewRef}
