@@ -24,6 +24,18 @@ export async function generateMetadata({ params }: Props) {
   return {
     title: `${title} — Draftmark`,
     description,
+    openGraph: {
+      title,
+      description,
+      type: "article",
+      url: `/share/${slug}`,
+      siteName: "Draftmark",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+    },
     robots: {
       index: doc.visibility === "public",
       follow: true,

@@ -803,6 +803,7 @@ footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  width: 100%;
   max-width: 1040px;
   margin: 0 auto;
 }
@@ -821,7 +822,7 @@ footer p {
 footer p span { color: var(--muted); }
 
 footer nav { border-bottom: none; position: static; background: transparent; backdrop-filter: none; padding: 0; }
-footer nav ul { gap: 20px; }
+footer nav ul { gap: 20px; position: static; transform: none; }
 footer nav ul a { font-size: 14px; }
 
 @keyframes fadeUp {
