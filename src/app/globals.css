@@ -123,6 +123,9 @@ nav ul {
   display: flex;
   gap: 32px;
   list-style: none;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
 }
 
 nav ul a {

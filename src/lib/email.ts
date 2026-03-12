@@ -15,7 +15,7 @@ export async function sendMagicLinkEmail(
   }
 
   await resend.emails.send({
-    from: "Draftmark <login@draftmark.app>",
+    from: "Draftmark <login@mail.draftmark.app>",
     to: email,
     subject: "Your login link for Draftmark",
     html: `
