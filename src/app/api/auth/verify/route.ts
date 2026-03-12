@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { hashToken } from "@/lib/tokens";
+import { hashToken, generateAccountApiKey } from "@/lib/tokens";
 import { createSessionToken, sessionCookieOptions } from "@/lib/session";
 
 export async function GET(request: NextRequest) {
@@ -49,6 +49,21 @@ export async function GET(request: NextRequest) {
     await prisma.user.update({
       where: { id: loginToken.user.id },
       data: { emailVerifiedAt: new Date() },
+    });
+  }
+
+  // Auto-create a default API key if the user has none
+  const keyCount = await prisma.accountApiKey.count({
+    where: { userId: loginToken.user.id },
+  });
+  if (keyCount === 0) {
+    const rawKey = generateAccountApiKey();
+    await prisma.accountApiKey.create({
+      data: {
+        userId: loginToken.user.id,
+        name: "default",
+        key: hashToken(rawKey),
+      },
     });
   }
 
