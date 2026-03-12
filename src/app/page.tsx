@@ -52,8 +52,8 @@ export default function Home() {
             <Link href="/new" className="btn-primary">
               start writing
             </Link>
-            <Link href="/example" className="btn-ghost">
-              see an example &rarr;
+            <Link href="/explore" className="btn-ghost">
+              explore &rarr;
             </Link>
           </div>
         </div>

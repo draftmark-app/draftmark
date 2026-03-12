@@ -8,6 +8,7 @@ type NavLink = { href: string; label: string; anchor?: boolean };
 
 export default function Nav({ links }: { links?: NavLink[] }) {
   const defaultLinks: NavLink[] = [
+    { href: "/explore", label: "explore" },
     { href: "/docs", label: "docs" },
     { href: "/about", label: "about" },
   ];
