@@ -20,8 +20,11 @@ registry:
     - KAMAL_REGISTRY_PASSWORD
 
 env:
+  clear:
+    NEXT_PUBLIC_BASE_URL: https://draftmark.app
   secret:
     - DATABASE_URL
+    - RESEND_API_KEY
 
 ssh:
   keys: ["~/.ssh/id_ed25519"]
