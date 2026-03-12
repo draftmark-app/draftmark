@@ -330,6 +330,40 @@ export default function Home() {
         </div>
       </section>
 
+      {/* USE CASES */}
+      <section className="usecases-section">
+        <div className="usecases-label">// use cases</div>
+        <div className="usecases-grid">
+          <Link href="/prompts" className="usecase-card">
+            <div className="usecase-card-icon">&#9998;</div>
+            <h3>Prompt Sharing</h3>
+            <p>
+              Share, review, and iterate on AI prompts — with inline comments
+              on specific lines and version tracking.
+            </p>
+            <span className="usecase-card-link">learn more &rarr;</span>
+          </Link>
+          <Link href="/rfcs" className="usecase-card">
+            <div className="usecase-card-icon">&#9878;</div>
+            <h3>RFCs &amp; Proposals</h3>
+            <p>
+              Structured async review with deadlines, review tracking, and
+              Mermaid diagrams for technical proposals.
+            </p>
+            <span className="usecase-card-link">learn more &rarr;</span>
+          </Link>
+          <Link href="/writing" className="usecase-card">
+            <div className="usecase-card-icon">&#128221;</div>
+            <h3>Writing &amp; Content</h3>
+            <p>
+              Get honest feedback on drafts before publishing. Reactions,
+              inline comments, and clean share links.
+            </p>
+            <span className="usecase-card-link">learn more &rarr;</span>
+          </Link>
+        </div>
+      </section>
+
       {/* PRICING */}
       <section className="pricing" id="pricing">
         <div className="pricing-label">// pricing</div>

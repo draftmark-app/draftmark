@@ -2917,6 +2917,297 @@ footer nav ul a { font-size: 14px; }
   }
 }
 
+/* ========== Use Case Pages ========== */
+
+.usecase-hero {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 80px 40px 60px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 60px;
+  align-items: start;
+}
+
+.usecase-hero > * { animation: fadeUp 0.5s ease both; }
+.usecase-hero > *:last-child { animation-delay: 0.1s; }
+
+.usecase-hero-visual {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  padding-top: 20px;
+}
+
+.usecase-visual-node {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 12px;
+  padding: 8px 20px;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.usecase-visual-node.highlight-green {
+  border-color: rgba(74, 124, 89, 0.4);
+  color: var(--green-bright);
+}
+
+.usecase-visual-node.highlight-blue {
+  border-color: rgba(138, 180, 212, 0.3);
+  color: #8ab4d4;
+}
+
+.usecase-visual-node.highlight-accent {
+  border-color: rgba(200, 184, 154, 0.3);
+  color: var(--accent);
+}
+
+.usecase-visual-icon {
+  font-size: 11px;
+  opacity: 0.7;
+}
+
+.usecase-visual-arrow {
+  font-size: 14px;
+  color: var(--border);
+  padding: 4px 0;
+}
+
+.usecase-visual-row {
+  display: flex;
+  gap: 12px;
+}
+
+.usecase-section {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 40px 60px;
+  border-top: 1px solid var(--border);
+  padding-top: 60px;
+}
+
+.usecase-section-label {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 36px;
+}
+
+.usecase-steps {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.usecase-step {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 24px;
+}
+
+.usecase-step .step-num {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 10px;
+  color: var(--border);
+  margin-bottom: 12px;
+}
+
+.usecase-step h3 {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+
+.usecase-step p {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.usecase-step p code {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 11px;
+  background: rgba(200, 184, 154, 0.1);
+  color: var(--accent);
+  padding: 1px 5px;
+  border-radius: 2px;
+}
+
+.usecase-code {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  padding: 14px 16px;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 11px;
+  line-height: 1.7;
+  border-radius: 2px;
+  margin-top: 16px;
+}
+
+.usecase-example {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.usecase-example-step {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 24px;
+}
+
+.usecase-example-label {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 11px;
+  color: var(--accent);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+.usecase-example-divider {
+  border-left: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  padding: 16px 24px;
+  background: var(--bg);
+  text-align: center;
+}
+
+.usecase-example-divider span {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 11px;
+  color: var(--muted);
+  font-style: italic;
+}
+
+.usecase-cta {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 60px 40px 80px;
+  border-top: 1px solid var(--border);
+  text-align: center;
+}
+
+.usecase-cta h2 {
+  font-family: var(--font-instrument-serif), 'Instrument Serif', serif;
+  font-size: 32px;
+  font-weight: 400;
+  color: var(--text);
+  line-height: 1.3;
+  margin-bottom: 28px;
+}
+
+.usecase-cta h2 em {
+  font-style: italic;
+  color: var(--accent);
+}
+
+.usecase-section .feature p code {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 11px;
+  background: rgba(200, 184, 154, 0.1);
+  color: var(--accent);
+  padding: 1px 5px;
+  border-radius: 2px;
+}
+
+/* Use Cases Section (Homepage) */
+.usecases-section {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 40px 60px;
+  border-top: 1px solid var(--border);
+  padding-top: 60px;
+}
+
+.usecases-label {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 36px;
+}
+
+.usecases-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.usecase-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 28px 24px;
+  text-decoration: none;
+  color: var(--text);
+  transition: border-color 0.2s;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.usecase-card:hover {
+  border-color: var(--accent-dim);
+}
+
+.usecase-card-icon {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 20px;
+  color: var(--accent);
+}
+
+.usecase-card h3 {
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.usecase-card p {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.usecase-card .usecase-card-link {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 11px;
+  color: var(--accent);
+  margin-top: auto;
+}
+
+@media (max-width: 700px) {
+  .usecase-hero {
+    grid-template-columns: 1fr;
+    gap: 40px;
+    padding: 60px 20px 40px;
+  }
+
+  .usecase-steps {
+    grid-template-columns: 1fr;
+  }
+
+  .usecase-section {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+
+  .usecase-cta {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+
+  .usecases-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* ========== Auth Pages ========== */
 
 .auth-page {
