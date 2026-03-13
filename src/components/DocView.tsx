@@ -149,13 +149,13 @@ export default function DocView({ doc, isOwner, editUrl }: DocViewProps) {
         </button>
         <button
           className={`tab ${activeTab === "source" ? "active" : ""}`}
-          onClick={() => setActiveTab("source")}
+          onClick={() => { setActiveTab("source"); setActiveView(null); }}
         >
           source
         </button>
       </div>
 
-      {availableViews.length > 0 && (
+      {availableViews.length > 0 && activeTab === "preview" && (
         <div className="view-picker">
           <button
             className={`view-pill ${activeView === null ? "active" : ""}`}
