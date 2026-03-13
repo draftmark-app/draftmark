@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
   await prisma.accountApiKey.create({
     data: {
       userId: user.id,
-      name: body.name || "default",
+      name: body.name || "Default key",
       key: hashToken(rawKey),
     },
   });

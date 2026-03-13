@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Nav from "@/components/Nav";
 import AccountApiKeys from "@/components/AccountApiKeys";
@@ -20,7 +20,17 @@ type Doc = {
 };
 
 export default function DashboardPage() {
+  return (
+    <Suspense fallback={<><Nav /><div className="dashboard-page"><p style={{ color: "var(--muted)" }}>Loading...</p></div></>}>
+      <DashboardContent />
+    </Suspense>
+  );
+}
+
+function DashboardContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const isWelcome = searchParams.get("welcome") === "1";
   const [docs, setDocs] = useState<Doc[]>([]);
   const [loading, setLoading] = useState(true);
   const [userEmail, setUserEmail] = useState("");
@@ -126,9 +136,11 @@ export default function DashboardPage() {
         </section>
 
         <section className="dashboard-section">
-          <h2>Account API keys</h2>
+          <h2>API Keys</h2>
           <p className="dashboard-hint">
-            Use account API keys (<code>acct_...</code>) to create and manage docs via the API.
+            {isWelcome
+              ? "Your default API key is ready. Copy it now — it won't be shown again."
+              : "Use account API keys to create and manage docs via the API."}
           </p>
           <AccountApiKeys />
         </section>
