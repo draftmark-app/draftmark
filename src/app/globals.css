@@ -1469,6 +1469,36 @@ footer nav ul a { font-size: 14px; }
   border-bottom-color: var(--accent);
 }
 
+/* VIEW PICKER (stakeholder views) */
+.view-picker {
+  display: flex;
+  gap: 6px;
+  padding: 12px 0 4px;
+}
+
+.view-pill {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 12px;
+  padding: 4px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+
+.view-pill:hover {
+  color: var(--text);
+  border-color: var(--accent-dim);
+}
+
+.view-pill.active {
+  color: var(--text);
+  border-color: var(--accent);
+  background: rgba(200, 184, 154, 0.1);
+}
+
 .create-editor {
   width: 100%;
   min-height: 500px;

@@ -4,6 +4,7 @@ import { authorizeWithMagicToken, getAuthenticatedUser, canAccessPrivateResource
 import { hashToken } from "@/lib/tokens";
 import { extractTitleFromContent } from "@/lib/markdown";
 import { generateSeoSlug } from "@/lib/slug";
+import { generateStakeholderViews } from "@/lib/openrouter";
 
 export async function GET(
   request: NextRequest,
@@ -53,10 +54,22 @@ export async function GET(
     );
   }
 
+  // Support ?view=executive|technical|ux for stakeholder views
+  const viewParam = new URL(request.url).searchParams.get("view");
+  const metaObj = doc.meta as Record<string, unknown> | null;
+  const viewsData = metaObj?.views as Record<string, { content: string; model: string; generated_at: string }> | undefined;
+  const availableViews = viewsData ? Object.keys(viewsData) : [];
+
+  // Determine content to serve (view or full doc)
+  let servedContent = doc.content;
+  if (viewParam && viewsData?.[viewParam]) {
+    servedContent = viewsData[viewParam].content;
+  }
+
   // Support ?format=raw or /share/{slug}.md (via middleware x-format header)
   const format = new URL(request.url).searchParams.get("format") || request.headers.get("x-format");
   if (format === "raw") {
-    return new Response(doc.content, {
+    return new Response(servedContent, {
       headers: { "Content-Type": "text/markdown; charset=utf-8" },
     });
   }
@@ -77,7 +90,8 @@ export async function GET(
   const response: Record<string, unknown> = {
     slug: doc.slug,
     title: doc.title,
-    content: doc.content,
+    content: servedContent,
+    available_views: availableViews,
     visibility: doc.visibility,
     status: doc.status,
     expected_reviews: doc.expectedReviews,
@@ -215,6 +229,19 @@ export async function PATCH(
         versionNumber: nextVersion,
       },
     });
+
+    // Fire-and-forget: regenerate stakeholder views
+    const updatedTitle = (updateData.title as string | undefined) ?? ownerDoc!.title;
+    generateStakeholderViews(content, updatedTitle)
+      .then(async (views) => {
+        if (!views) return;
+        const currentMeta = (doc.meta as Record<string, unknown>) ?? {};
+        await prisma.doc.update({
+          where: { slug },
+          data: { meta: { ...currentMeta, views } },
+        });
+      })
+      .catch(() => {});
   }
 
   return NextResponse.json({

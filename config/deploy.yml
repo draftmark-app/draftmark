@@ -26,6 +26,7 @@ env:
     - DATABASE_URL
     - RESEND_API_KEY
     - JWT_SECRET
+    - OPENROUTER_API_KEY
 
 ssh:
   keys: ["~/.ssh/id_ed25519"]

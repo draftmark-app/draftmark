@@ -113,6 +113,16 @@ export default async function DocPage({ params, searchParams }: Props) {
           currentVersion,
           createdAt: doc.createdAt.toISOString(),
           updatedAt: doc.updatedAt.toISOString(),
+          views: (() => {
+            const meta = doc.meta as Record<string, unknown> | null;
+            const v = meta?.views as Record<string, { content: string; model: string; generated_at: string }> | undefined;
+            if (!v) return undefined;
+            const result: Record<string, { content: string; model: string; generated_at: string }> = {};
+            for (const [key, val] of Object.entries(v)) {
+              if (val?.content) result[key] = val;
+            }
+            return Object.keys(result).length > 0 ? result : undefined;
+          })(),
         }}
         isOwner={isOwner}
         editUrl={
