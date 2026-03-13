@@ -1,8 +1,6 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-import rehypeHighlight from "rehype-highlight";
+import MarkdownPreview from "@/components/MarkdownPreview";
 import type { Metadata } from "next";
 import Link from "next/link";
 
@@ -140,14 +138,7 @@ export default async function SEODocPage({ params }: Props) {
             </div>
           </header>
 
-          <div className="markdown-body">
-            <ReactMarkdown
-              remarkPlugins={[remarkGfm]}
-              rehypePlugins={[rehypeHighlight]}
-            >
-              {stripMatchingH1(doc.content, doc.title)}
-            </ReactMarkdown>
-          </div>
+          <MarkdownPreview content={stripMatchingH1(doc.content, doc.title)} />
 
           <SeoReactions reactions={doc.reactions} />
           <SeoComments comments={doc.comments} totalCount={doc._count.comments} />
