@@ -1,6 +1,6 @@
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
-const MODEL = "google/gemini-2.5-flash-lite:free";
+const MODEL = "openrouter/hunter-alpha";
 const MAX_CONTENT_LENGTH = 12000; // ~8K tokens, safe for free models
 
 export type StakeholderView = {
