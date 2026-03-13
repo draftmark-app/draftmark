@@ -99,6 +99,7 @@ export default async function DocPage({ params, searchParams }: Props) {
     <>
       <Nav />
       <DocView
+        authToken={hasValidToken ? token : undefined}
         doc={{
           slug: doc.slug,
           title: doc.title,

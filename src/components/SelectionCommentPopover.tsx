@@ -9,6 +9,7 @@ type Props = {
   setReviewerName: (name: string) => void;
   persistReviewerName: (name: string) => void;
   onCommentPosted: () => void;
+  authToken?: string;
 };
 
 export default function SelectionCommentPopover({
@@ -18,6 +19,7 @@ export default function SelectionCommentPopover({
   setReviewerName,
   persistReviewerName,
   onCommentPosted,
+  authToken,
 }: Props) {
   const [selectedText, setSelectedText] = useState("");
   const [showButton, setShowButton] = useState(false);
@@ -98,7 +100,8 @@ export default function SelectionCommentPopover({
     if (!body.trim() || !selectedText) return;
 
     setSubmitting(true);
-    const res = await fetch(`/api/v1/docs/${slug}/comments`, {
+    const tokenParam = authToken ? `?token=${encodeURIComponent(authToken)}` : "";
+    const res = await fetch(`/api/v1/docs/${slug}/comments${tokenParam}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

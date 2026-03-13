@@ -11,9 +11,10 @@ const EMOJI_MAP: Record<string, string> = {
 
 type Props = {
   slug: string;
+  authToken?: string;
 };
 
-export default function ReactionsBar({ slug }: Props) {
+export default function ReactionsBar({ slug, authToken }: Props) {
   const [counts, setCounts] = useState<Record<string, number>>({
     thumbs_up: 0,
     check: 0,
@@ -24,12 +25,13 @@ export default function ReactionsBar({ slug }: Props) {
   const [loading, setLoading] = useState(false);
 
   const fetchReactions = useCallback(async () => {
-    const res = await fetch(`/api/v1/docs/${slug}/reactions`);
+    const tokenParam = authToken ? `?token=${encodeURIComponent(authToken)}` : "";
+    const res = await fetch(`/api/v1/docs/${slug}/reactions${tokenParam}`);
     if (res.ok) {
       const data = await res.json();
       setCounts(data.reactions);
     }
-  }, [slug]);
+  }, [slug, authToken]);
 
   useEffect(() => {
     fetchReactions();
@@ -51,7 +53,8 @@ export default function ReactionsBar({ slug }: Props) {
       localStorage.setItem("draftmark:identifier", identifier);
     }
 
-    const res = await fetch(`/api/v1/docs/${slug}/reactions`, {
+    const tokenParam = authToken ? `?token=${encodeURIComponent(authToken)}` : "";
+    const res = await fetch(`/api/v1/docs/${slug}/reactions${tokenParam}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ emoji, identifier }),

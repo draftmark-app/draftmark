@@ -158,6 +158,48 @@ export async function isAccountOwner(
 }
 
 /**
+ * Find a doc and authorize read access for feedback endpoints (comments, reactions, reviews).
+ * Checks: public visibility, API key (Bearer key_...), magic token (?token= or X-Magic-Token),
+ * account API key (Bearer acct_...), or session cookie (account owner).
+ */
+export async function findDocWithReadAccess(
+  slug: string,
+  request: NextRequest
+): Promise<{ doc: Awaited<ReturnType<typeof prisma.doc.findUnique>>; authorized: boolean }> {
+  const doc = await prisma.doc.findUnique({ where: { slug } });
+  if (!doc) return { doc: null, authorized: false };
+
+  if (doc.visibility === "public") {
+    return { doc, authorized: true };
+  }
+
+  // Check doc-level API key (key_...)
+  const authHeader = request.headers.get("authorization");
+  const bearerToken = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
+  if (bearerToken && !bearerToken.startsWith("acct_") && doc.apiKey === hashToken(bearerToken)) {
+    return { doc, authorized: true };
+  }
+
+  // Check magic token (query param or header)
+  const magicToken =
+    request.headers.get("x-magic-token") ||
+    new URL(request.url).searchParams.get("token");
+  if (magicToken && doc.magicToken === hashToken(magicToken)) {
+    return { doc, authorized: true };
+  }
+
+  // Check account ownership (acct_ key or session cookie)
+  if (doc.userId) {
+    const user = await getAuthenticatedUser(request);
+    if (user?.id === doc.userId) {
+      return { doc, authorized: true };
+    }
+  }
+
+  return { doc, authorized: false };
+}
+
+/**
  * Check if a doc is currently accepting feedback (comments, reactions, reviews).
  * Returns null if accepting, or a NextResponse with 409 if not.
  */

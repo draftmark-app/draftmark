@@ -24,16 +24,18 @@ type Props = {
   setReviewerName: (name: string) => void;
   persistReviewerName: (name: string) => void;
   onInlineCommentsLoaded?: (comments: Comment[]) => void;
+  authToken?: string;
 };
 
-export default function CommentSection({ slug, currentVersion, reviewerName, setReviewerName, persistReviewerName, onInlineCommentsLoaded }: Props) {
+export default function CommentSection({ slug, currentVersion, reviewerName, setReviewerName, persistReviewerName, onInlineCommentsLoaded, authToken }: Props) {
   const [comments, setComments] = useState<Comment[]>([]);
   const [body, setBody] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
   const fetchComments = useCallback(async () => {
-    const res = await fetch(`/api/v1/docs/${slug}/comments`);
+    const tokenParam = authToken ? `?token=${encodeURIComponent(authToken)}` : "";
+    const res = await fetch(`/api/v1/docs/${slug}/comments${tokenParam}`);
     if (res.ok) {
       const data = await res.json();
       setComments(data.comments);
@@ -43,7 +45,7 @@ export default function CommentSection({ slug, currentVersion, reviewerName, set
         );
       }
     }
-  }, [slug, onInlineCommentsLoaded]);
+  }, [slug, onInlineCommentsLoaded, authToken]);
 
   useEffect(() => {
     fetchComments();
@@ -58,7 +60,8 @@ export default function CommentSection({ slug, currentVersion, reviewerName, set
     setSubmitting(true);
     setError("");
 
-    const res = await fetch(`/api/v1/docs/${slug}/comments`, {
+    const tokenParam = authToken ? `?token=${encodeURIComponent(authToken)}` : "";
+    const res = await fetch(`/api/v1/docs/${slug}/comments${tokenParam}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

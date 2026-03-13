@@ -57,9 +57,10 @@ type DocViewProps = {
   doc: DocData;
   isOwner?: boolean;
   editUrl?: string;
+  authToken?: string;
 };
 
-export default function DocView({ doc, isOwner, editUrl }: DocViewProps) {
+export default function DocView({ doc, isOwner, editUrl, authToken }: DocViewProps) {
   const [activeTab, setActiveTab] = useState<"preview" | "source">("preview");
   const [activeView, setActiveView] = useState<string | null>(null);
   const [inlineComments, setInlineComments] = useState<InlineComment[]>([]);
@@ -187,6 +188,7 @@ export default function DocView({ doc, isOwner, editUrl }: DocViewProps) {
               setReviewerName={setReviewerName}
               persistReviewerName={persistReviewerName}
               onCommentPosted={handleCommentPosted}
+              authToken={authToken}
             />
           )}
           {selectionComments.length > 0 && (
@@ -262,7 +264,7 @@ export default function DocView({ doc, isOwner, editUrl }: DocViewProps) {
         </>
       )}
 
-      <ReactionsBar slug={doc.slug} />
+      <ReactionsBar slug={doc.slug} authToken={authToken} />
 
       <CommentSection
         key={refreshKey}
@@ -272,6 +274,7 @@ export default function DocView({ doc, isOwner, editUrl }: DocViewProps) {
         setReviewerName={setReviewerName}
         persistReviewerName={persistReviewerName}
         onInlineCommentsLoaded={handleInlineCommentsLoaded}
+        authToken={authToken}
       />
 
       <ReviewsSection
@@ -279,6 +282,7 @@ export default function DocView({ doc, isOwner, editUrl }: DocViewProps) {
         reviewerName={reviewerName}
         setReviewerName={setReviewerName}
         persistReviewerName={persistReviewerName}
+        authToken={authToken}
       />
     </div>
   );

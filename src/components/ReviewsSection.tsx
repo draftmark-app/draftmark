@@ -15,9 +15,10 @@ type Props = {
   reviewerName: string;
   setReviewerName: (name: string) => void;
   persistReviewerName: (name: string) => void;
+  authToken?: string;
 };
 
-export default function ReviewsSection({ slug, reviewerName, setReviewerName, persistReviewerName }: Props) {
+export default function ReviewsSection({ slug, reviewerName, setReviewerName, persistReviewerName, authToken }: Props) {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [hasReviewed, setHasReviewed] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -32,14 +33,15 @@ export default function ReviewsSection({ slug, reviewerName, setReviewerName, pe
   };
 
   const fetchReviews = useCallback(async () => {
-    const res = await fetch(`/api/v1/docs/${slug}/reviews`);
+    const tokenParam = authToken ? `?token=${encodeURIComponent(authToken)}` : "";
+    const res = await fetch(`/api/v1/docs/${slug}/reviews${tokenParam}`);
     if (res.ok) {
       const data = await res.json();
       setReviews(data.reviews);
       const identifier = getIdentifier();
       setHasReviewed(data.reviews.some((r: Review) => r.identifier === identifier));
     }
-  }, [slug]);
+  }, [slug, authToken]);
 
   useEffect(() => {
     fetchReviews();
@@ -50,7 +52,8 @@ export default function ReviewsSection({ slug, reviewerName, setReviewerName, pe
     setLoading(true);
 
     const identifier = getIdentifier();
-    const res = await fetch(`/api/v1/docs/${slug}/reviews`, {
+    const tokenParam = authToken ? `?token=${encodeURIComponent(authToken)}` : "";
+    const res = await fetch(`/api/v1/docs/${slug}/reviews${tokenParam}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

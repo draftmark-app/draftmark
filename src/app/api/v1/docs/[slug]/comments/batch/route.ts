@@ -1,30 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { hashToken } from "@/lib/tokens";
-import { checkAcceptingFeedback } from "@/lib/auth";
+import { findDocWithReadAccess, checkAcceptingFeedback } from "@/lib/auth";
 
 type RouteContext = { params: Promise<{ slug: string }> };
 
-async function findDocWithAuth(slug: string, request: NextRequest) {
-  const doc = await prisma.doc.findUnique({ where: { slug } });
-  if (!doc) return { doc: null, authorized: false as const };
-
-  if (doc.visibility === "public") {
-    return { doc, authorized: true as const };
-  }
-
-  const authHeader = request.headers.get("authorization");
-  const apiKey = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
-  if (apiKey && doc.apiKey === hashToken(apiKey)) {
-    return { doc, authorized: true as const };
-  }
-
-  return { doc, authorized: false as const };
-}
-
 export async function POST(request: NextRequest, { params }: RouteContext) {
   const { slug } = await params;
-  const { doc, authorized } = await findDocWithAuth(slug, request);
+  const { doc, authorized } = await findDocWithReadAccess(slug, request);
 
   if (!doc) {
     return NextResponse.json({ error: "Document not found" }, { status: 404 });
