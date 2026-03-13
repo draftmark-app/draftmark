@@ -8,7 +8,13 @@ import CommentSection from "./CommentSection";
 import ReactionsBar from "./ReactionsBar";
 import ReviewsSection from "./ReviewsSection";
 import SelectionCommentPopover from "./SelectionCommentPopover";
+import TableOfContents from "./TableOfContents";
 import { useReviewerName } from "@/lib/useReviewerName";
+
+function estimateReadingTime(content: string): number {
+  const words = content.trim().split(/\s+/).length;
+  return Math.max(1, Math.ceil(words / 230));
+}
 
 type DocData = {
   slug: string;
@@ -53,6 +59,7 @@ export default function DocView({ doc, isOwner, editUrl }: DocViewProps) {
   const { name: reviewerName, setName: setReviewerName, persistName: persistReviewerName } = useReviewerName();
 
   const timeAgo = getTimeAgo(new Date(doc.createdAt));
+  const readingTime = estimateReadingTime(doc.content);
   const reviewExpired = doc.reviewDeadline ? new Date() > new Date(doc.reviewDeadline) : false;
   const acceptingFeedback = doc.status !== "review_closed" && !reviewExpired;
   const reviewComplete = doc.expectedReviews != null && doc.reviewsCount >= doc.expectedReviews;
@@ -111,6 +118,7 @@ export default function DocView({ doc, isOwner, editUrl }: DocViewProps) {
         <span>
           {doc.reviewsCount}{doc.expectedReviews != null ? `/${doc.expectedReviews}` : ""} reviews
         </span>
+        <span>{readingTime} min read</span>
         {doc.reviewDeadline && (
           <span>deadline: {new Date(doc.reviewDeadline).toLocaleDateString()}</span>
         )}
@@ -133,6 +141,7 @@ export default function DocView({ doc, isOwner, editUrl }: DocViewProps) {
 
       {activeTab === "preview" ? (
         <div className="doc-view-body" ref={previewRef} style={{ position: "relative" }}>
+          <TableOfContents containerRef={previewRef} />
           <MarkdownPreview content={displayContent} />
           {acceptingFeedback && (
             <SelectionCommentPopover
