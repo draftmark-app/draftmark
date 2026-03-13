@@ -72,15 +72,6 @@ const components: Components = {
       return <MermaidDiagram chart={content} />;
     }
 
-    // Block code (inside <pre>)
-    if (lang || content.includes("\n")) {
-      return (
-        <code className={className} {...props}>
-          {children}
-        </code>
-      );
-    }
-
     return (
       <code className={className} {...props}>
         {children}
@@ -88,7 +79,6 @@ const components: Components = {
     );
   },
   pre({ children }) {
-    // Extract code text for copy button
     let codeText = "";
     if (children && typeof children === "object" && "props" in children) {
       const props = (children as { props: { children?: ReactNode } }).props;
@@ -102,22 +92,155 @@ const components: Components = {
       </div>
     );
   },
-  section({ children, ...props }) {
-    // Collapsible sections created by rehype
-    return <section {...props}>{children}</section>;
-  },
 };
 
+type Section = {
+  heading: string; // raw markdown heading line
+  headingText: string; // plain text for summary
+  headingId: string;
+  content: string;
+};
+
+function splitIntoSections(content: string): { preamble: string; sections: Section[] } {
+  const lines = content.split("\n");
+  let preamble = "";
+  const sections: Section[] = [];
+  let current: { headingLine: string; text: string; id: string; lines: string[] } | null = null;
+  let inCodeBlock = false;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+
+    if (line.trimStart().startsWith("```")) {
+      inCodeBlock = !inCodeBlock;
+    }
+
+    if (inCodeBlock) {
+      if (current) current.lines.push(line);
+      else preamble += line + "\n";
+      continue;
+    }
+
+    // ATX h2: ## heading
+    const atxMatch = line.match(/^##\s+(.+?)(?:\s+#+)?$/);
+    // Setext h2: text followed by line of ---
+    const isSetext = !atxMatch && i + 1 < lines.length &&
+      lines[i + 1].match(/^-{3,}\s*$/) &&
+      line.trim().length > 0 &&
+      !line.startsWith("#") &&
+      !line.startsWith(">") &&
+      !line.startsWith("-") &&
+      !line.startsWith("*");
+
+    if (atxMatch || isSetext) {
+      // Save previous section
+      if (current) {
+        sections.push({
+          heading: current.headingLine,
+          headingText: current.text,
+          headingId: current.id,
+          content: current.lines.join("\n"),
+        });
+      }
+
+      const headingText = atxMatch ? atxMatch[1].trim() : line.trim();
+      const headingId = slugify(headingText);
+      const headingLine = atxMatch ? line : line;
+
+      current = { headingLine, text: headingText, id: headingId, lines: [] };
+
+      // For setext, skip the underline
+      if (isSetext) {
+        i++;
+      }
+    } else {
+      if (current) {
+        current.lines.push(line);
+      } else {
+        preamble += line + "\n";
+      }
+    }
+  }
+
+  if (current) {
+    sections.push({
+      heading: current.headingLine,
+      headingText: current.text,
+      headingId: current.id,
+      content: current.lines.join("\n"),
+    });
+  }
+
+  return { preamble, sections };
+}
+
+function CollapsibleSection({ section }: { section: Section }) {
+  const [isOpen, setIsOpen] = useState(true);
+
+  return (
+    <div className="collapsible-section" data-open={isOpen}>
+      <button
+        className="collapsible-summary"
+        id={section.headingId}
+        onClick={() => setIsOpen(!isOpen)}
+      >
+        <a
+          href={`#${section.headingId}`}
+          className="heading-anchor"
+          onClick={(e) => e.stopPropagation()}
+        >
+          #
+        </a>
+        <span>{section.headingText}</span>
+        <span className="collapsible-chevron" />
+      </button>
+      {isOpen && (
+        <div className="collapsible-content">
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            rehypePlugins={[rehypeHighlight]}
+            components={components}
+          >
+            {section.content}
+          </ReactMarkdown>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function MarkdownPreview({ content }: { content: string }) {
+  const { preamble, sections } = splitIntoSections(content);
+  const hasCollapsible = sections.length >= 1;
+
+  if (!hasCollapsible) {
+    return (
+      <div className="markdown-body">
+        <ReactMarkdown
+          remarkPlugins={[remarkGfm]}
+          rehypePlugins={[rehypeHighlight]}
+          components={components}
+        >
+          {content}
+        </ReactMarkdown>
+      </div>
+    );
+  }
+
   return (
     <div className="markdown-body">
-      <ReactMarkdown
-        remarkPlugins={[remarkGfm]}
-        rehypePlugins={[rehypeHighlight]}
-        components={components}
-      >
-        {content}
-      </ReactMarkdown>
+      {preamble.trim() && (
+        <ReactMarkdown
+          remarkPlugins={[remarkGfm]}
+          rehypePlugins={[rehypeHighlight]}
+          components={components}
+        >
+          {preamble}
+        </ReactMarkdown>
+      )}
+      {sections.map((section) => (
+        <CollapsibleSection key={section.headingId} section={section} />
+      ))}
     </div>
   );
 }

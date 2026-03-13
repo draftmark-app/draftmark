@@ -9,6 +9,7 @@ import ReactionsBar from "./ReactionsBar";
 import ReviewsSection from "./ReviewsSection";
 import SelectionCommentPopover from "./SelectionCommentPopover";
 import TableOfContents from "./TableOfContents";
+import ReadingProgressBar from "./ReadingProgressBar";
 import { useReviewerName } from "@/lib/useReviewerName";
 
 function estimateReadingTime(content: string): number {
@@ -86,6 +87,7 @@ export default function DocView({ doc, isOwner, editUrl }: DocViewProps) {
 
   return (
     <div className="doc-view">
+      <ReadingProgressBar />
       <div className="doc-view-header">
         <div className="doc-view-title-row">
           <h1 className="doc-view-title">{doc.title || "Untitled"}</h1>

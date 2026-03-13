@@ -1802,6 +1802,82 @@ footer nav ul a { font-size: 14px; }
   height: auto;
 }
 
+/* READING PROGRESS BAR */
+.reading-progress-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 2px;
+  background: var(--accent);
+  z-index: 1000;
+  transition: width 0.1s linear;
+  pointer-events: none;
+}
+
+/* COLLAPSIBLE SECTIONS */
+.collapsible-section {
+  margin-top: 32px;
+  margin-bottom: 16px;
+}
+
+.collapsible-summary {
+  font-family: var(--font-geist-sans), sans-serif;
+  font-size: 22px;
+  font-weight: 500;
+  color: var(--text);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  scroll-margin-top: 24px;
+  position: relative;
+  background: none;
+  border: none;
+  padding: 0;
+  text-align: left;
+  width: 100%;
+}
+
+.collapsible-chevron {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-right: 1.5px solid var(--muted);
+  border-bottom: 1.5px solid var(--muted);
+  transform: rotate(45deg);
+  transition: transform 0.2s;
+  flex-shrink: 0;
+  margin-left: 4px;
+}
+
+.collapsible-section[data-open="false"] .collapsible-chevron {
+  transform: rotate(-45deg);
+}
+
+.collapsible-summary:hover {
+  color: var(--accent);
+}
+
+.collapsible-summary:hover .collapsible-chevron {
+  border-color: var(--accent);
+}
+
+.collapsible-summary .heading-anchor {
+  position: absolute;
+  left: -24px;
+  color: var(--accent-dim);
+  text-decoration: none;
+  opacity: 0;
+  font-weight: 400;
+  font-size: 0.85em;
+  transition: opacity 0.15s;
+}
+
+.collapsible-summary:hover .heading-anchor {
+  opacity: 1;
+}
+
 /* HEADING ANCHORS */
 .markdown-body h2,
 .markdown-body h3 {
