@@ -36,6 +36,7 @@ yarn-error.log*
 
 # deployment config (contains server-specific details)
 config/deploy.yml
+.kamal/secrets
 .env.kamal
 
 # vercel
