@@ -1,27 +1,27 @@
 service: draftmark
 
-image: draftmark-app/draftmark
+image: your-org/draftmark
 
 servers:
   web:
-    - 46.62.150.50
+    - YOUR_SERVER_IP
 
 proxy:
   ssl: true
-  host: draftmark.app
+  host: your-domain.com
   app_port: 3000
   healthcheck:
     path: /up
 
 registry:
   server: ghcr.io
-  username: facundofarias
+  username: YOUR_GITHUB_USERNAME
   password:
     - KAMAL_REGISTRY_PASSWORD
 
 env:
   clear:
-    NEXT_PUBLIC_BASE_URL: https://draftmark.app
+    NEXT_PUBLIC_BASE_URL: https://your-domain.com
   secret:
     - DATABASE_URL
     - RESEND_API_KEY
@@ -38,7 +38,7 @@ builder:
 accessories:
   db:
     image: postgres:17-alpine
-    host: 46.62.150.50
+    host: YOUR_SERVER_IP
     port: "127.0.0.1:5436:5432"
     env:
       clear:
