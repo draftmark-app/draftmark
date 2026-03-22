@@ -68,6 +68,7 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
           status: "open",
           crossRefSlug: (c.cross_ref_slug as string) || null,
           crossRefLine: c.cross_ref_line != null ? Number(c.cross_ref_line) : null,
+          parentId: (c.parent_id as string) || null,
         },
       });
       comments.push(comment);
@@ -86,6 +87,7 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
           anchor_text: c.anchorText,
           doc_version: c.docVersion,
           status: c.status,
+          parent_id: c.parentId,
           created_at: c.createdAt.toISOString(),
         })),
       },

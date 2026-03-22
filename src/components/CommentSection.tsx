@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useToast } from "./Toast";
 
 type Comment = {
   id: string;
@@ -14,6 +15,7 @@ type Comment = {
   status: string;
   cross_ref_slug: string | null;
   cross_ref_line: number | null;
+  parent_id: string | null;
   created_at: string;
 };
 
@@ -32,6 +34,10 @@ export default function CommentSection({ slug, currentVersion, reviewerName, set
   const [body, setBody] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const [replyBody, setReplyBody] = useState("");
+  const [replySubmitting, setReplySubmitting] = useState(false);
+  const { showToast } = useToast();
 
   const fetchComments = useCallback(async () => {
     const tokenParam = authToken ? `?token=${encodeURIComponent(authToken)}` : "";
@@ -52,6 +58,14 @@ export default function CommentSection({ slug, currentVersion, reviewerName, set
   }, [fetchComments]);
 
   const generalComments = comments.filter((c) => !c.anchor_type || c.anchor_type === null);
+  const topLevel = generalComments.filter((c) => !c.parent_id);
+  const repliesByParent = generalComments.reduce<Record<string, Comment[]>>((acc, c) => {
+    if (c.parent_id) {
+      if (!acc[c.parent_id]) acc[c.parent_id] = [];
+      acc[c.parent_id].push(c);
+    }
+    return acc;
+  }, {});
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -74,6 +88,7 @@ export default function CommentSection({ slug, currentVersion, reviewerName, set
       setBody("");
       persistReviewerName(reviewerName);
       fetchComments();
+      showToast("comment posted");
     } else {
       const data = await res.json().catch(() => null);
       setError(data?.error || "Failed to post comment");
@@ -81,12 +96,38 @@ export default function CommentSection({ slug, currentVersion, reviewerName, set
     setSubmitting(false);
   }
 
-  return (
-    <div className="doc-view-comments">
-      <h3>comments ({generalComments.length})</h3>
+  async function handleReply(e: React.FormEvent, parentId: string) {
+    e.preventDefault();
+    if (!replyBody.trim()) return;
 
-      {generalComments.map((c) => (
-        <div key={c.id} className="doc-view-comment">
+    setReplySubmitting(true);
+
+    const tokenParam = authToken ? `?token=${encodeURIComponent(authToken)}` : "";
+    const res = await fetch(`/api/v1/docs/${slug}/comments${tokenParam}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        body: replyBody.trim(),
+        author: reviewerName.trim() || undefined,
+        parent_id: parentId,
+      }),
+    });
+
+    if (res.ok) {
+      setReplyBody("");
+      setReplyingTo(null);
+      persistReviewerName(reviewerName);
+      fetchComments();
+      showToast("reply posted");
+    }
+    setReplySubmitting(false);
+  }
+
+  function renderComment(c: Comment, isReply = false) {
+    const replies = repliesByParent[c.id] || [];
+    return (
+      <div key={c.id}>
+        <div className={`doc-view-comment ${isReply ? "doc-view-comment-reply" : ""}`}>
           <div className="avatar avatar-a">
             {(c.author || "a")[0].toUpperCase()}
           </div>
@@ -118,9 +159,67 @@ export default function CommentSection({ slug, currentVersion, reviewerName, set
                 {c.cross_ref_line ? `:${c.cross_ref_line}` : ""}
               </a>
             )}
+            {!isReply && (
+              <button
+                type="button"
+                className="comment-reply-btn"
+                onClick={() => {
+                  setReplyingTo(replyingTo === c.id ? null : c.id);
+                  setReplyBody("");
+                }}
+              >
+                reply
+              </button>
+            )}
           </div>
         </div>
-      ))}
+
+        {replies.map((r) => renderComment(r, true))}
+
+        {replyingTo === c.id && (
+          <form onSubmit={(e) => handleReply(e, c.id)} className="comment-reply-form">
+            <input
+              type="text"
+              value={reviewerName}
+              onChange={(e) => setReviewerName(e.target.value)}
+              placeholder="name (optional)"
+              className="comment-author-input"
+            />
+            <textarea
+              value={replyBody}
+              onChange={(e) => setReplyBody(e.target.value)}
+              placeholder="write a reply..."
+              className="comment-textarea"
+              rows={2}
+              autoFocus
+            />
+            <div className="comment-reply-actions">
+              <button
+                type="button"
+                className="comment-reply-cancel"
+                onClick={() => { setReplyingTo(null); setReplyBody(""); }}
+              >
+                cancel
+              </button>
+              <button
+                type="submit"
+                className="btn-primary comment-submit"
+                disabled={replySubmitting || !replyBody.trim()}
+              >
+                {replySubmitting ? "posting..." : "reply"}
+              </button>
+            </div>
+          </form>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="doc-view-comments">
+      <h3>comments ({generalComments.length})</h3>
+
+      {topLevel.map((c) => renderComment(c))}
 
       <form onSubmit={handleSubmit} className="comment-form">
         <input

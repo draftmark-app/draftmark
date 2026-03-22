@@ -8,8 +8,10 @@ import CommentSection from "./CommentSection";
 import ReactionsBar from "./ReactionsBar";
 import ReviewsSection from "./ReviewsSection";
 import SelectionCommentPopover from "./SelectionCommentPopover";
+import CommentHighlighter from "./CommentHighlighter";
 import TableOfContents from "./TableOfContents";
 import ReadingProgressBar from "./ReadingProgressBar";
+import { ToastProvider } from "./Toast";
 import { useReviewerName } from "@/lib/useReviewerName";
 
 function estimateReadingTime(content: string): number {
@@ -50,6 +52,7 @@ type InlineComment = {
   anchor_text: string | null;
   doc_version: number | null;
   status: string;
+  parent_id: string | null;
   created_at: string;
 };
 
@@ -101,6 +104,7 @@ export default function DocView({ doc, isOwner, editUrl, authToken }: DocViewPro
   }, []);
 
   return (
+    <ToastProvider>
     <div className="doc-view">
       <ReadingProgressBar />
       <div className="doc-view-header">
@@ -180,6 +184,19 @@ export default function DocView({ doc, isOwner, editUrl, authToken }: DocViewPro
         <div className="doc-view-body" ref={previewRef} style={{ position: "relative" }}>
           <TableOfContents containerRef={previewRef} />
           <MarkdownPreview content={displayContent} />
+          {selectionComments.length > 0 && (
+            <CommentHighlighter
+              containerRef={previewRef}
+              comments={selectionComments}
+              currentVersion={doc.currentVersion}
+              slug={doc.slug}
+              reviewerName={reviewerName}
+              setReviewerName={setReviewerName}
+              persistReviewerName={persistReviewerName}
+              onCommentPosted={handleCommentPosted}
+              authToken={authToken}
+            />
+          )}
           {acceptingFeedback && (
             <SelectionCommentPopover
               containerRef={previewRef}
@@ -190,34 +207,6 @@ export default function DocView({ doc, isOwner, editUrl, authToken }: DocViewPro
               onCommentPosted={handleCommentPosted}
               authToken={authToken}
             />
-          )}
-          {selectionComments.length > 0 && (
-            <div className="selection-comments-list">
-              {selectionComments.map((c) => (
-                <div key={c.id} className="selection-comment-item">
-                  <div className="selection-comment-quote-display">
-                    &ldquo;{c.anchor_text}&rdquo;
-                  </div>
-                  <div className="selection-comment-content">
-                    <div className="doc-view-comment-header">
-                      <span className="comment-author">{c.author}</span>
-                      {c.status !== "open" && (
-                        <span className="comment-tag">{c.status}</span>
-                      )}
-                      {c.doc_version != null && c.doc_version < doc.currentVersion && (
-                        <span className="comment-version-badge comment-version-stale">
-                          v{c.doc_version}
-                        </span>
-                      )}
-                      <span className="doc-view-comment-time">
-                        {getTimeAgo(new Date(c.created_at))}
-                      </span>
-                    </div>
-                    <p>{c.body}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
           )}
         </div>
       ) : (
@@ -285,6 +274,7 @@ export default function DocView({ doc, isOwner, editUrl, authToken }: DocViewPro
         authToken={authToken}
       />
     </div>
+    </ToastProvider>
   );
 }
 

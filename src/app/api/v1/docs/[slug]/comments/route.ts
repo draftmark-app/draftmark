@@ -44,6 +44,7 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
       status: c.status,
       cross_ref_slug: c.crossRefSlug,
       cross_ref_line: c.crossRefLine,
+      parent_id: c.parentId,
       created_at: c.createdAt.toISOString(),
     })),
   });
@@ -81,6 +82,19 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
     orderBy: { versionNumber: "desc" },
   });
 
+  // Validate parent_id if provided
+  if (body.parent_id) {
+    const parent = await prisma.comment.findFirst({
+      where: { id: body.parent_id, docId: doc.id },
+    });
+    if (!parent) {
+      return NextResponse.json(
+        { error: "Parent comment not found" },
+        { status: 400 }
+      );
+    }
+  }
+
   const comment = await prisma.comment.create({
     data: {
       docId: doc.id,
@@ -94,6 +108,7 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
       status: "open",
       crossRefSlug: body.cross_ref_slug || null,
       crossRefLine: body.cross_ref_line ?? null,
+      parentId: body.parent_id || null,
     },
   });
 
@@ -110,6 +125,7 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
       status: comment.status,
       cross_ref_slug: comment.crossRefSlug,
       cross_ref_line: comment.crossRefLine,
+      parent_id: comment.parentId,
       created_at: comment.createdAt.toISOString(),
     },
     { status: 201 }

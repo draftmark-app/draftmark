@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useToast } from "./Toast";
 
 type Props = {
   containerRef: React.RefObject<HTMLElement | null>;
@@ -28,6 +29,7 @@ export default function SelectionCommentPopover({
   const [body, setBody] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const formRef = useRef<HTMLDivElement>(null);
+  const { showToast } = useToast();
 
   const handleMouseUp = useCallback(() => {
     const selection = window.getSelection();
@@ -119,6 +121,7 @@ export default function SelectionCommentPopover({
       setSelectedText("");
       window.getSelection()?.removeAllRanges();
       onCommentPosted();
+      showToast("comment posted");
     }
     setSubmitting(false);
   }

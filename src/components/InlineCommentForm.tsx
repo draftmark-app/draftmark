@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useToast } from "./Toast";
 
 type Props = {
   slug: string;
@@ -23,6 +24,7 @@ export default function InlineCommentForm({
 }: Props) {
   const [body, setBody] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const { showToast } = useToast();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -43,6 +45,7 @@ export default function InlineCommentForm({
     if (res.ok) {
       persistReviewerName(reviewerName);
       onPosted();
+      showToast("comment posted");
     }
     setSubmitting(false);
   }
