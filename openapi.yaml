@@ -1,0 +1,1310 @@
+openapi: 3.1.0
+info:
+  title: Draftmark API
+  description: |
+    Markdown sharing platform for async collaboration between humans and AI agents.
+
+    The core loop: agent/human writes markdown → shares link → reviewer reads + comments → agent consumes feedback via API.
+
+    ## Authentication
+
+    Draftmark uses three token types — no passwords, no OAuth:
+
+    | Token | Prefix | Passed via | Purpose |
+    |-------|--------|------------|---------|
+    | Magic Token | _(none)_ | `X-Magic-Token` header or `?token=` query | Owner operations (update, delete) |
+    | Doc API Key | `key_` | `Authorization: Bearer key_…` | Read private docs, manage comments |
+    | Account API Key | `acct_` | `Authorization: Bearer acct_…` | Account-level operations |
+
+    All tokens are shown **once** at creation time and stored as SHA-256 hashes.
+
+    ## Review Lifecycle
+
+    Documents accept feedback while `status` is `open` **and** the `review_deadline` (if set) has not passed.
+    Three mechanisms control this:
+
+    1. **Explicit close** — PATCH with `status: "review_closed"`
+    2. **Threshold** — Set `expected_reviews`; `review_complete` becomes `true` when met (signal only)
+    3. **Deadline** — Set `review_deadline`; feedback is auto-rejected (409) after expiry
+
+    ## Cross-Session Context
+
+    Agents should write a `.draftmark.json` file after creating a doc:
+    ```json
+    { "slug": "abc12345", "api_key": "key_…", "url": "https://draftmark.app/share/abc12345" }
+    ```
+  version: 1.0.0
+  contact:
+    name: Rumbo Labs
+    url: https://draftmark.app
+  license:
+    name: MIT
+    identifier: MIT
+
+servers:
+  - url: https://draftmark.app/api/v1
+    description: Production
+  - url: http://localhost:3333/api/v1
+    description: Local development
+
+tags:
+  - name: Documents
+    description: Create, read, update, and delete markdown documents
+  - name: Comments
+    description: Add and manage inline or general comments on documents
+  - name: Reactions
+    description: Emoji reactions on documents
+  - name: Reviews
+    description: Mark documents as reviewed
+  - name: Collections
+    description: Group documents into ordered collections
+  - name: Account
+    description: Account registration and API key management
+  - name: Explore
+    description: Browse public documents
+
+paths:
+  # ── Documents ──────────────────────────────────────────────
+  /docs:
+    post:
+      operationId: createDoc
+      summary: Create a document
+      tags: [Documents]
+      security:
+        - {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateDocRequest"
+      responses:
+        "201":
+          description: Document created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateDocResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /docs/{slug}:
+    parameters:
+      - $ref: "#/components/parameters/Slug"
+
+    get:
+      operationId: getDoc
+      summary: Get a document
+      description: |
+        Returns document content and metadata. For private docs, requires auth via
+        Bearer API key, magic token, or account key.
+
+        Use `?format=raw` to get raw markdown as `text/markdown`.
+        Use `?view=executive|technical|ux` for stakeholder-specific views (if available).
+
+        Shortcut: `GET /share/{slug}.md` returns raw markdown directly (via middleware rewrite).
+      tags: [Documents]
+      security:
+        - {}
+        - BearerApiKey: []
+        - MagicTokenHeader: []
+        - MagicTokenQuery: []
+      parameters:
+        - name: format
+          in: query
+          schema:
+            type: string
+            enum: [raw]
+          description: Set to `raw` to return markdown as `text/markdown`
+        - name: view
+          in: query
+          schema:
+            type: string
+            enum: [executive, technical, ux]
+          description: Return a stakeholder-specific view (if available in metadata)
+        - name: token
+          in: query
+          schema:
+            type: string
+          description: Magic token for owner access
+      responses:
+        "200":
+          description: Document with metadata
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Doc"
+            text/markdown:
+              schema:
+                type: string
+                description: Raw markdown content (when format=raw)
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    patch:
+      operationId: updateDoc
+      summary: Update a document
+      description: Requires magic token or account ownership. Updates content, status, review settings, or visibility.
+      tags: [Documents]
+      security:
+        - MagicTokenHeader: []
+        - MagicTokenQuery: []
+        - BearerAccountKey: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateDocRequest"
+      responses:
+        "200":
+          description: Updated document
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UpdateDocResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    delete:
+      operationId: deleteDoc
+      summary: Delete a document
+      tags: [Documents]
+      security:
+        - MagicTokenHeader: []
+        - MagicTokenQuery: []
+        - BearerAccountKey: []
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeleteResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  # ── Comments ───────────────────────────────────────────────
+  /docs/{slug}/comments:
+    parameters:
+      - $ref: "#/components/parameters/Slug"
+
+    get:
+      operationId: listComments
+      summary: List comments on a document
+      tags: [Comments]
+      security:
+        - {}
+        - BearerApiKey: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [open, resolved, dismissed]
+          description: Filter by comment status
+      responses:
+        "200":
+          description: List of comments
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [comments]
+                properties:
+                  comments:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Comment"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    post:
+      operationId: createComment
+      summary: Add a comment
+      description: Returns 409 if the document is not accepting feedback (closed or expired).
+      tags: [Comments]
+      security:
+        - {}
+        - BearerApiKey: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCommentRequest"
+      responses:
+        "201":
+          description: Comment created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Comment"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/NotAcceptingFeedback"
+
+  /docs/{slug}/comments/{commentId}:
+    parameters:
+      - $ref: "#/components/parameters/Slug"
+      - name: commentId
+        in: path
+        required: true
+        schema:
+          type: string
+
+    patch:
+      operationId: updateCommentStatus
+      summary: Update comment status
+      description: Resolve or dismiss a comment. Requires the doc-level API key.
+      tags: [Comments]
+      security:
+        - BearerApiKey: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:
+                  type: string
+                  enum: [resolved, dismissed]
+      responses:
+        "200":
+          description: Updated comment
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Comment"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /docs/{slug}/comments/batch:
+    parameters:
+      - $ref: "#/components/parameters/Slug"
+
+    post:
+      operationId: batchCreateComments
+      summary: Batch create comments
+      description: Create up to 50 comments in a single request. Returns 409 if the document is not accepting feedback.
+      tags: [Comments]
+      security:
+        - {}
+        - BearerApiKey: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [comments]
+              properties:
+                comments:
+                  type: array
+                  maxItems: 50
+                  items:
+                    $ref: "#/components/schemas/CreateCommentRequest"
+      responses:
+        "201":
+          description: Comments created
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [created, comments]
+                properties:
+                  created:
+                    type: integer
+                  comments:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Comment"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/NotAcceptingFeedback"
+
+  # ── Reactions ──────────────────────────────────────────────
+  /docs/{slug}/reactions:
+    parameters:
+      - $ref: "#/components/parameters/Slug"
+
+    get:
+      operationId: listReactions
+      summary: Get reaction counts
+      tags: [Reactions]
+      security:
+        - {}
+        - BearerApiKey: []
+      responses:
+        "200":
+          description: Reaction counts
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [reactions]
+                properties:
+                  reactions:
+                    $ref: "#/components/schemas/ReactionCounts"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    post:
+      operationId: addReaction
+      summary: Add a reaction
+      description: |
+        Deduplicated by `(docId, emoji, identifier)`. If the same reaction already exists,
+        the existing one is returned (no duplicate created). Returns 409 if not accepting feedback.
+      tags: [Reactions]
+      security:
+        - {}
+        - BearerApiKey: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddReactionRequest"
+      responses:
+        "201":
+          description: Reaction added (or existing returned)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Reaction"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/NotAcceptingFeedback"
+
+  # ── Reviews ────────────────────────────────────────────────
+  /docs/{slug}/reviews:
+    parameters:
+      - $ref: "#/components/parameters/Slug"
+
+    get:
+      operationId: listReviews
+      summary: List reviews
+      tags: [Reviews]
+      security:
+        - {}
+        - BearerApiKey: []
+      responses:
+        "200":
+          description: List of reviews
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [reviews]
+                properties:
+                  reviews:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Review"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    post:
+      operationId: markReviewed
+      summary: Mark document as reviewed
+      description: |
+        Deduplicated by `(docId, identifier)`. If already reviewed by this identifier,
+        the existing review is returned. Returns 409 if not accepting feedback.
+      tags: [Reviews]
+      security:
+        - {}
+        - BearerApiKey: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MarkReviewedRequest"
+      responses:
+        "201":
+          description: Review recorded (or existing returned)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Review"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/NotAcceptingFeedback"
+
+  # ── Collections ────────────────────────────────────────────
+  /collections:
+    post:
+      operationId: createCollection
+      summary: Create a collection
+      tags: [Collections]
+      security:
+        - {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [title]
+              properties:
+                title:
+                  type: string
+      responses:
+        "201":
+          description: Collection created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateCollectionResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /collections/{slug}:
+    parameters:
+      - $ref: "#/components/parameters/Slug"
+
+    get:
+      operationId: getCollection
+      summary: Get a collection with its documents
+      tags: [Collections]
+      security:
+        - {}
+      responses:
+        "200":
+          description: Collection with ordered documents
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Collection"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    patch:
+      operationId: updateCollection
+      summary: Update a collection
+      description: Add/remove docs, reorder, or rename. Requires magic token.
+      tags: [Collections]
+      security:
+        - MagicTokenHeader: []
+        - MagicTokenQuery: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCollectionRequest"
+      responses:
+        "200":
+          description: Updated collection
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Collection"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    delete:
+      operationId: deleteCollection
+      summary: Delete a collection
+      tags: [Collections]
+      security:
+        - MagicTokenHeader: []
+        - MagicTokenQuery: []
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeleteResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  # ── Account ────────────────────────────────────────────────
+  /account/register:
+    post:
+      operationId: registerAccount
+      summary: Register an account
+      security:
+        - {}
+      description: |
+        Creates an unverified account with a 24-hour grace period for private doc access.
+        A verification email is sent automatically.
+      tags: [Account]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email:
+                  type: string
+                  format: email
+                name:
+                  type: string
+                  description: Name for the default API key
+                  default: Default key
+      responses:
+        "201":
+          description: Account created
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [api_key, email, verified, message]
+                properties:
+                  api_key:
+                    type: string
+                    description: "Account API key (acct_ prefix). Shown once."
+                  email:
+                    type: string
+                  verified:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "409":
+          description: Account already exists
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /account/api-keys:
+    get:
+      operationId: listAccountApiKeys
+      summary: List account API keys
+      tags: [Account]
+      security:
+        - BearerAccountKey: []
+      responses:
+        "200":
+          description: List of API keys (keys are not shown, only metadata)
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [api_keys]
+                properties:
+                  api_keys:
+                    type: array
+                    items:
+                      type: object
+                      required: [id, name, created_at]
+                      properties:
+                        id:
+                          type: string
+                        name:
+                          type: string
+                        last_used_at:
+                          type: [string, "null"]
+                          format: date-time
+                        created_at:
+                          type: string
+                          format: date-time
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+    post:
+      operationId: createAccountApiKey
+      summary: Create a new account API key
+      tags: [Account]
+      security:
+        - BearerAccountKey: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  default: default
+      responses:
+        "201":
+          description: API key created (shown once)
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [api_key, name]
+                properties:
+                  api_key:
+                    type: string
+                    description: "Full API key (acct_ prefix). Shown once."
+                  name:
+                    type: string
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /account/api-keys/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+
+    delete:
+      operationId: deleteAccountApiKey
+      summary: Delete an account API key
+      tags: [Account]
+      security:
+        - BearerAccountKey: []
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeleteResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /account/docs:
+    get:
+      operationId: listAccountDocs
+      summary: List documents owned by the account
+      tags: [Account]
+      security:
+        - BearerAccountKey: []
+      responses:
+        "200":
+          description: List of owned documents
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [docs]
+                properties:
+                  docs:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/DocSummary"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  # ── Explore ────────────────────────────────────────────────
+  /explore:
+    get:
+      operationId: listPublicDocs
+      summary: Browse public documents
+      security:
+        - {}
+      description: Cursor-based pagination, 20 documents per page.
+      tags: [Explore]
+      parameters:
+        - name: cursor
+          in: query
+          schema:
+            type: string
+          description: Document ID cursor for next page
+      responses:
+        "200":
+          description: Paginated list of public documents
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [docs]
+                properties:
+                  docs:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ExploreDocs"
+                  nextCursor:
+                    type: [string, "null"]
+                    description: Pass as `?cursor=` for next page. Null when no more pages.
+
+components:
+  # ── Security Schemes ───────────────────────────────────────
+  securitySchemes:
+    BearerApiKey:
+      type: http
+      scheme: bearer
+      description: "Doc-level API key (`key_` prefix)"
+
+    BearerAccountKey:
+      type: http
+      scheme: bearer
+      description: "Account API key (`acct_` prefix)"
+
+    MagicTokenHeader:
+      type: apiKey
+      in: header
+      name: X-Magic-Token
+      description: Magic token for owner operations
+
+    MagicTokenQuery:
+      type: apiKey
+      in: query
+      name: token
+      description: Magic token as query parameter
+
+  # ── Parameters ─────────────────────────────────────────────
+  parameters:
+    Slug:
+      name: slug
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 8
+        maxLength: 8
+      description: "8-character nanoid slug"
+
+  # ── Reusable Responses ─────────────────────────────────────
+  responses:
+    BadRequest:
+      description: Invalid input
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+    NotAcceptingFeedback:
+      description: Document is not accepting feedback (review closed or deadline passed)
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            error: "This document is no longer accepting feedback"
+
+  # ── Schemas ────────────────────────────────────────────────
+  schemas:
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+
+    DeleteResponse:
+      type: object
+      required: [deleted]
+      properties:
+        deleted:
+          type: boolean
+          example: true
+
+    # ── Document schemas ───────────────────────────────────
+    CreateDocRequest:
+      type: object
+      required: [content]
+      properties:
+        content:
+          type: string
+          description: Markdown content
+        title:
+          type: string
+          description: Auto-extracted from first heading if omitted
+        visibility:
+          type: string
+          enum: [public, private]
+          default: public
+        version_note:
+          type: string
+        expected_reviews:
+          type: integer
+          minimum: 1
+          description: Number of reviews to trigger `review_complete` flag
+        review_deadline:
+          type: string
+          format: date-time
+          description: ISO 8601 date after which feedback is auto-rejected
+        meta:
+          type: object
+          description: Arbitrary JSON metadata
+
+    CreateDocResponse:
+      type: object
+      required: [slug, url, magic_token, api_key]
+      properties:
+        slug:
+          type: string
+          example: "a1b2c3d4"
+        url:
+          type: string
+          format: uri
+          example: "https://draftmark.app/share/a1b2c3d4"
+        magic_token:
+          type: string
+          description: "Owner token. Shown once — store it."
+        api_key:
+          type: string
+          description: "Doc API key (key_ prefix). Shown once — store it."
+
+    Doc:
+      type: object
+      required:
+        - slug
+        - content
+        - visibility
+        - status
+        - accepting_feedback
+        - reactions_count
+        - comments_count
+        - reviews_count
+        - created_at
+        - updated_at
+      properties:
+        slug:
+          type: string
+        title:
+          type: [string, "null"]
+        content:
+          type: string
+        available_views:
+          type: array
+          items:
+            type: string
+          description: Stakeholder view names available (e.g. executive, technical, ux)
+        visibility:
+          type: string
+          enum: [public, private]
+        status:
+          type: string
+          enum: [open, review_closed]
+        expected_reviews:
+          type: [integer, "null"]
+        review_deadline:
+          type: [string, "null"]
+          format: date-time
+        review_complete:
+          type: boolean
+          description: True when reviews_count >= expected_reviews
+        review_expired:
+          type: boolean
+          description: True when review_deadline has passed
+        accepting_feedback:
+          type: boolean
+          description: True when status is open and deadline has not passed
+        reactions_count:
+          $ref: "#/components/schemas/ReactionCounts"
+        comments_count:
+          type: integer
+        reviews_count:
+          type: integer
+        reviews:
+          type: array
+          items:
+            type: object
+            properties:
+              reviewer_name:
+                type: string
+              reviewed_at:
+                type: string
+                format: date-time
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        # Owner-only fields (require magic_token or account ownership)
+        views_count:
+          type: integer
+          description: "Owner-only. Total page views."
+        meta:
+          type: object
+          description: "Owner-only. Arbitrary JSON metadata."
+
+    UpdateDocRequest:
+      type: object
+      properties:
+        content:
+          type: string
+        title:
+          type: string
+        visibility:
+          type: string
+          enum: [public, private]
+        version_note:
+          type: string
+          description: Only used when content is also provided
+        status:
+          type: string
+          enum: [open, review_closed]
+        expected_reviews:
+          type: [integer, "null"]
+          minimum: 1
+          description: Set to null to clear
+        review_deadline:
+          type: [string, "null"]
+          format: date-time
+          description: Set to null to clear
+
+    UpdateDocResponse:
+      type: object
+      required: [slug, content, visibility, status, updated_at]
+      properties:
+        slug:
+          type: string
+        title:
+          type: [string, "null"]
+        content:
+          type: string
+        visibility:
+          type: string
+          enum: [public, private]
+        status:
+          type: string
+          enum: [open, review_closed]
+        expected_reviews:
+          type: [integer, "null"]
+        review_deadline:
+          type: [string, "null"]
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    DocSummary:
+      type: object
+      required: [slug, visibility, status, views_count, comments_count, reviews_count, created_at, updated_at]
+      properties:
+        slug:
+          type: string
+        seo_slug:
+          type: [string, "null"]
+        title:
+          type: [string, "null"]
+        visibility:
+          type: string
+          enum: [public, private]
+        status:
+          type: string
+          enum: [open, review_closed]
+        views_count:
+          type: integer
+        comments_count:
+          type: integer
+        reviews_count:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ExploreDocs:
+      type: object
+      required: [slug, content, viewsCount, createdAt, commentsCount, reviewsCount]
+      properties:
+        slug:
+          type: string
+        seoSlug:
+          type: [string, "null"]
+        title:
+          type: [string, "null"]
+        content:
+          type: string
+        viewsCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        commentsCount:
+          type: integer
+        reviewsCount:
+          type: integer
+
+    # ── Comment schemas ────────────────────────────────────
+    Comment:
+      type: object
+      required: [id, body, author, author_type, status, created_at]
+      properties:
+        id:
+          type: string
+        body:
+          type: string
+        author:
+          type: string
+        author_type:
+          type: string
+          enum: [human, agent]
+        anchor_type:
+          type: [string, "null"]
+          enum: [line, selection]
+        anchor_ref:
+          type: [integer, "null"]
+          description: Line number for line-anchored comments
+        anchor_text:
+          type: [string, "null"]
+          description: Selected text quote for selection-anchored comments
+        doc_version:
+          type: [integer, "null"]
+        status:
+          type: string
+          enum: [open, resolved, dismissed]
+        cross_ref_slug:
+          type: [string, "null"]
+        cross_ref_line:
+          type: [integer, "null"]
+        parent_id:
+          type: [string, "null"]
+          description: Parent comment ID for threaded replies
+        created_at:
+          type: string
+          format: date-time
+
+    CreateCommentRequest:
+      type: object
+      required: [body]
+      properties:
+        body:
+          type: string
+        author:
+          type: string
+          default: anonymous
+        author_type:
+          type: string
+          enum: [human, agent]
+          default: human
+        anchor_type:
+          type: string
+          enum: [line, selection]
+        anchor_ref:
+          type: integer
+          description: Line number
+        anchor_text:
+          type: string
+          description: Selected text quote
+        cross_ref_slug:
+          type: string
+        cross_ref_line:
+          type: integer
+        parent_id:
+          type: string
+          description: Parent comment ID for threaded replies
+
+    # ── Reaction schemas ───────────────────────────────────
+    ReactionCounts:
+      type: object
+      properties:
+        thumbs_up:
+          type: integer
+          default: 0
+        check:
+          type: integer
+          default: 0
+        thinking:
+          type: integer
+          default: 0
+        cross:
+          type: integer
+          default: 0
+
+    AddReactionRequest:
+      type: object
+      required: [emoji, identifier]
+      properties:
+        emoji:
+          type: string
+          enum: [thumbs_up, check, thinking, cross]
+        identifier:
+          type: string
+          description: Unique identifier for dedup (one per emoji per doc per identifier)
+
+    Reaction:
+      type: object
+      required: [id, emoji, identifier, created_at]
+      properties:
+        id:
+          type: string
+        emoji:
+          type: string
+        identifier:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    # ── Review schemas ─────────────────────────────────────
+    Review:
+      type: object
+      required: [id, reviewer_name, reviewer_type, identifier, created_at]
+      properties:
+        id:
+          type: string
+        reviewer_name:
+          type: string
+        reviewer_type:
+          type: string
+          enum: [human, agent]
+        identifier:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    MarkReviewedRequest:
+      type: object
+      required: [identifier]
+      properties:
+        identifier:
+          type: string
+          description: Unique identifier for dedup (one review per doc per identifier)
+        reviewer_name:
+          type: string
+          default: anonymous
+        reviewer_type:
+          type: string
+          enum: [human, agent]
+          default: human
+
+    # ── Collection schemas ─────────────────────────────────
+    CreateCollectionResponse:
+      type: object
+      required: [slug, title, url, magic_token, api_key]
+      properties:
+        slug:
+          type: string
+        title:
+          type: string
+        url:
+          type: string
+          format: uri
+        magic_token:
+          type: string
+          description: "Owner token. Shown once."
+        api_key:
+          type: string
+          description: "Collection API key. Shown once."
+
+    Collection:
+      type: object
+      required: [slug, title, created_at, updated_at, docs]
+      properties:
+        slug:
+          type: string
+        title:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        docs:
+          type: array
+          items:
+            $ref: "#/components/schemas/CollectionDocItem"
+
+    CollectionDocItem:
+      type: object
+      required: [slug, position]
+      properties:
+        slug:
+          type: string
+        title:
+          type: [string, "null"]
+        label:
+          type: [string, "null"]
+          description: Optional display name within the collection
+        position:
+          type: integer
+        visibility:
+          type: string
+          enum: [public, private]
+        views_count:
+          type: integer
+        comments_count:
+          type: integer
+        reviews_count:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    UpdateCollectionRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        add_docs:
+          type: array
+          items:
+            type: object
+            required: [slug]
+            properties:
+              slug:
+                type: string
+              label:
+                type: string
+                description: Optional display name
+        remove_docs:
+          type: array
+          items:
+            type: string
+          description: Array of doc slugs to remove
+        reorder:
+          type: array
+          items:
+            type: object
+            required: [slug, position]
+            properties:
+              slug:
+                type: string
+              position:
+                type: integer
