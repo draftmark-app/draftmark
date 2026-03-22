@@ -486,6 +486,9 @@ export default function Home() {
               <li className="active">Unlimited private docs</li>
               <li className="active">Password-protected links</li>
               <li className="active">Version history</li>
+              <li className="active">Webhooks</li>
+              <li className="active">Custom domain</li>
+              <li className="active">Higher API rate limits</li>
             </ul>
           </div>
           <div className="plan">
