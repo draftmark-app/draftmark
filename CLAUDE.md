@@ -84,6 +84,14 @@ Three mechanisms:
 
 Feedback gates: POST comments/reactions/reviews return 409 when doc not accepting feedback.
 
+## CLI
+
+`npm install -g draftmark` installs the `dm` CLI ([draftmark-app/cli](https://github.com/draftmark-app/cli)). Commands: `create`, `status`, `comments`, `comment`, `review`, `raw`, `close`, `open`, `delete`. Config resolves from CLI flags > env vars (`DM_API_KEY`, `DM_MAGIC_TOKEN`) > `.draftmark.json`.
+
+## API Documentation
+
+OpenAPI 3.1 spec at `openapi.yaml` (source of truth) and `public/openapi.yaml` (served). Interactive docs at `/api-docs` (Redoc, standalone route handler with dark/light theme support).
+
 ## Cross-Session Context
 
 `.draftmark.json` convention: agents write this file after creating a doc so future sessions can discover pending reviews. Stores api_key (not magic_token). Should be `.gitignore`d.

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import ThemeToggle from "./ThemeToggle";
 
-type NavLink = { href: string; label: string; anchor?: boolean };
+type NavLink = { href: string; label: string; anchor?: boolean; external?: boolean };
 
 export default function Nav({ links }: { links?: NavLink[] }) {
   const defaultLinks: NavLink[] = [
@@ -31,7 +31,9 @@ export default function Nav({ links }: { links?: NavLink[] }) {
       <ul>
         {navLinks.map((link) => (
           <li key={link.href}>
-            {link.anchor ? (
+            {link.external ? (
+              <a href={link.href} target="_blank" rel="noopener noreferrer">{link.label}</a>
+            ) : link.anchor ? (
               <a href={link.href}>{link.label}</a>
             ) : (
               <Link href={link.href}>{link.label}</Link>

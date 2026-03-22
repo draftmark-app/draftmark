@@ -31,6 +31,7 @@ export default function Home() {
           { href: "#pricing", label: "pricing", anchor: true },
           { href: "/agents", label: "for agents" },
           { href: "/docs", label: "docs" },
+          { href: "https://github.com/draftmark-app/draftmark", label: "github", external: true },
         ]}
       />
 
@@ -56,6 +57,10 @@ export default function Home() {
               explore &rarr;
             </Link>
           </div>
+          <a href="https://github.com/draftmark-app/draftmark" target="_blank" rel="noopener noreferrer" className="oss-badge">
+            <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+            open source &mdash; MIT license
+          </a>
         </div>
 
         <div>
@@ -67,7 +72,7 @@ export default function Home() {
               </div>
               <div className="doc-actions">
                 <button className="doc-action-btn">share</button>
-                <button className="doc-action-btn">permissions</button>
+                <button className="doc-action-btn">edit</button>
               </div>
             </div>
             <div className="doc-body">
@@ -282,7 +287,7 @@ export default function Home() {
             </div>
           </div>
           <p className="api-docs-link">
-            <Link href="/docs">see full API docs &rarr;</Link>
+            <Link href="/api-docs">see full API docs &rarr;</Link>
           </p>
         </div>
         <div className="code-block">
@@ -327,6 +332,85 @@ export default function Home() {
           <span className="code-comment">
             &rarr; feed into next agent session
           </span>
+        </div>
+      </section>
+
+      {/* CLI */}
+      <section className="api-section" id="cli">
+        <div>
+          <div className="api-label">// cli</div>
+          <div className="api-heading">
+            One command
+            <br />
+            to <em>share</em>
+          </div>
+          <p className="api-desc">
+            Install the CLI and publish markdown from your terminal. Agents can
+            create docs, poll for feedback, and close reviews — all without
+            leaving the shell.
+          </p>
+          <div className="api-endpoints">
+            <div className="endpoint">
+              <span className="method post">$</span>dm create draft.md
+            </div>
+            <div className="endpoint">
+              <span className="method get">$</span>dm status
+            </div>
+            <div className="endpoint">
+              <span className="method get">$</span>dm comments
+            </div>
+            <div className="endpoint">
+              <span className="method post">$</span>dm comment &quot;LGTM&quot;
+            </div>
+            <div className="endpoint">
+              <span className="method get">$</span>dm raw | head -20
+            </div>
+            <div className="endpoint">
+              <span className="method patch">$</span>dm close
+            </div>
+          </div>
+          <p className="api-docs-link">
+            <a href="https://www.npmjs.com/package/draftmark" target="_blank" rel="noopener noreferrer">
+              view on npm &rarr;
+            </a>
+          </p>
+        </div>
+        <div className="code-block">
+          <span className="code-comment"># install globally</span>
+          <br />
+          <span className="code-method">$</span>{" "}
+          <span className="code-url">npm install -g draftmark</span>
+          <br />
+          <br />
+          <span className="code-comment"># publish a markdown file</span>
+          <br />
+          <span className="code-method">$</span> dm create api-proposal.md --private
+          <br />
+          <span className="code-string">&#10003; Document created</span>
+          <br />
+          <span className="code-key">URL:</span>{" "}
+          <span className="code-url">draftmark.app/share/a1b2c3d4</span>
+          <br />
+          <span className="code-key">Slug:</span> a1b2c3d4
+          <br />
+          <span className="code-key">API Key:</span> key_xxxx
+          <br />
+          <br />
+          <span className="code-comment"># check review status</span>
+          <br />
+          <span className="code-method">$</span> dm status
+          <br />
+          <span className="code-key">Status:</span> open
+          <br />
+          <span className="code-key">Comments:</span> 3
+          <br />
+          <span className="code-key">Accepting Feedback:</span>{" "}
+          <span className="code-string">yes</span>
+          <br />
+          <br />
+          <span className="code-comment"># pipe feedback as json</span>
+          <br />
+          <span className="code-method">$</span> dm comments --json | jq
         </div>
       </section>
 
@@ -404,22 +488,22 @@ export default function Home() {
               <li className="active">Version history</li>
             </ul>
           </div>
-          <div className="plan plan-coming-soon">
-            <span className="coming-soon-badge">coming soon</span>
-            <div className="plan-name">team</div>
-            <div className="plan-price">
-              $15 <span>/mo</span>
-            </div>
+          <div className="plan">
+            <div className="plan-name">self-hosted</div>
+            <div className="plan-price">Free</div>
             <p className="plan-desc">
-              For small teams sharing docs internally.
+              Run it on your own infrastructure.
             </p>
             <ul className="plan-features">
-              <li className="active">Everything in writer</li>
-              <li className="active">Up to 5 members</li>
-              <li className="active">Team workspace</li>
-              <li className="active">Custom domain</li>
-              <li className="active">Webhooks</li>
+              <li className="active">Everything, unlimited</li>
+              <li className="active">Full source code</li>
+              <li className="active">Docker + Kamal deploy</li>
+              <li className="active">MIT license</li>
+              <li className="active">Community support</li>
             </ul>
+            <a href="https://github.com/draftmark-app/draftmark" target="_blank" rel="noopener noreferrer" className="btn-ghost" style={{ display: "inline-block" }}>
+              view on github
+            </a>
           </div>
         </div>
       </section>
@@ -429,15 +513,22 @@ export default function Home() {
           draft<span>mark</span>
         </Link>
         <p>
+          open source <span>&middot;</span> MIT license <span>&middot;</span>{" "}
           <a href="mailto:hello@draftmark.app" style={{ color: "inherit", textDecoration: "none" }}>hello@draftmark.app</a>
         </p>
         <nav>
           <ul>
             <li>
-              <Link href="/docs">docs</Link>
+              <Link href="/api-docs">api docs</Link>
+            </li>
+            <li>
+              <a href="https://www.npmjs.com/package/draftmark" target="_blank" rel="noopener noreferrer">cli</a>
             </li>
             <li>
               <Link href="/about">about</Link>
+            </li>
+            <li>
+              <a href="https://github.com/draftmark-app/draftmark" target="_blank" rel="noopener noreferrer">github</a>
             </li>
             <li>
               <Link href="/privacy">privacy</Link>
