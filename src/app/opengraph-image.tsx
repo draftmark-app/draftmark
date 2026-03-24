@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
 
-export const runtime = "edge";
+export const runtime = "nodejs";
 export const alt = "Draftmark — Markdown sharing for async collaboration";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
@@ -10,7 +10,7 @@ export default function OGImage() {
     (
       <div
         style={{
-          background: "#0a0a0a",
+          background: "#0d0d0d",
           width: "100%",
           height: "100%",
           display: "flex",
@@ -20,57 +20,109 @@ export default function OGImage() {
           fontFamily: "system-ui, sans-serif",
         }}
       >
+        {/* Top accent line */}
+        <div
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            height: "4px",
+            background: "#c8b89a",
+          }}
+        />
+
+        {/* Brand */}
         <div
           style={{
             display: "flex",
             alignItems: "center",
-            marginBottom: "32px",
+            gap: "16px",
+            marginBottom: "40px",
           }}
         >
-          <span
+          <div
             style={{
-              fontSize: "42px",
-              fontWeight: 400,
-              color: "#e0e0e0",
-              letterSpacing: "-0.02em",
-            }}
-          >
-            draft
-          </span>
-          <span
-            style={{
-              fontSize: "42px",
+              width: "48px",
+              height: "48px",
+              background: "#c8b89a",
+              borderRadius: "10px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: "28px",
+              color: "#0d0d0d",
               fontWeight: 700,
-              color: "#ffffff",
+            }}
+          >
+            D
+          </div>
+          <span
+            style={{
+              fontSize: "32px",
+              color: "#8a8a8a",
               letterSpacing: "-0.02em",
             }}
           >
-            mark
+            draftmark.app
           </span>
         </div>
+
+        {/* Title */}
         <div
           style={{
+            display: "flex",
+            flexDirection: "column",
             fontSize: "64px",
             fontWeight: 700,
-            color: "#ffffff",
+            color: "#e8e6e1",
             lineHeight: 1.15,
-            marginBottom: "24px",
             letterSpacing: "-0.03em",
+            marginBottom: "24px",
           }}
         >
-          Markdown sharing for
-          <br />
-          async collaboration
+          <span>Markdown sharing for</span>
+          <span>async collaboration</span>
         </div>
+
+        {/* Subtitle */}
         <div
           style={{
             fontSize: "28px",
-            color: "#888888",
+            color: "#8a8a8a",
             lineHeight: 1.5,
           }}
         >
-          Share with humans and AI agents. Comments, reactions, reviews, and a
-          full REST API.
+          Share docs with humans and AI agents. Comments, reactions,
+          reviews — no account required.
+        </div>
+
+        {/* Feature pills */}
+        <div
+          style={{
+            display: "flex",
+            gap: "12px",
+            marginTop: "48px",
+          }}
+        >
+          {["REST API", "Inline Comments", "Review Lifecycle", "CLI"].map(
+            (label) => (
+              <div
+                key={label}
+                style={{
+                  display: "flex",
+                  padding: "10px 20px",
+                  background: "#1a1a1a",
+                  border: "1px solid #242424",
+                  borderRadius: "8px",
+                  fontSize: "20px",
+                  color: "#c8b89a",
+                }}
+              >
+                {label}
+              </div>
+            )
+          )}
         </div>
       </div>
     ),

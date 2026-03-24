@@ -36,7 +36,7 @@ export default async function OGImage({
     (
       <div
         style={{
-          background: "#0a0a0a",
+          background: "#0d0d0d",
           width: "100%",
           height: "100%",
           display: "flex",
@@ -46,12 +46,25 @@ export default async function OGImage({
           fontFamily: "system-ui, sans-serif",
         }}
       >
+        {/* Top accent line */}
+        <div
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            height: "4px",
+            background: "#c8b89a",
+          }}
+        />
+
+        {/* Doc content */}
         <div style={{ display: "flex", flexDirection: "column" }}>
           <div
             style={{
               fontSize: "56px",
               fontWeight: 700,
-              color: "#ffffff",
+              color: "#e8e6e1",
               lineHeight: 1.2,
               letterSpacing: "-0.03em",
               marginBottom: "24px",
@@ -64,41 +77,50 @@ export default async function OGImage({
             <div
               style={{
                 fontSize: "26px",
-                color: "#888888",
+                color: "#8a8a8a",
                 lineHeight: 1.5,
                 overflow: "hidden",
               }}
             >
-              {preview.length > 180 ? preview.slice(0, 177) + "..." : preview}
+              {preview.length > 180
+                ? preview.slice(0, 177) + "..."
+                : preview}
             </div>
           )}
         </div>
 
+        {/* Bottom: branding */}
         <div
           style={{
             display: "flex",
             alignItems: "center",
+            gap: "16px",
           }}
         >
-          <span
+          <div
             style={{
-              fontSize: "32px",
-              fontWeight: 400,
-              color: "#e0e0e0",
-              letterSpacing: "-0.02em",
-            }}
-          >
-            draft
-          </span>
-          <span
-            style={{
-              fontSize: "32px",
+              width: "40px",
+              height: "40px",
+              background: "#c8b89a",
+              borderRadius: "8px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: "22px",
+              color: "#0d0d0d",
               fontWeight: 700,
-              color: "#ffffff",
+            }}
+          >
+            D
+          </div>
+          <span
+            style={{
+              fontSize: "28px",
+              color: "#8a8a8a",
               letterSpacing: "-0.02em",
             }}
           >
-            mark
+            draftmark.app
           </span>
         </div>
       </div>
