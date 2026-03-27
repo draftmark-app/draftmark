@@ -86,7 +86,13 @@ Feedback gates: POST comments/reactions/reviews return 409 when doc not acceptin
 
 ## CLI
 
-`npm install -g draftmark` installs the `dm` CLI ([draftmark-app/cli](https://github.com/draftmark-app/cli)). Commands: `create`, `status`, `comments`, `comment`, `review`, `raw`, `close`, `open`, `delete`. Config resolves from CLI flags > env vars (`DM_API_KEY`, `DM_MAGIC_TOKEN`) > `.draftmark.json`.
+`npm install -g draftmark` installs the `dm` CLI ([draftmark-app/cli](https://github.com/draftmark-app/cli)).
+
+Commands: `create`, `update`, `status`, `comments`, `comment`, `react`, `review`, `raw`, `browse`, `list`, `close`, `open`, `delete`, `login`, `logout`, `whoami`, `config`.
+
+Config resolves from: CLI flags → env vars (`DM_API_KEY`, `DM_MAGIC_TOKEN`) → `.draftmark.json` → global config (`~/.config/draftmark/config.json` via `dm login`).
+
+Key features: stdin support (`dm create -`), `--agent` flag (auto-inherited by comment/review), `--meta <json>`, `--format table|json|minimal`, `--since` date filter, `-q` quiet mode, `--base-url` override, structured JSON errors, exit codes (0 ok, 1 error, 2 auth, 3 not found, 4 conflict).
 
 ## API Documentation
 

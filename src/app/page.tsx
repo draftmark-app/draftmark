@@ -346,21 +346,27 @@ export default function Home() {
           </div>
           <p className="api-desc">
             Install the CLI and publish markdown from your terminal. Agents can
-            create docs, poll for feedback, and close reviews — all without
-            leaving the shell.
+            create docs, push updates, poll for feedback, and close reviews —
+            all without leaving the shell.
           </p>
           <div className="api-endpoints">
             <div className="endpoint">
-              <span className="method post">$</span>dm create draft.md
+              <span className="method post">$</span>dm create draft.md --agent
+            </div>
+            <div className="endpoint">
+              <span className="method patch">$</span>dm update revised.md
             </div>
             <div className="endpoint">
               <span className="method get">$</span>dm status
             </div>
             <div className="endpoint">
-              <span className="method get">$</span>dm comments
+              <span className="method get">$</span>dm comments --since 2026-03-27
             </div>
             <div className="endpoint">
               <span className="method post">$</span>dm comment &quot;LGTM&quot;
+            </div>
+            <div className="endpoint">
+              <span className="method post">$</span>dm react 👍
             </div>
             <div className="endpoint">
               <span className="method get">$</span>dm raw | head -20
@@ -382,9 +388,9 @@ export default function Home() {
           <span className="code-url">npm install -g draftmark</span>
           <br />
           <br />
-          <span className="code-comment"># publish a markdown file</span>
+          <span className="code-comment"># publish as an agent (stdin works too)</span>
           <br />
-          <span className="code-method">$</span> dm create api-proposal.md --private
+          <span className="code-method">$</span> dm create draft.md --agent
           <br />
           <span className="code-string">&#10003; Document created</span>
           <br />
@@ -393,22 +399,19 @@ export default function Home() {
           <br />
           <span className="code-key">Slug:</span> a1b2c3d4
           <br />
-          <span className="code-key">API Key:</span> key_xxxx
+          <br />
+          <span className="code-comment"># poll for feedback</span>
+          <br />
+          <span className="code-method">$</span> dm comments --format minimal
+          <br />
+          alice: Great analysis, but section 3 needs...
+          <br />
+          bob [agent]: LGTM, ship it
           <br />
           <br />
-          <span className="code-comment"># check review status</span>
+          <span className="code-comment"># push an update, pipe feedback as json</span>
           <br />
-          <span className="code-method">$</span> dm status
-          <br />
-          <span className="code-key">Status:</span> open
-          <br />
-          <span className="code-key">Comments:</span> 3
-          <br />
-          <span className="code-key">Accepting Feedback:</span>{" "}
-          <span className="code-string">yes</span>
-          <br />
-          <br />
-          <span className="code-comment"># pipe feedback as json</span>
+          <span className="code-method">$</span> dm update revised.md
           <br />
           <span className="code-method">$</span> dm comments --json | jq
         </div>
