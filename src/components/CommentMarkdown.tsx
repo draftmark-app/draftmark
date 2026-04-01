@@ -2,31 +2,41 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
 /**
- * Preprocesses comment text to restore markdown block structure when
- * newlines are missing (common with agent-pasted content).
+ * Preprocesses comment text so that markdown renders correctly.
  *
- * Agents often paste structured markdown as a single line, wrapping it
- * in ``` delimiters. This preprocessor strips those delimiters and
- * inserts line breaks before block-level elements so the parser can
- * recognize headings, lists, etc.
+ * Two cases:
+ * 1. Well-structured content wrapped in ``` fences — agents use these as
+ *    delimiters, not code blocks. The content inside is markdown that should
+ *    be rendered. We strip fences that wrap markdown (detected by headings
+ *    or bold text inside).
+ * 2. Single-line content with no newlines — we insert line breaks before
+ *    block-level elements so the parser can recognize structure.
  */
 function normalizeMarkdown(text: string): string {
-  // Already has reasonable line structure — skip preprocessing
-  if (text.split("\n").length > 3) return text;
-
   let result = text;
 
-  // Strip ``` wrappers — agents use these as delimiters, not code fences.
-  // The content inside is markdown that should be rendered, not shown as code.
-  result = result.replace(/```\w*\s?/g, "\n\n");
+  // Strip ``` fences that wrap markdown content (not actual code).
+  // Detected by: content between fences contains markdown block markers
+  // like ## headings or **bold** text at line starts.
+  result = result.replace(
+    /```\w*\n([\s\S]*?)```/g,
+    (_match, inner: string) => {
+      const hasMarkdown = /^(#{1,6}\s|\*\*|\d+\.\s|-\s)/m.test(inner);
+      return hasMarkdown ? "\n\n" + inner + "\n\n" : _match;
+    }
+  );
 
-  // Add line breaks before block-level elements when inline
-  // Headings: ## , ### , etc.
-  result = result.replace(/(#{1,6}\s)/g, "\n\n$1");
-  // Numbered list items: 1. **Bold start** (common agent pattern)
-  result = result.replace(/(\d+\.\s\*\*)/g, "\n$1");
-  // Unordered list items: - **Text**
-  result = result.replace(/(- \*\*)/g, "\n$1");
+  // For single-line content (agent pasted without newlines), restore structure
+  if (result.split("\n").length <= 3) {
+    // Strip any remaining inline ``` wrappers
+    result = result.replace(/```\w*\s?/g, "\n\n");
+    // Headings
+    result = result.replace(/(#{1,6}\s)/g, "\n\n$1");
+    // Numbered list items: 1. **Bold start**
+    result = result.replace(/(\d+\.\s\*\*)/g, "\n$1");
+    // Unordered list items: - **Text**
+    result = result.replace(/(- \*\*)/g, "\n$1");
+  }
 
   // Clean up excessive newlines
   result = result.replace(/\n{3,}/g, "\n\n");
