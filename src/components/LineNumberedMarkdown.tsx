@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useMemo } from "react";
 import InlineCommentForm from "./InlineCommentForm";
+import CommentMarkdown from "./CommentMarkdown";
 
 type InlineComment = {
   id: string;
@@ -101,7 +102,7 @@ export default function LineNumberedMarkdown({
                       </span>
                     )}
                   </div>
-                  <p className="inline-comment-body">{c.body}</p>
+                  <div className="inline-comment-body"><CommentMarkdown content={c.body} /></div>
                 </div>
               ))}
 

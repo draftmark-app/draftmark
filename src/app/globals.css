@@ -1130,6 +1130,83 @@ footer nav ul a { font-size: 14px; }
   padding: 0;
 }
 
+/* Comment markdown rendering */
+.comment-markdown {
+  font-size: 15px;
+  color: var(--doc-comment-body);
+  line-height: 1.6;
+}
+
+.comment-markdown p {
+  margin: 0 0 8px;
+}
+
+.comment-markdown p:last-child {
+  margin-bottom: 0;
+}
+
+.comment-markdown code {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 13px;
+  background: var(--surface-hover);
+  padding: 2px 5px;
+  border-radius: 3px;
+}
+
+.comment-markdown pre {
+  background: var(--surface-hover);
+  padding: 12px;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 8px 0;
+}
+
+.comment-markdown pre code {
+  background: none;
+  padding: 0;
+}
+
+.comment-markdown ul,
+.comment-markdown ol {
+  margin: 4px 0;
+  padding-left: 20px;
+}
+
+.comment-markdown blockquote {
+  border-left: 3px solid var(--accent-dim);
+  padding-left: 12px;
+  margin: 8px 0;
+  color: var(--muted);
+}
+
+.comment-markdown a {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+.comment-markdown img {
+  max-width: 100%;
+  border-radius: 6px;
+}
+
+.comment-markdown table {
+  border-collapse: collapse;
+  margin: 8px 0;
+  font-size: 14px;
+}
+
+.comment-markdown th,
+.comment-markdown td {
+  border: 1px solid var(--border);
+  padding: 4px 8px;
+}
+
+.comment-markdown hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 12px 0;
+}
+
 .doc-view-comment-inline .doc-view-comment-body {
   border-left: 2px solid var(--accent-dim);
   padding-left: 12px;
@@ -2157,6 +2234,10 @@ footer nav ul a { font-size: 14px; }
   font-size: 14px;
   color: var(--doc-comment-body);
   margin: 0;
+}
+
+.inline-comment-body .comment-markdown {
+  font-size: 14px;
 }
 
 /* SOURCE VIEW MARKDOWN FORMATTING */

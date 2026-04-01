@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useToast } from "./Toast";
+import CommentMarkdown from "./CommentMarkdown";
 
 type Comment = {
   id: string;
@@ -149,7 +150,7 @@ export default function CommentSection({ slug, currentVersion, reviewerName, set
                 {getTimeAgo(new Date(c.created_at))}
               </span>
             </div>
-            <p>{c.body}</p>
+            <CommentMarkdown content={c.body} />
             {c.cross_ref_slug && (
               <a
                 href={`/share/${c.cross_ref_slug}`}
