@@ -127,6 +127,11 @@ paths:
           schema:
             type: string
           description: Magic token for owner access
+        - name: share_token
+          in: query
+          schema:
+            type: string
+          description: Read-only share token for private doc access (share_ prefix)
       responses:
         "200":
           description: Document with metadata
@@ -889,6 +894,14 @@ components:
         api_key:
           type: string
           description: "Doc API key (key_ prefix). Shown once — store it."
+        share_token:
+          type: string
+          description: "Read-only share token (share_ prefix). Only returned for private docs. Retrievable via GET /docs/:slug with owner auth."
+        share_url:
+          type: string
+          format: uri
+          description: "Shareable URL with embedded share token. Only returned for private docs."
+          example: "https://draftmark.app/share/a1b2c3d4?share_token=share_abc123"
 
     Doc:
       type: object
@@ -964,6 +977,13 @@ components:
         meta:
           type: object
           description: "Owner-only. Arbitrary JSON metadata."
+        share_token:
+          type: string
+          description: "Owner-only. Read-only share token for private docs."
+        share_url:
+          type: string
+          format: uri
+          description: "Owner-only. Shareable URL with embedded share token for private docs."
 
     UpdateDocRequest:
       type: object

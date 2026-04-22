@@ -53,13 +53,17 @@ export default function NewDocPage() {
       }
 
       const data = await res.json();
-      // Store tokens in sessionStorage for the success page
-      sessionStorage.setItem(
+      // Store tokens in localStorage for the success page and dashboard
+      localStorage.setItem(
         `doc_${data.slug}`,
         JSON.stringify({
           magic_token: data.magic_token,
           api_key: data.api_key,
           url: data.url,
+          ...(data.share_token && {
+            share_token: data.share_token,
+            share_url: data.share_url,
+          }),
         })
       );
       router.push(`/created/${data.slug}`);

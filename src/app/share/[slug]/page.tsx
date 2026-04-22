@@ -3,10 +3,11 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import Nav from "@/components/Nav";
 import DocView from "@/components/DocView";
+import ShareBanner from "@/components/ShareBanner";
 
 type Props = {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ token?: string }>;
+  searchParams: Promise<{ token?: string; share_token?: string }>;
 };
 
 export async function generateMetadata({ params }: Props) {
@@ -48,7 +49,7 @@ export async function generateMetadata({ params }: Props) {
 
 export default async function DocPage({ params, searchParams }: Props) {
   const { slug } = await params;
-  const { token } = await searchParams;
+  const { token, share_token } = await searchParams;
 
   const doc = await prisma.doc.findUnique({
     where: { slug },
@@ -71,23 +72,27 @@ export default async function DocPage({ params, searchParams }: Props) {
     data: { viewsCount: { increment: 1 } },
   }).catch(() => {});
 
-  // Check access: magic token or account ownership
+  // Check access: magic token, share token, or account ownership
   const { hashToken } = await import("@/lib/tokens");
   const hasValidToken = !!(token && doc.magicToken === hashToken(token));
+  // Share token can come via dedicated param or via token param (from prompt form)
+  const hasShareToken = !!(share_token && doc.shareToken === share_token) ||
+    !!(token && token.startsWith("share_") && doc.shareToken === token);
 
   const session = await getSession();
   const isAccountOwner = !!(session && doc.userId && session.userId === doc.userId);
   const isOwner = hasValidToken || isAccountOwner;
+  const hasReadAccess = isOwner || hasShareToken;
 
   // Private doc without access — show token prompt
-  if (doc.visibility === "private" && !isOwner) {
+  if (doc.visibility === "private" && !hasReadAccess) {
     return (
       <>
         <Nav />
         <div className="doc-view">
           <div className="token-prompt">
             <h1>This document is private</h1>
-            <p>Paste your magic token to view this document.</p>
+            <p>Paste your access token to view this document.</p>
             <TokenPromptForm slug={slug} />
           </div>
         </div>
@@ -95,9 +100,15 @@ export default async function DocPage({ params, searchParams }: Props) {
     );
   }
 
+  // Build share URL for owner banner
+  const shareUrl = isOwner && doc.visibility === "private" && doc.shareToken
+    ? `${process.env.NEXT_PUBLIC_BASE_URL || ""}/share/${slug}?share_token=${encodeURIComponent(doc.shareToken)}`
+    : null;
+
   return (
     <>
       <Nav />
+      {shareUrl && <ShareBanner url={shareUrl} />}
       <DocView
         authToken={hasValidToken ? token : undefined}
         doc={{
@@ -144,7 +155,7 @@ function TokenPromptForm({ slug }: { slug: string }) {
       <input
         type="text"
         name="token"
-        placeholder="tok_..."
+        placeholder="tok_... or share_..."
         className="token-input"
         autoFocus
       />
@@ -154,3 +165,4 @@ function TokenPromptForm({ slug }: { slug: string }) {
     </form>
   );
 }
+

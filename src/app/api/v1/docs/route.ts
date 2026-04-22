@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { generateSlug, generateSeoSlug } from "@/lib/slug";
-import { generateMagicToken, generateApiKey, hashToken } from "@/lib/tokens";
+import { generateMagicToken, generateApiKey, generateShareToken, hashToken } from "@/lib/tokens";
 import { extractTitleFromContent } from "@/lib/markdown";
 import { getAuthenticatedUser, canAccessPrivateResources } from "@/lib/auth";
 import { generateStakeholderViews } from "@/lib/openrouter";
@@ -55,6 +55,7 @@ export async function POST(request: NextRequest) {
   const slug = generateSlug();
   const rawMagicToken = generateMagicToken();
   const rawApiKey = generateApiKey();
+  const rawShareToken = visibility === "private" ? generateShareToken() : null;
   const resolvedTitle = title || extractTitleFromContent(content) || null;
 
   // Validate optional review lifecycle fields
@@ -89,6 +90,7 @@ export async function POST(request: NextRequest) {
       visibility,
       magicToken: hashToken(rawMagicToken),
       apiKey: hashToken(rawApiKey),
+      shareToken: rawShareToken,
       expectedReviews: expected_reviews ?? null,
       reviewDeadline: review_deadline ? new Date(review_deadline) : null,
       meta: meta ?? undefined,
@@ -115,12 +117,19 @@ export async function POST(request: NextRequest) {
     })
     .catch(() => {});
 
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || new URL(request.url).origin;
+  const docUrl = `${baseUrl}/share/${doc.slug}`;
+
   return NextResponse.json(
     {
       slug: doc.slug,
-      url: `${process.env.NEXT_PUBLIC_BASE_URL || new URL(request.url).origin}/share/${doc.slug}`,
+      url: docUrl,
       magic_token: rawMagicToken,
       api_key: rawApiKey,
+      ...(rawShareToken && {
+        share_token: rawShareToken,
+        share_url: `${docUrl}?token=${encodeURIComponent(rawShareToken)}`,
+      }),
     },
     { status: 201 }
   );

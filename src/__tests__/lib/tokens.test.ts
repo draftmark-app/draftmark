@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   generateMagicToken,
   generateApiKey,
+  generateShareToken,
   hashToken,
 } from "@/lib/tokens";
 
@@ -20,6 +21,27 @@ describe("generateMagicToken", () => {
 describe("generateApiKey", () => {
   it("starts with key_ prefix", () => {
     expect(generateApiKey()).toMatch(/^key_/);
+  });
+});
+
+describe("generateShareToken", () => {
+  it("starts with share_ prefix", () => {
+    expect(generateShareToken()).toMatch(/^share_/);
+  });
+
+  it("generates unique tokens", () => {
+    const a = generateShareToken();
+    const b = generateShareToken();
+    expect(a).not.toBe(b);
+  });
+
+  it("is distinct from magic tokens and api keys", () => {
+    const share = generateShareToken();
+    const magic = generateMagicToken();
+    const api = generateApiKey();
+    expect(share.startsWith("share_")).toBe(true);
+    expect(magic.startsWith("tok_")).toBe(true);
+    expect(api.startsWith("key_")).toBe(true);
   });
 });
 

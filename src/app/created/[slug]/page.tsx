@@ -9,6 +9,8 @@ type DocCredentials = {
   magic_token: string;
   api_key: string;
   url: string;
+  share_token?: string;
+  share_url?: string;
 };
 
 export default function CreatedPage() {
@@ -18,9 +20,16 @@ export default function CreatedPage() {
   const [copied, setCopied] = useState<string | null>(null);
 
   useEffect(() => {
-    const stored = sessionStorage.getItem(`doc_${slug}`);
+    // Try localStorage first (persistent), fall back to sessionStorage (legacy)
+    const stored = localStorage.getItem(`doc_${slug}`) || sessionStorage.getItem(`doc_${slug}`);
     if (stored) {
-      setCreds(JSON.parse(stored));
+      const parsed = JSON.parse(stored);
+      setCreds(parsed);
+      // Migrate from sessionStorage to localStorage if needed
+      if (!localStorage.getItem(`doc_${slug}`)) {
+        localStorage.setItem(`doc_${slug}`, stored);
+        sessionStorage.removeItem(`doc_${slug}`);
+      }
     }
   }, [slug]);
 
@@ -47,6 +56,8 @@ export default function CreatedPage() {
     );
   }
 
+  const shareableLink = creds.share_url || creds.url;
+
   return (
     <>
       <Nav />
@@ -60,11 +71,16 @@ export default function CreatedPage() {
         <div className="cred-cards">
           <div className="cred-card">
             <div className="cred-label">Shareable Link</div>
+            {creds.share_url && (
+              <div className="cred-hint">
+                Anyone with this link can view the document
+              </div>
+            )}
             <div className="cred-value">
-              <code>{creds.url}</code>
+              <code>{shareableLink}</code>
               <button
                 className="copy-btn"
-                onClick={() => copyToClipboard(creds.url, "url")}
+                onClick={() => copyToClipboard(shareableLink, "url")}
               >
                 {copied === "url" ? "copied!" : "copy"}
               </button>

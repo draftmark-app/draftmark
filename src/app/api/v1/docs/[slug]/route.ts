@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { authorizeWithMagicToken, getAuthenticatedUser, canAccessPrivateResources } from "@/lib/auth";
-import { hashToken } from "@/lib/tokens";
+import { hashToken, generateShareToken } from "@/lib/tokens";
 import { extractTitleFromContent } from "@/lib/markdown";
 import { generateSeoSlug } from "@/lib/slug";
 import { generateStakeholderViews } from "@/lib/openrouter";
@@ -34,6 +34,11 @@ export async function GET(
   const isOwnerByToken = !!(tokenParam && doc.magicToken === hashToken(tokenParam));
   const hasApiKey = !!(apiKey && !apiKey.startsWith("acct_") && doc.apiKey === hashToken(apiKey));
 
+  // Check share token (unhashed, read-only access)
+  const shareTokenParam = new URL(request.url).searchParams.get("share_token") ||
+    request.headers.get("x-share-token");
+  const hasShareToken = !!(shareTokenParam && doc.shareToken === shareTokenParam);
+
   // Check account ownership (session cookie or acct_ API key)
   const user = await getAuthenticatedUser(request);
   const isAccountOwner = !!(user && doc.userId && user.id === doc.userId);
@@ -47,7 +52,7 @@ export async function GET(
     );
   }
 
-  if (doc.visibility === "private" && !isOwner && !hasApiKey) {
+  if (doc.visibility === "private" && !isOwner && !hasApiKey && !hasShareToken) {
     return NextResponse.json(
       { error: "This document is private. Provide a valid token or API key." },
       { status: 401 }
@@ -114,6 +119,11 @@ export async function GET(
   if (isOwner) {
     response.views_count = doc.viewsCount;
     response.meta = doc.meta;
+    if (doc.visibility === "private" && doc.shareToken) {
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || new URL(request.url).origin;
+      response.share_token = doc.shareToken;
+      response.share_url = `${baseUrl}/share/${doc.slug}?share_token=${encodeURIComponent(doc.shareToken)}`;
+    }
   }
 
   return NextResponse.json(response);
@@ -168,6 +178,10 @@ export async function PATCH(
       );
     }
     updateData.visibility = visibility;
+    // Generate share token when switching to private (if not already set)
+    if (visibility === "private" && !ownerDoc!.shareToken) {
+      updateData.shareToken = generateShareToken();
+    }
   }
   if (status !== undefined) {
     if (status !== "open" && status !== "review_closed") {
@@ -244,7 +258,7 @@ export async function PATCH(
       .catch(() => {});
   }
 
-  return NextResponse.json({
+  const patchResponse: Record<string, unknown> = {
     slug: doc.slug,
     title: doc.title,
     content: doc.content,
@@ -253,7 +267,16 @@ export async function PATCH(
     expected_reviews: doc.expectedReviews,
     review_deadline: doc.reviewDeadline?.toISOString() ?? null,
     updated_at: doc.updatedAt.toISOString(),
-  });
+  };
+
+  // Include share_url when doc is private and has a share token
+  if (doc.visibility === "private" && doc.shareToken) {
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || new URL(request.url).origin;
+    patchResponse.share_token = doc.shareToken;
+    patchResponse.share_url = `${baseUrl}/share/${doc.slug}?share_token=${encodeURIComponent(doc.shareToken)}`;
+  }
+
+  return NextResponse.json(patchResponse);
 }
 
 export async function DELETE(

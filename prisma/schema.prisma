@@ -56,6 +56,7 @@ model Doc {
   status          String    @default("open") // "open" | "review_closed"
   magicToken      String    @map("magic_token") // hashed
   apiKey          String    @map("api_key") // hashed
+  shareToken      String?   @unique @map("share_token") // unhashed, read-only access for private docs
   viewsCount      Int       @default(0) @map("views_count")
   expectedReviews Int?      @map("expected_reviews")
   reviewDeadline  DateTime? @map("review_deadline")

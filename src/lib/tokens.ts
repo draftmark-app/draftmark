@@ -24,3 +24,7 @@ export function generateLoginToken(): string {
 export function generateAccountApiKey(): string {
   return generateToken("acct");
 }
+
+export function generateShareToken(): string {
+  return generateToken("share");
+}

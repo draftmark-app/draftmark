@@ -188,6 +188,14 @@ export async function findDocWithReadAccess(
     return { doc, authorized: true };
   }
 
+  // Check share token (unhashed, read-only access for private docs)
+  const shareToken =
+    new URL(request.url).searchParams.get("share_token") ||
+    request.headers.get("x-share-token");
+  if (shareToken && doc.shareToken === shareToken) {
+    return { doc, authorized: true };
+  }
+
   // Check account ownership (acct_ key or session cookie)
   if (doc.userId) {
     const user = await getAuthenticatedUser(request);

@@ -953,6 +953,59 @@ footer nav ul a { font-size: 14px; }
 }
 
 /* DOCUMENT VIEW */
+.share-banner {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 12px 40px 0;
+}
+
+.share-banner-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 14px;
+  font-size: 0.82rem;
+}
+
+.share-banner-label {
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.share-banner-url {
+  display: block;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.78rem;
+  color: var(--text);
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+.share-banner-copy {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 3px 10px;
+  font-size: 0.78rem;
+  white-space: nowrap;
+  transition: color 0.2s, border-color 0.2s;
+}
+
+.share-banner-copy:hover {
+  color: var(--accent);
+  border-color: var(--accent-dim);
+}
+
 .doc-view {
   max-width: 720px;
   margin: 0 auto;
@@ -1289,6 +1342,10 @@ footer nav ul a { font-size: 14px; }
   .selfhost-cmd {
     width: 100%;
     overflow-x: auto;
+  }
+
+  .share-banner {
+    padding: 12px 20px 0;
   }
 
   .doc-view {
@@ -3709,6 +3766,42 @@ footer nav ul a { font-size: 14px; }
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+.dashboard-doc-row {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+}
+
+.dashboard-doc-row .dashboard-doc-card {
+  flex: 1;
+  min-width: 0;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.dashboard-doc-row:not(:has(.dashboard-share-btn)) .dashboard-doc-card {
+  border-radius: 6px;
+}
+
+.dashboard-share-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: none;
+  border-radius: 0 6px 6px 0;
+  color: var(--muted);
+  cursor: pointer;
+  transition: color 0.2s, background 0.2s;
+}
+
+.dashboard-share-btn:hover {
+  color: var(--accent);
+  background: var(--surface-hover, var(--surface));
 }
 
 .dashboard-doc-card {

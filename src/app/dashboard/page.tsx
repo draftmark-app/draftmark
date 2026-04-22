@@ -12,6 +12,7 @@ type Doc = {
   title: string | null;
   visibility: string;
   status: string;
+  share_token: string | null;
   views_count: number;
   comments_count: number;
   reviews_count: number;
@@ -34,6 +35,7 @@ function DashboardContent() {
   const [docs, setDocs] = useState<Doc[]>([]);
   const [loading, setLoading] = useState(true);
   const [userEmail, setUserEmail] = useState("");
+  const [copiedSlug, setCopiedSlug] = useState<string | null>(null);
 
   useEffect(() => {
     async function load() {
@@ -107,29 +109,54 @@ function DashboardContent() {
           ) : (
             <div className="dashboard-docs">
               {docs.map((doc) => (
-                <Link
-                  key={doc.slug}
-                  href={`/share/${doc.slug}`}
-                  className="dashboard-doc-card"
-                >
-                  <div className="dashboard-doc-title">
-                    {doc.title || "Untitled"}
-                    <span className={`badge-vis badge-${doc.visibility}`}>
-                      {doc.visibility}
-                    </span>
-                    {doc.status === "review_closed" && (
-                      <span className="badge-status">closed</span>
-                    )}
-                  </div>
-                  <div className="dashboard-doc-stats">
-                    <span>{doc.views_count} views</span>
-                    <span>{doc.comments_count} comments</span>
-                    <span>{doc.reviews_count} reviews</span>
-                    <span className="dashboard-doc-date">
-                      {new Date(doc.updated_at).toLocaleDateString()}
-                    </span>
-                  </div>
-                </Link>
+                <div key={doc.slug} className="dashboard-doc-row">
+                  <Link
+                    href={`/share/${doc.slug}`}
+                    className="dashboard-doc-card"
+                  >
+                    <div className="dashboard-doc-title">
+                      {doc.title || "Untitled"}
+                      <span className={`badge-vis badge-${doc.visibility}`}>
+                        {doc.visibility}
+                      </span>
+                      {doc.status === "review_closed" && (
+                        <span className="badge-status">closed</span>
+                      )}
+                    </div>
+                    <div className="dashboard-doc-stats">
+                      <span>{doc.views_count} views</span>
+                      <span>{doc.comments_count} comments</span>
+                      <span>{doc.reviews_count} reviews</span>
+                      <span className="dashboard-doc-date">
+                        {new Date(doc.updated_at).toLocaleDateString()}
+                      </span>
+                    </div>
+                  </Link>
+                  {doc.visibility === "private" && doc.share_token && (
+                    <button
+                      className="dashboard-share-btn"
+                      title={copiedSlug === doc.slug ? "Copied!" : "Copy share link"}
+                      onClick={() => {
+                        const url = `${window.location.origin}/share/${doc.slug}?share_token=${encodeURIComponent(doc.share_token!)}`;
+                        navigator.clipboard.writeText(url);
+                        setCopiedSlug(doc.slug);
+                        setTimeout(() => setCopiedSlug(null), 2000);
+                      }}
+                    >
+                      {copiedSlug === doc.slug ? (
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="3.5 8.5 6.5 11.5 12.5 4.5" />
+                        </svg>
+                      ) : (
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M6 10.5L10 6.5" />
+                          <path d="M8.5 4.5L9.5 3.5a2.12 2.12 0 0 1 3 3L11.5 7.5" />
+                          <path d="M7.5 8.5L6.5 9.5a2.12 2.12 0 0 0 3 3l1-1" />
+                        </svg>
+                      )}
+                    </button>
+                  )}
+                </div>
               ))}
             </div>
           )}
