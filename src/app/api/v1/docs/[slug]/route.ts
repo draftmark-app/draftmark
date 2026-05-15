@@ -34,10 +34,13 @@ export async function GET(
   const isOwnerByToken = !!(tokenParam && doc.magicToken === hashToken(tokenParam));
   const hasApiKey = !!(apiKey && !apiKey.startsWith("acct_") && doc.apiKey === hashToken(apiKey));
 
-  // Check share token (unhashed, read-only access)
+  // Check share token (unhashed, read-only access).
+  // Accept via ?share_token=, x-share-token header, or ?token=share_... (matches share page).
   const shareTokenParam = new URL(request.url).searchParams.get("share_token") ||
     request.headers.get("x-share-token");
-  const hasShareToken = !!(shareTokenParam && doc.shareToken === shareTokenParam);
+  const hasShareToken =
+    !!(shareTokenParam && doc.shareToken === shareTokenParam) ||
+    !!(tokenParam && tokenParam.startsWith("share_") && doc.shareToken === tokenParam);
 
   // Check account ownership (session cookie or acct_ API key)
   const user = await getAuthenticatedUser(request);
