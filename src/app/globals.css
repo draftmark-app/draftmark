@@ -1619,6 +1619,16 @@ footer nav ul a { font-size: 14px; }
   border-bottom-color: var(--accent);
 }
 
+.tab-raw {
+  margin-left: auto;
+  text-decoration: none;
+  color: var(--muted);
+  display: inline-flex;
+  align-items: center;
+}
+
+.tab-raw:hover { color: var(--text); }
+
 /* VIEW PICKER (stakeholder views) */
 .view-picker {
   display: flex;

@@ -61,9 +61,10 @@ type DocViewProps = {
   isOwner?: boolean;
   editUrl?: string;
   authToken?: string;
+  rawUrl?: string | null;
 };
 
-export default function DocView({ doc, isOwner, editUrl, authToken }: DocViewProps) {
+export default function DocView({ doc, isOwner, editUrl, authToken, rawUrl }: DocViewProps) {
   const [activeTab, setActiveTab] = useState<"preview" | "source">("preview");
   const [activeView, setActiveView] = useState<string | null>(null);
   const [inlineComments, setInlineComments] = useState<InlineComment[]>([]);
@@ -158,6 +159,17 @@ export default function DocView({ doc, isOwner, editUrl, authToken }: DocViewPro
         >
           source
         </button>
+        {rawUrl && (
+          <a
+            className="tab tab-raw"
+            href={rawUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Raw markdown — share this URL with agents"
+          >
+            raw .md ↗
+          </a>
+        )}
       </div>
 
       {availableViews.length > 0 && activeTab === "preview" && (

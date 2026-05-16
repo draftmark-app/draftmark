@@ -101,16 +101,27 @@ export default async function DocPage({ params, searchParams }: Props) {
   }
 
   // Build share URL for owner banner
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "";
   const shareUrl = isOwner && doc.visibility === "private" && doc.shareToken
-    ? `${process.env.NEXT_PUBLIC_BASE_URL || ""}/share/${slug}?share_token=${encodeURIComponent(doc.shareToken)}`
+    ? `${baseUrl}/share/${slug}?share_token=${encodeURIComponent(doc.shareToken)}`
     : null;
+
+  // Build raw .md URL for current viewer. Prefer share_token for private docs
+  // (read-only, what you'd hand an agent) over the owner's magic_token.
+  const rawUrl = (() => {
+    if (doc.visibility === "public") return `${baseUrl}/share/${slug}.md`;
+    if (doc.shareToken) return `${baseUrl}/share/${slug}.md?token=${encodeURIComponent(doc.shareToken)}`;
+    if (hasValidToken) return `${baseUrl}/share/${slug}.md?token=${encodeURIComponent(token!)}`;
+    return null;
+  })();
 
   return (
     <>
       <Nav />
-      {shareUrl && <ShareBanner url={shareUrl} />}
+      {shareUrl && <ShareBanner url={shareUrl} rawUrl={rawUrl} />}
       <DocView
         authToken={hasValidToken ? token : undefined}
+        rawUrl={rawUrl}
         doc={{
           slug: doc.slug,
           title: doc.title,

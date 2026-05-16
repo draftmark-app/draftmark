@@ -2,13 +2,18 @@
 
 import { useState } from "react";
 
-export default function ShareBanner({ url }: { url: string }) {
-  const [copied, setCopied] = useState(false);
+type Props = {
+  url: string;
+  rawUrl?: string | null;
+};
 
-  function handleCopy() {
-    navigator.clipboard.writeText(url);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+export default function ShareBanner({ url, rawUrl }: Props) {
+  const [copied, setCopied] = useState<"url" | "raw" | null>(null);
+
+  function handleCopy(value: string, which: "url" | "raw") {
+    navigator.clipboard.writeText(value);
+    setCopied(which);
+    setTimeout(() => setCopied(null), 2000);
   }
 
   return (
@@ -21,9 +26,18 @@ export default function ShareBanner({ url }: { url: string }) {
         </svg>
         <span className="share-banner-label">Share this private doc:</span>
         <code className="share-banner-url">{url}</code>
-        <button className="share-banner-copy" onClick={handleCopy}>
-          {copied ? "copied!" : "copy"}
+        <button className="share-banner-copy" onClick={() => handleCopy(url, "url")}>
+          {copied === "url" ? "copied!" : "copy"}
         </button>
+        {rawUrl && (
+          <button
+            className="share-banner-copy"
+            onClick={() => handleCopy(rawUrl, "raw")}
+            title="Raw markdown URL — for agents"
+          >
+            {copied === "raw" ? "copied!" : "copy .md"}
+          </button>
+        )}
       </div>
     </div>
   );
