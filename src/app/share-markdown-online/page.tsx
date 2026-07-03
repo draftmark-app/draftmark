@@ -12,7 +12,7 @@ export const metadata = {
   description:
     "Share markdown online with a clean link in seconds. Paste or write markdown, get a shareable URL, and collect inline comments and reviews — no account required.",
   alternates: {
-    canonical: "https://draftmark.app/share-markdown-online",
+    canonical: "/share-markdown-online",
   },
   openGraph: {
     title: "Share Markdown Online — Draftmark",
@@ -36,7 +36,7 @@ const faq = [
   },
   {
     q: "Can I share markdown from the command line or an AI agent?",
-    a: "Yes. Install the CLI with npm i -g draftmark, or use the REST API directly. Pipe a file with dm create - < notes.md, or have an agent POST to /api/v1/docs and poll for feedback.",
+    a: "Yes. Install the CLI with npm install -g draftmark, or use the REST API directly. Pipe a file with dm create - < notes.md, or have an agent POST to /api/v1/docs and poll for feedback.",
   },
 ];
 
@@ -214,8 +214,8 @@ export default function ShareMarkdownOnlinePage() {
             <h3>Review tracking</h3>
             <p>
               Set an expected number of reviewers and a deadline. Draftmark
-              tells you when review is complete and closes feedback
-              automatically.
+              signals when the review threshold is met, and automatically stops
+              accepting feedback once the deadline passes.
             </p>
           </div>
         </div>
@@ -233,6 +233,15 @@ export default function ShareMarkdownOnlinePage() {
           ))}
         </div>
       </section>
+
+      <div className="related-links">
+        Compare Draftmark:{" "}
+        <Link href="/vs/github-gist">vs GitHub Gist</Link>
+        <span className="sep">&middot;</span>
+        <Link href="/vs/hackmd">vs HackMD</Link>
+        <span className="sep">&middot;</span>
+        <Link href="/vs/stackedit">vs StackEdit</Link>
+      </div>
 
       {/* CTA */}
       <section className="usecase-cta">

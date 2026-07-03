@@ -478,6 +478,17 @@ export default function Home() {
             <span className="usecase-card-link">learn more &rarr;</span>
           </Link>
         </div>
+        <div className="related-links">
+          <Link href="/share-markdown-online">share markdown online</Link>
+          <span className="sep">&middot;</span>
+          <Link href="/agents">for AI agents</Link>
+          <span className="sep">&middot;</span>
+          <Link href="/vs/github-gist">vs GitHub Gist</Link>
+          <span className="sep">&middot;</span>
+          <Link href="/vs/hackmd">vs HackMD</Link>
+          <span className="sep">&middot;</span>
+          <Link href="/vs/stackedit">vs StackEdit</Link>
+        </div>
       </section>
 
       {/* PRICING */}

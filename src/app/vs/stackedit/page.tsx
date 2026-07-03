@@ -14,7 +14,7 @@ export const metadata = {
   title: `Draftmark vs ${COMPETITOR}`,
   description: `Draftmark vs ${COMPETITOR}: StackEdit is an in-browser markdown editor; Draftmark is for sharing markdown and collecting reviews — inline comments, review tracking, and an agent-friendly REST API.`,
   alternates: {
-    canonical: "https://draftmark.app/vs/stackedit",
+    canonical: "/vs/stackedit",
   },
   openGraph: {
     title: `Draftmark vs ${COMPETITOR}`,
@@ -33,7 +33,7 @@ const faq = [
   },
   {
     q: `Can AI agents use Draftmark programmatically?`,
-    a: `Yes. Draftmark has a full REST API and a CLI (npm i -g draftmark): agents create docs, poll review status, and read comments as JSON. StackEdit has no comparable review API.`,
+    a: `Yes. Draftmark has a full REST API and a CLI (npm install -g draftmark): agents create docs, poll review status, and read comments as JSON. StackEdit has no comparable review API.`,
   },
 ];
 
@@ -63,8 +63,10 @@ const rows: Row[] = [
 ];
 
 function Cell({ value }: { value: string }) {
-  if (value === "yes") return <span className="compare-yes">&#10003;</span>;
-  if (value === "no") return <span className="compare-no">&mdash;</span>;
+  if (value === "yes")
+    return <span className="compare-yes" role="img" aria-label="Yes">&#10003;</span>;
+  if (value === "no")
+    return <span className="compare-no" role="img" aria-label="No">&mdash;</span>;
   return <>{value}</>;
 }
 
@@ -206,6 +208,15 @@ export default function DraftmarkVsStackeditPage() {
           ))}
         </div>
       </section>
+
+      <div className="related-links">
+        More comparisons:{" "}
+        <Link href="/vs/github-gist">vs GitHub Gist</Link>
+        <span className="sep">&middot;</span>
+        <Link href="/vs/hackmd">vs HackMD</Link>
+        <span className="sep">&middot;</span>
+        <Link href="/share-markdown-online">share markdown online</Link>
+      </div>
 
       {/* CTA */}
       <section className="usecase-cta">

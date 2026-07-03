@@ -15,7 +15,7 @@ export const metadata = {
   title: `Draftmark vs ${COMPETITOR}`,
   description: `Draftmark vs ${COMPETITOR} for sharing markdown: inline comments, review tracking, agent-friendly REST API, and no account required. See how they compare.`,
   alternates: {
-    canonical: "https://draftmark.app/vs/github-gist",
+    canonical: "/vs/github-gist",
   },
   openGraph: {
     title: `Draftmark vs ${COMPETITOR}`,
@@ -34,7 +34,7 @@ const faq = [
   },
   {
     q: `Can AI agents use Draftmark programmatically?`,
-    a: `Yes. Draftmark has a full REST API — agents create docs, poll for feedback, and consume comments as structured JSON. There's also a CLI (npm i -g draftmark).`,
+    a: `Yes. Draftmark has a full REST API — agents create docs, poll for feedback, and consume comments as structured JSON. There's also a CLI (npm install -g draftmark).`,
   },
 ];
 
@@ -56,7 +56,7 @@ const rows: Row[] = [
   { feature: "Reviewers need an account", draftmark: "No", competitor: "GitHub account required" },
   { feature: "Review tracking & deadlines", draftmark: "yes", competitor: "no" },
   { feature: "Reactions", draftmark: "yes", competitor: "no" },
-  { feature: "REST API for AI agents", draftmark: "yes", competitor: "no" },
+  { feature: "Review API (comments/status) for AI agents", draftmark: "yes", competitor: "General gist API, no review model" },
   { feature: "Mermaid diagrams", draftmark: "yes", competitor: "no" },
   { feature: "Raw markdown endpoint", draftmark: "yes", competitor: "yes" },
   { feature: "Version history", draftmark: "yes", competitor: "yes (revisions)" },
@@ -64,8 +64,10 @@ const rows: Row[] = [
 ];
 
 function Cell({ value }: { value: string }) {
-  if (value === "yes") return <span className="compare-yes">&#10003;</span>;
-  if (value === "no") return <span className="compare-no">&mdash;</span>;
+  if (value === "yes")
+    return <span className="compare-yes" role="img" aria-label="Yes">&#10003;</span>;
+  if (value === "no")
+    return <span className="compare-no" role="img" aria-label="No">&mdash;</span>;
   return <>{value}</>;
 }
 
@@ -187,8 +189,10 @@ export default function DraftmarkVsGithubGistPage() {
             <h3>Review lifecycle</h3>
             <p>
               Set <code>expected_reviews</code> and a{" "}
-              <code>review_deadline</code>. Draftmark tracks who reviewed and
-              closes feedback automatically. Gist has no concept of &ldquo;done.&rdquo;
+              <code>review_deadline</code>. Draftmark tracks who reviewed,
+              signals when the threshold is met, and stops accepting feedback on
+              the deadline or when you close the review. Gist has no concept of
+              &ldquo;done.&rdquo;
             </p>
           </div>
         </div>
@@ -206,6 +210,15 @@ export default function DraftmarkVsGithubGistPage() {
           ))}
         </div>
       </section>
+
+      <div className="related-links">
+        More comparisons:{" "}
+        <Link href="/vs/hackmd">vs HackMD</Link>
+        <span className="sep">&middot;</span>
+        <Link href="/vs/stackedit">vs StackEdit</Link>
+        <span className="sep">&middot;</span>
+        <Link href="/share-markdown-online">share markdown online</Link>
+      </div>
 
       {/* CTA */}
       <section className="usecase-cta">

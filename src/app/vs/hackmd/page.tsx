@@ -14,7 +14,7 @@ export const metadata = {
   title: `Draftmark vs ${COMPETITOR}`,
   description: `Draftmark vs ${COMPETITOR} for markdown collaboration: review tracking, inline comments, an agent-friendly REST API, and no account required for readers. See how they compare.`,
   alternates: {
-    canonical: "https://draftmark.app/vs/hackmd",
+    canonical: "/vs/hackmd",
   },
   openGraph: {
     title: `Draftmark vs ${COMPETITOR}`,
@@ -33,7 +33,7 @@ const faq = [
   },
   {
     q: `Can AI agents use Draftmark programmatically?`,
-    a: `Yes. Draftmark has a full REST API and a CLI (npm i -g draftmark) designed for the agent → human → agent handoff: agents create docs, poll review status, and read comments as JSON.`,
+    a: `Yes. Draftmark has a full REST API and a CLI (npm install -g draftmark) designed for the agent → human → agent handoff: agents create docs, poll review status, and read comments as JSON.`,
   },
 ];
 
@@ -63,8 +63,10 @@ const rows: Row[] = [
 ];
 
 function Cell({ value }: { value: string }) {
-  if (value === "yes") return <span className="compare-yes">&#10003;</span>;
-  if (value === "no") return <span className="compare-no">&mdash;</span>;
+  if (value === "yes")
+    return <span className="compare-yes" role="img" aria-label="Yes">&#10003;</span>;
+  if (value === "no")
+    return <span className="compare-no" role="img" aria-label="No">&mdash;</span>;
   return <>{value}</>;
 }
 
@@ -206,6 +208,15 @@ export default function DraftmarkVsHackmdPage() {
           ))}
         </div>
       </section>
+
+      <div className="related-links">
+        More comparisons:{" "}
+        <Link href="/vs/github-gist">vs GitHub Gist</Link>
+        <span className="sep">&middot;</span>
+        <Link href="/vs/stackedit">vs StackEdit</Link>
+        <span className="sep">&middot;</span>
+        <Link href="/share-markdown-online">share markdown online</Link>
+      </div>
 
       {/* CTA */}
       <section className="usecase-cta">
