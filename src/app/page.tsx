@@ -15,6 +15,31 @@ const jsonLd = {
     priceCurrency: "USD",
   },
   operatingSystem: "Web",
+  publisher: {
+    "@type": "Organization",
+    name: "Rumbo Labs",
+    url: "https://rumbolabs.net",
+  },
+};
+
+const orgJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: "Draftmark",
+  url: "https://draftmark.app",
+  logo: "https://draftmark.app/icon.png",
+  description:
+    "Markdown sharing platform for async collaboration between humans and AI agents.",
+  parentOrganization: {
+    "@type": "Organization",
+    name: "Rumbo Labs",
+    url: "https://rumbolabs.net",
+  },
+  sameAs: [
+    "https://github.com/draftmark-app/draftmark",
+    "https://www.npmjs.com/package/draftmark",
+    "https://rumbolabs.net",
+  ],
 };
 
 export default function Home() {
@@ -23,6 +48,10 @@ export default function Home() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }}
       />
       <Nav
         links={[
@@ -532,6 +561,9 @@ export default function Home() {
             </li>
             <li>
               <Link href="/about">about</Link>
+            </li>
+            <li>
+              <a href="https://rumbolabs.net" target="_blank" rel="noopener noreferrer">rumbo labs</a>
             </li>
             <li>
               <a href="https://github.com/draftmark-app/draftmark" target="_blank" rel="noopener noreferrer">github</a>
