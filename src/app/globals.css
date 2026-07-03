@@ -3540,6 +3540,78 @@ footer nav ul a { font-size: 14px; }
   border-radius: 2px;
 }
 
+/* Comparison Table (vs pages) */
+.compare-wrap {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 40px;
+  overflow-x: auto;
+}
+
+.compare-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.compare-table th,
+.compare-table td {
+  text-align: left;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+
+.compare-table thead th {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 12px;
+  letter-spacing: 0.03em;
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.compare-table thead th.compare-self {
+  color: var(--accent);
+}
+
+.compare-table tbody th {
+  font-weight: 400;
+  color: var(--text);
+  width: 34%;
+}
+
+.compare-table td {
+  color: var(--muted);
+}
+
+.compare-table td.compare-self {
+  color: var(--text);
+  background: var(--surface);
+}
+
+.compare-yes { color: var(--accent); font-weight: 500; }
+.compare-no { color: var(--muted); opacity: 0.55; }
+
+@media (max-width: 640px) {
+  .compare-wrap { padding: 0 20px; }
+  .compare-table th,
+  .compare-table td { padding: 10px 10px; font-size: 13px; }
+}
+
+/* Related / cross-links row (homepage + landing pages) */
+.related-links {
+  max-width: 900px;
+  margin: 28px auto 0;
+  padding: 0 40px;
+  text-align: center;
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.9;
+}
+.related-links a { color: var(--accent); text-decoration: none; }
+.related-links a:hover { text-decoration: underline; }
+.related-links .sep { margin: 0 8px; opacity: 0.45; }
+
 /* Use Cases Section (Homepage) */
 .usecases-section {
   max-width: 900px;

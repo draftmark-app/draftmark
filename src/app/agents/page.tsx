@@ -480,6 +480,9 @@ export default function AgentsPage() {
               <Link href="/about">about</Link>
             </li>
             <li>
+              <a href="https://rumbolabs.net" target="_blank" rel="noopener noreferrer">rumbo labs</a>
+            </li>
+            <li>
               <Link href="/privacy">privacy</Link>
             </li>
             <li>
