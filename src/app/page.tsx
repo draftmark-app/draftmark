@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Nav from "@/components/Nav";
+import SiteFooter from "@/components/SiteFooter";
 
 const jsonLd = {
   "@context": "https://schema.org",
@@ -554,40 +555,7 @@ export default function Home() {
         </div>
       </section>
 
-      <footer>
-        <Link href="/" className="logo">
-          draft<span>mark</span>
-        </Link>
-        <p>
-          open source <span>&middot;</span> MIT license <span>&middot;</span>{" "}
-          <a href="mailto:hello@draftmark.app" style={{ color: "inherit", textDecoration: "none" }}>hello@draftmark.app</a>
-        </p>
-        <nav>
-          <ul>
-            <li>
-              <Link href="/api-docs">api docs</Link>
-            </li>
-            <li>
-              <a href="https://www.npmjs.com/package/draftmark" target="_blank" rel="noopener noreferrer">cli</a>
-            </li>
-            <li>
-              <Link href="/about">about</Link>
-            </li>
-            <li>
-              <a href="https://rumbolabs.net" target="_blank" rel="noopener noreferrer">rumbo labs</a>
-            </li>
-            <li>
-              <a href="https://github.com/draftmark-app/draftmark" target="_blank" rel="noopener noreferrer">github</a>
-            </li>
-            <li>
-              <Link href="/privacy">privacy</Link>
-            </li>
-            <li>
-              <Link href="/terms">terms</Link>
-            </li>
-          </ul>
-        </nav>
-      </footer>
+      <SiteFooter variant="home" />
     </>
   );
 }
