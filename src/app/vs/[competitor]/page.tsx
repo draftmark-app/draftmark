@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
@@ -95,7 +96,7 @@ export default async function ComparisonPage({ params }: Props) {
         </div>
         <div className="usecase-hero-visual">
           {c.heroVisual.map((node, i) => (
-            <div key={node.label}>
+            <Fragment key={node.label}>
               <div
                 className={
                   node.highlight
@@ -109,7 +110,7 @@ export default async function ComparisonPage({ params }: Props) {
               {i < c.heroVisual.length - 1 ? (
                 <div className="usecase-visual-arrow">&darr;</div>
               ) : null}
-            </div>
+            </Fragment>
           ))}
         </div>
       </section>
