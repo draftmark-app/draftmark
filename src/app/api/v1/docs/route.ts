@@ -4,7 +4,6 @@ import { generateSlug, generateSeoSlug } from "@/lib/slug";
 import { generateMagicToken, generateApiKey, generateShareToken, hashToken } from "@/lib/tokens";
 import { extractTitleFromContent } from "@/lib/markdown";
 import { getAuthenticatedUser, canAccessPrivateResources } from "@/lib/auth";
-import { generateStakeholderViews } from "@/lib/openrouter";
 
 export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => null);
@@ -104,18 +103,6 @@ export async function POST(request: NextRequest) {
       },
     },
   });
-
-  // Fire-and-forget: generate stakeholder views in background
-  generateStakeholderViews(content, resolvedTitle)
-    .then(async (views) => {
-      if (!views) return;
-      const existingMeta = (meta as Record<string, unknown>) ?? {};
-      await prisma.doc.update({
-        where: { slug },
-        data: { meta: { ...existingMeta, views } },
-      });
-    })
-    .catch(() => {});
 
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || new URL(request.url).origin;
   const docUrl = `${baseUrl}/share/${doc.slug}`;

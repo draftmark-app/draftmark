@@ -100,7 +100,6 @@ paths:
         Bearer API key, magic token, or account key.
 
         Use `?format=raw` to get raw markdown as `text/markdown`.
-        Use `?view=executive|technical|ux` for stakeholder-specific views (if available).
 
         Shortcut: `GET /share/{slug}.md` returns raw markdown directly (via middleware rewrite).
       tags: [Documents]
@@ -116,12 +115,6 @@ paths:
             type: string
             enum: [raw]
           description: Set to `raw` to return markdown as `text/markdown`
-        - name: view
-          in: query
-          schema:
-            type: string
-            enum: [executive, technical, ux]
-          description: Return a stakeholder-specific view (if available in metadata)
         - name: token
           in: query
           schema:
@@ -923,11 +916,6 @@ components:
           type: [string, "null"]
         content:
           type: string
-        available_views:
-          type: array
-          items:
-            type: string
-          description: Stakeholder view names available (e.g. executive, technical, ux)
         visibility:
           type: string
           enum: [public, private]

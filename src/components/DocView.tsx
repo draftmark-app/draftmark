@@ -19,12 +19,6 @@ function estimateReadingTime(content: string): number {
   return Math.max(1, Math.ceil(words / 230));
 }
 
-type StakeholderView = {
-  content: string;
-  model: string;
-  generated_at: string;
-};
-
 type DocData = {
   slug: string;
   title: string | null;
@@ -39,7 +33,6 @@ type DocData = {
   currentVersion: number;
   createdAt: string;
   updatedAt: string;
-  views?: Record<string, StakeholderView>;
 };
 
 type InlineComment = {
@@ -66,7 +59,6 @@ type DocViewProps = {
 
 export default function DocView({ doc, isOwner, editUrl, authToken, rawUrl }: DocViewProps) {
   const [activeTab, setActiveTab] = useState<"preview" | "source">("preview");
-  const [activeView, setActiveView] = useState<string | null>(null);
   const [inlineComments, setInlineComments] = useState<InlineComment[]>([]);
   const [refreshKey, setRefreshKey] = useState(0);
   const previewRef = useRef<HTMLDivElement>(null);
@@ -79,10 +71,9 @@ export default function DocView({ doc, isOwner, editUrl, authToken, rawUrl }: Do
   const reviewComplete = doc.expectedReviews != null && doc.reviewsCount >= doc.expectedReviews;
 
   const selectionComments = inlineComments.filter((c) => c.anchor_type === "selection");
-  const availableViews = doc.views ? Object.keys(doc.views) : [];
 
   // Strip first H1 from content if it matches the displayed title (avoids duplication)
-  const fullContent = (() => {
+  const displayContent = (() => {
     if (!doc.title) return doc.content;
     const match = doc.content.match(/^#\s+(.+)\n?/);
     if (match && match[1].trim() === doc.title.trim()) {
@@ -90,11 +81,6 @@ export default function DocView({ doc, isOwner, editUrl, authToken, rawUrl }: Do
     }
     return doc.content;
   })();
-
-  // Use view content when a stakeholder view is selected
-  const displayContent = activeView && doc.views?.[activeView]
-    ? doc.views[activeView].content
-    : fullContent;
 
   const handleInlineCommentsLoaded = useCallback((comments: InlineComment[]) => {
     setInlineComments(comments);
@@ -155,7 +141,7 @@ export default function DocView({ doc, isOwner, editUrl, authToken, rawUrl }: Do
         </button>
         <button
           className={`tab ${activeTab === "source" ? "active" : ""}`}
-          onClick={() => { setActiveTab("source"); setActiveView(null); }}
+          onClick={() => setActiveTab("source")}
         >
           source
         </button>
@@ -171,26 +157,6 @@ export default function DocView({ doc, isOwner, editUrl, authToken, rawUrl }: Do
           </a>
         )}
       </div>
-
-      {availableViews.length > 0 && activeTab === "preview" && (
-        <div className="view-picker">
-          <button
-            className={`view-pill ${activeView === null ? "active" : ""}`}
-            onClick={() => setActiveView(null)}
-          >
-            full doc
-          </button>
-          {availableViews.map((v) => (
-            <button
-              key={v}
-              className={`view-pill ${activeView === v ? "active" : ""}`}
-              onClick={() => setActiveView(v)}
-            >
-              {v}
-            </button>
-          ))}
-        </div>
-      )}
 
       {activeTab === "preview" ? (
         <div className="doc-view-body" ref={previewRef} style={{ position: "relative" }}>
