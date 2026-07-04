@@ -295,14 +295,13 @@ export default function DocsPage() {
             <span className="method post">POST</span> /docs/:slug/reactions
           </h3>
           <p>
-            Add a reaction. Deduplicated by identifier per emoji per doc.
-            Returns <code>409</code> if the document is no longer accepting
-            feedback.
+            Add a reaction. Deduplicated per emoji per doc by a server-derived
+            identity (client IP, or account when authenticated). Returns{" "}
+            <code>409</code> if the document is no longer accepting feedback.
           </p>
           <div className="md-code">
             {`{
-  "emoji": "thumbs_up" | "check" | "thinking" | "cross",
-  "identifier": "unique-user-id"
+  "emoji": "thumbs_up" | "check" | "thinking" | "cross"
 }`}
           </div>
         </section>
@@ -319,14 +318,14 @@ export default function DocsPage() {
             <span className="method post">POST</span> /docs/:slug/reviews
           </h3>
           <p>
-            Mark a document as &quot;done reviewing&quot;. Deduplicated by
-            identifier. Returns <code>409</code> if the document is no longer
-            accepting feedback.
+            Mark a document as &quot;done reviewing&quot;. Deduplicated by a
+            server-derived identity (client IP, or account when authenticated).
+            Returns <code>409</code> if the document is no longer accepting
+            feedback.
           </p>
           <div className="md-code">
             {`{
-  "reviewer_name": "alice",
-  "identifier": "unique-user-id"
+  "reviewer_name": "alice"
 }`}
           </div>
         </section>

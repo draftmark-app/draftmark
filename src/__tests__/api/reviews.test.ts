@@ -38,7 +38,8 @@ describe("Reviews API", () => {
     expect(res.status).toBe(201);
     const data = await res.json();
     expect(data.reviewer_name).toBe("Alice");
-    expect(data.identifier).toBe("user-1");
+    // Dedup identity is server-derived and no longer exposed in the response.
+    expect(data.identifier).toBeUndefined();
   });
 
   it("POST /reviews defaults reviewer_name to anonymous", async () => {
@@ -80,16 +81,17 @@ describe("Reviews API", () => {
   it("GET /reviews returns all reviews", async () => {
     const { doc } = await createTestDoc();
 
+    // Distinct reviewers are simulated via distinct client IPs.
     await fetch(`${BASE_URL}/api/v1/docs/${doc.slug}/reviews`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ identifier: "user-1", reviewer_name: "Alice" }),
+      headers: { "Content-Type": "application/json", "cf-connecting-ip": "203.0.113.1" },
+      body: JSON.stringify({ reviewer_name: "Alice" }),
     });
 
     await fetch(`${BASE_URL}/api/v1/docs/${doc.slug}/reviews`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ identifier: "user-2", reviewer_name: "Bob" }),
+      headers: { "Content-Type": "application/json", "cf-connecting-ip": "203.0.113.2" },
+      body: JSON.stringify({ reviewer_name: "Bob" }),
     });
 
     const res = await fetch(`${BASE_URL}/api/v1/docs/${doc.slug}/reviews`);
@@ -98,6 +100,8 @@ describe("Reviews API", () => {
     expect(data.reviews).toHaveLength(2);
     expect(data.reviews[0].reviewer_name).toBe("Alice");
     expect(data.reviews[1].reviewer_name).toBe("Bob");
+    // Server-derived identity is not leaked to readers.
+    expect(data.reviews[0].identifier).toBeUndefined();
   });
 
   it("requires api_key for private doc reviews", async () => {
@@ -127,7 +131,7 @@ describe("Reviews API", () => {
     expect(res.status).toBe(201);
   });
 
-  it("POST /reviews requires identifier", async () => {
+  it("POST /reviews no longer requires a client identifier", async () => {
     const { doc } = await createTestDoc();
     const res = await fetch(`${BASE_URL}/api/v1/docs/${doc.slug}/reviews`, {
       method: "POST",
@@ -135,6 +139,42 @@ describe("Reviews API", () => {
       body: JSON.stringify({ reviewer_name: "Alice" }),
     });
 
-    expect(res.status).toBe(400);
+    expect(res.status).toBe(201);
+  });
+
+  it("dedups by server-derived identity even when the client varies its identifier", async () => {
+    const { doc } = await createTestDoc();
+    const ip = "203.0.113.77";
+
+    // Same client IP, different client-supplied identifiers — the old exploit
+    // that could inflate counts and flip review_complete. Must count as ONE.
+    for (const identifier of ["x", "y", "z"]) {
+      await fetch(`${BASE_URL}/api/v1/docs/${doc.slug}/reviews`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "cf-connecting-ip": ip },
+        body: JSON.stringify({ identifier, reviewer_name: "Spammer" }),
+      });
+    }
+
+    const res = await fetch(`${BASE_URL}/api/v1/docs/${doc.slug}/reviews`);
+    const data = await res.json();
+    expect(data.reviews).toHaveLength(1);
+  });
+
+  it("dedups same IP across different User-Agents (UA is not a spoofing dimension)", async () => {
+    const { doc } = await createTestDoc();
+    const ip = "203.0.113.88";
+
+    for (const ua of ["Mozilla/5.0 A", "Mozilla/5.0 B", "curl/8.0"]) {
+      await fetch(`${BASE_URL}/api/v1/docs/${doc.slug}/reviews`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "cf-connecting-ip": ip, "user-agent": ua },
+        body: JSON.stringify({ reviewer_name: "Spammer" }),
+      });
+    }
+
+    const res = await fetch(`${BASE_URL}/api/v1/docs/${doc.slug}/reviews`);
+    const data = await res.json();
+    expect(data.reviews).toHaveLength(1);
   });
 });

@@ -6,7 +6,6 @@ type Review = {
   id: string;
   reviewer_name: string;
   reviewer_type: string;
-  identifier: string;
   created_at: string;
 };
 
@@ -23,14 +22,9 @@ export default function ReviewsSection({ slug, reviewerName, setReviewerName, pe
   const [hasReviewed, setHasReviewed] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const getIdentifier = () => {
-    let identifier = localStorage.getItem("draftmark:identifier");
-    if (!identifier) {
-      identifier = crypto.randomUUID();
-      localStorage.setItem("draftmark:identifier", identifier);
-    }
-    return identifier;
-  };
+  // Server dedup is by IP/account, so "you reviewed this" is tracked locally
+  // (per-doc, per-browser) rather than derived from the response.
+  const reviewedKey = `draftmark:reviewed:${slug}`;
 
   const fetchReviews = useCallback(async () => {
     const tokenParam = authToken ? `?token=${encodeURIComponent(authToken)}` : "";
@@ -38,10 +32,9 @@ export default function ReviewsSection({ slug, reviewerName, setReviewerName, pe
     if (res.ok) {
       const data = await res.json();
       setReviews(data.reviews);
-      const identifier = getIdentifier();
-      setHasReviewed(data.reviews.some((r: Review) => r.identifier === identifier));
+      setHasReviewed(localStorage.getItem(reviewedKey) === "1");
     }
-  }, [slug, authToken]);
+  }, [slug, authToken, reviewedKey]);
 
   useEffect(() => {
     fetchReviews();
@@ -51,13 +44,11 @@ export default function ReviewsSection({ slug, reviewerName, setReviewerName, pe
     if (loading || hasReviewed) return;
     setLoading(true);
 
-    const identifier = getIdentifier();
     const tokenParam = authToken ? `?token=${encodeURIComponent(authToken)}` : "";
     const res = await fetch(`/api/v1/docs/${slug}/reviews${tokenParam}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        identifier,
         reviewer_name: reviewerName.trim() || "anonymous",
       }),
     });
@@ -66,6 +57,7 @@ export default function ReviewsSection({ slug, reviewerName, setReviewerName, pe
       const data = await res.json();
       setReviews((prev) => [...prev, data]);
       setHasReviewed(true);
+      localStorage.setItem(reviewedKey, "1");
       persistReviewerName(reviewerName);
     }
 
