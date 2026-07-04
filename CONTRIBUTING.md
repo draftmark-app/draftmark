@@ -78,10 +78,9 @@ src/__tests__/                — Unit and integration tests
 
 Some features require external API keys (see `.env.example`):
 
-- **Resend** — email notifications
-- **OpenRouter** — AI-powered stakeholder views
+- **Plunk** — email notifications
 
-These are optional. The app works without them — those features just won't be available.
+This is optional. The app works without it — magic links are logged to the console instead of emailed.
 
 ## Questions?
 
