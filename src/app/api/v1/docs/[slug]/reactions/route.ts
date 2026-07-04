@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { findDocWithReadAccess, checkAcceptingFeedback, getAuthenticatedUser } from "@/lib/auth";
 import { feedbackIdentity } from "@/lib/identity";
+import { enforceRateLimit, LIMITS } from "@/lib/ratelimit";
 
 type RouteContext = { params: Promise<{ slug: string }> };
 
@@ -40,6 +41,9 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
 
 export async function POST(request: NextRequest, { params }: RouteContext) {
   const { slug } = await params;
+  const limited = enforceRateLimit(request, LIMITS.react.bucket, LIMITS.react.limit, LIMITS.react.windowMs);
+  if (limited) return limited;
+
   const { doc, authorized } = await findDocWithReadAccess(slug, request);
 
   if (!doc) {

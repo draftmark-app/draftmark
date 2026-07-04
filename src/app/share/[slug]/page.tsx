@@ -77,9 +77,16 @@ export default async function DocPage({ params, searchParams }: Props) {
     data: { viewsCount: { increment: 1 } },
   }).catch(() => {});
 
-  // Check access: magic token, share token, or account ownership
+  // Check access: magic token, share token, or account ownership.
+  // The magic token normally arrives via the httpOnly cookie set by the
+  // middleware token->cookie exchange (kept out of the URL); ?token= is still
+  // honored for the first hop / API clients.
   const { hashToken } = await import("@/lib/tokens");
-  const hasValidToken = !!(token && doc.magicToken === hashToken(token));
+  const { cookies } = await import("next/headers");
+  const cookieMagic = (await cookies()).get(`dm_tok_${slug}`)?.value;
+  const hasValidToken =
+    !!(token && doc.magicToken === hashToken(token)) ||
+    !!(cookieMagic && doc.magicToken === hashToken(cookieMagic));
   // Share token can come via dedicated param or via token param (from prompt form)
   const hasShareToken = !!(share_token && doc.shareToken === share_token) ||
     !!(token && token.startsWith("share_") && doc.shareToken === token);
@@ -116,7 +123,9 @@ export default async function DocPage({ params, searchParams }: Props) {
   const rawUrl = (() => {
     if (doc.visibility === "public") return `${baseUrl}/share/${slug}.md`;
     if (doc.shareToken) return `${baseUrl}/share/${slug}.md?token=${encodeURIComponent(doc.shareToken)}`;
-    if (hasValidToken) return `${baseUrl}/share/${slug}.md?token=${encodeURIComponent(token!)}`;
+    // Owner without a share token: a clean .md URL works because the magic-token
+    // cookie (Path=/) is sent to the .md route too.
+    if (isOwner) return `${baseUrl}/share/${slug}.md`;
     return null;
   })();
 
@@ -143,13 +152,7 @@ export default async function DocPage({ params, searchParams }: Props) {
           updatedAt: doc.updatedAt.toISOString(),
         }}
         isOwner={isOwner}
-        editUrl={
-          hasValidToken
-            ? `/share/${slug}/edit?token=${encodeURIComponent(token!)}`
-            : isAccountOwner
-              ? `/share/${slug}/edit`
-              : undefined
-        }
+        editUrl={isOwner ? `/share/${slug}/edit` : undefined}
       />
     </>
   );

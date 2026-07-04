@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { findDocWithReadAccess, checkAcceptingFeedback } from "@/lib/auth";
+import { enforceRateLimit, LIMITS } from "@/lib/ratelimit";
 
 type RouteContext = { params: Promise<{ slug: string }> };
 
@@ -52,6 +53,9 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
 
 export async function POST(request: NextRequest, { params }: RouteContext) {
   const { slug } = await params;
+  const limited = enforceRateLimit(request, LIMITS.comment.bucket, LIMITS.comment.limit, LIMITS.comment.windowMs);
+  if (limited) return limited;
+
   const { doc, authorized } = await findDocWithReadAccess(slug, request);
 
   if (!doc) {

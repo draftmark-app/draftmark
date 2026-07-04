@@ -1,16 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams, useSearchParams, useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Nav from "@/components/Nav";
 import MarkdownPreview from "@/components/MarkdownPreview";
 
 export default function EditDocPage() {
   const params = useParams<{ slug: string }>();
-  const searchParams = useSearchParams();
   const router = useRouter();
   const slug = params.slug;
-  const token = searchParams.get("token");
 
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
@@ -25,36 +23,16 @@ export default function EditDocPage() {
   const [loaded, setLoaded] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
 
-  const [isAccountOwner, setIsAccountOwner] = useState(false);
-
   useEffect(() => {
     async function loadDoc() {
-      // Try loading with magic token if present, otherwise try account ownership
-      const url = token
-        ? `/api/v1/docs/${slug}?token=${encodeURIComponent(token)}`
-        : `/api/v1/docs/${slug}`;
-
-      const res = await fetch(url);
+      // Auth rides on cookies: the httpOnly magic-token cookie set by the
+      // token->cookie exchange, or the account session. No token in the URL.
+      const res = await fetch(`/api/v1/docs/${slug}`);
       if (!res.ok) {
-        if (!token) {
-          setError("You don't have access to edit this document.");
-        } else {
-          setError("Failed to load document. Check your magic token.");
-        }
+        setError("You don't have access to edit this document.");
         return;
       }
       const data = await res.json();
-
-      // If no magic token, verify we can PATCH (account owner)
-      if (!token) {
-        const meRes = await fetch("/api/auth/me");
-        const meData = await meRes.json();
-        if (!meData.user) {
-          setError("Sign in or provide a magic token to edit this document.");
-          return;
-        }
-        setIsAccountOwner(true);
-      }
 
       setTitle(data.title || "");
       setContent(data.content);
@@ -66,7 +44,7 @@ export default function EditDocPage() {
     }
 
     loadDoc();
-  }, [slug, token]);
+  }, [slug]);
 
   async function handleSave() {
     if (!content.trim()) {
@@ -78,17 +56,10 @@ export default function EditDocPage() {
     setError("");
 
     try {
-      const patchUrl = token
-        ? `/api/v1/docs/${slug}?token=${encodeURIComponent(token)}`
-        : `/api/v1/docs/${slug}`;
-      const headers: Record<string, string> = {
-        "Content-Type": "application/json",
-      };
-      if (token) headers["X-Magic-Token"] = token;
-
-      const res = await fetch(patchUrl, {
+      // Auth rides on the httpOnly magic-token cookie or account session.
+      const res = await fetch(`/api/v1/docs/${slug}`, {
         method: "PATCH",
-        headers,
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           content,
           title: title || undefined,
@@ -106,10 +77,7 @@ export default function EditDocPage() {
         return;
       }
 
-      const viewUrl = token && visibility === "private"
-        ? `/share/${slug}?token=${encodeURIComponent(token)}`
-        : `/share/${slug}`;
-      router.push(viewUrl);
+      router.push(`/share/${slug}`);
     } catch {
       setError("Failed to save document");
     } finally {
@@ -122,11 +90,9 @@ export default function EditDocPage() {
     setError("");
 
     try {
-      const deleteHeaders: Record<string, string> = {};
-      if (token) deleteHeaders["X-Magic-Token"] = token;
+      // Auth rides on the httpOnly magic-token cookie or account session.
       const res = await fetch(`/api/v1/docs/${slug}`, {
         method: "DELETE",
-        headers: deleteHeaders,
       });
 
       if (!res.ok) {
