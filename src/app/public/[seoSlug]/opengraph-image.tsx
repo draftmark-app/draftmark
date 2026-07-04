@@ -12,10 +12,13 @@ export default async function OGImage({
   params: Promise<{ seoSlug: string }>;
 }) {
   const { seoSlug } = await params;
-  const doc = await prisma.doc.findUnique({
+  const found = await prisma.doc.findUnique({
     where: { seoSlug },
-    select: { title: true, content: true },
+    select: { title: true, content: true, visibility: true },
   });
+  // Only public docs are served here; a stale seoSlug on a now-private doc
+  // must not leak its title or content.
+  const doc = found?.visibility === "public" ? found : null;
 
   const title = doc?.title || "Untitled";
 

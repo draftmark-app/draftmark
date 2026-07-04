@@ -16,11 +16,14 @@ export async function generateMetadata({ params }: Props) {
   if (!doc) return { title: "Not found — Draftmark" };
 
   const title = doc.title || "Untitled";
-  const description = doc.content
-    .replace(/^#.*\n/gm, "")
-    .replace(/[*_`~\[\]]/g, "")
-    .trim()
-    .slice(0, 160);
+  // Never expose private content in metadata served before the token gate.
+  const description = doc.visibility === "public"
+    ? doc.content
+        .replace(/^#.*\n/gm, "")
+        .replace(/[*_`~\[\]]/g, "")
+        .trim()
+        .slice(0, 160)
+    : "A private document on Draftmark.";
 
   return {
     title: `${title} — Draftmark`,

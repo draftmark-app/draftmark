@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { authorizeCollectionWithMagicToken } from "@/lib/auth";
+import { hashToken } from "@/lib/tokens";
 
 type RouteContext = { params: Promise<{ slug: string }> };
 
@@ -54,7 +55,9 @@ export async function GET(
       label: cd.label,
       position: cd.position,
       visibility: cd.doc.visibility,
-      views_count: cd.doc.viewsCount,
+      // views_count is an owner-only field; this endpoint is unauthenticated,
+      // so only expose it for public docs.
+      views_count: cd.doc.visibility === "public" ? cd.doc.viewsCount : null,
       comments_count: cd.doc._count.comments,
       reviews_count: cd.doc._count.reviews,
       created_at: cd.doc.createdAt.toISOString(),
@@ -105,9 +108,17 @@ export async function PATCH(
     for (const entry of add_docs) {
       const doc = await prisma.doc.findUnique({
         where: { slug: entry.slug },
-        select: { id: true },
+        select: { id: true, visibility: true, magicToken: true },
       });
       if (!doc) continue;
+
+      // A private doc can only be added by someone who proves ownership with
+      // its magic token. Otherwise anyone could attach another user's private
+      // doc to a public collection to expose its metadata.
+      if (doc.visibility === "private") {
+        const docToken = entry.token || entry.magic_token;
+        if (!docToken || doc.magicToken !== hashToken(docToken)) continue;
+      }
 
       await prisma.collectionDoc.upsert({
         where: {
