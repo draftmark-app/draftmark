@@ -2,8 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { generateLoginToken, hashToken } from "@/lib/tokens";
 import { sendMagicLinkEmail } from "@/lib/email";
+import { enforceRateLimit, LIMITS } from "@/lib/ratelimit";
 
 export async function POST(request: NextRequest) {
+  const limited = enforceRateLimit(request, LIMITS.login.bucket, LIMITS.login.limit, LIMITS.login.windowMs);
+  if (limited) return limited;
+
   const body = await request.json().catch(() => null);
   if (!body?.email || typeof body.email !== "string") {
     return NextResponse.json(

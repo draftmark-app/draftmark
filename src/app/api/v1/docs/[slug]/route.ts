@@ -30,7 +30,10 @@ export async function GET(
     ? authHeader.slice(7)
     : null;
 
-  const isOwnerByToken = !!(tokenParam && doc.magicToken === hashToken(tokenParam));
+  const cookieToken = request.cookies.get(`dm_tok_${slug}`)?.value;
+  const isOwnerByToken =
+    !!(tokenParam && doc.magicToken === hashToken(tokenParam)) ||
+    !!(cookieToken && doc.magicToken === hashToken(cookieToken));
   const hasApiKey = !!(apiKey && !apiKey.startsWith("acct_") && doc.apiKey === hashToken(apiKey));
 
   // Check share token (unhashed, read-only access).

@@ -4,8 +4,12 @@ import { generateSlug, generateSeoSlug } from "@/lib/slug";
 import { generateMagicToken, generateApiKey, generateShareToken, hashToken } from "@/lib/tokens";
 import { extractTitleFromContent } from "@/lib/markdown";
 import { getAuthenticatedUser, canAccessPrivateResources } from "@/lib/auth";
+import { enforceRateLimit, LIMITS } from "@/lib/ratelimit";
 
 export async function POST(request: NextRequest) {
+  const limited = enforceRateLimit(request, LIMITS.createDoc.bucket, LIMITS.createDoc.limit, LIMITS.createDoc.windowMs);
+  if (limited) return limited;
+
   const body = await request.json().catch(() => null);
 
   if (!body || !body.content) {

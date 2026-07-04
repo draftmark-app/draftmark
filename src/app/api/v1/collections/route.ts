@@ -2,8 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { generateSlug } from "@/lib/slug";
 import { generateMagicToken, generateApiKey, hashToken } from "@/lib/tokens";
+import { enforceRateLimit, LIMITS } from "@/lib/ratelimit";
 
 export async function POST(request: NextRequest) {
+  const limited = enforceRateLimit(request, LIMITS.createCollection.bucket, LIMITS.createCollection.limit, LIMITS.createCollection.windowMs);
+  if (limited) return limited;
+
   const body = await request.json().catch(() => null);
 
   if (!body || !body.title) {

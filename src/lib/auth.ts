@@ -15,11 +15,15 @@ export async function authorizeWithMagicToken(
   request: NextRequest,
   slug: string
 ): Promise<AuthResult> {
-  const magicToken =
-    request.headers.get("x-magic-token") ||
-    new URL(request.url).searchParams.get("token");
+  // All magic-token sources are checked independently so a stray/wrong ?token=
+  // in the URL can't shadow a valid header or cookie.
+  const candidates = [
+    request.headers.get("x-magic-token"),
+    new URL(request.url).searchParams.get("token"),
+    request.cookies.get(`dm_tok_${slug}`)?.value ?? null,
+  ].filter((t): t is string => !!t);
 
-  if (!magicToken) {
+  if (candidates.length === 0) {
     return { authorized: false, error: "Magic token required", status: 401 };
   }
 
@@ -28,7 +32,7 @@ export async function authorizeWithMagicToken(
     return { authorized: false, error: "Document not found", status: 404 };
   }
 
-  if (doc.magicToken !== hashToken(magicToken)) {
+  if (!candidates.some((t) => doc.magicToken === hashToken(t))) {
     return { authorized: false, error: "Invalid magic token", status: 403 };
   }
 
@@ -180,11 +184,15 @@ export async function findDocWithReadAccess(
     return { doc, authorized: true };
   }
 
-  // Check magic token (query param or header)
-  const magicToken =
-    request.headers.get("x-magic-token") ||
-    new URL(request.url).searchParams.get("token");
-  if (magicToken && doc.magicToken === hashToken(magicToken)) {
+  // Check magic token from any independent source (header, query param, or the
+  // httpOnly per-doc cookie set by the middleware token->cookie exchange) so a
+  // stray/wrong ?token= can't shadow a valid cookie.
+  const magicCandidates = [
+    request.headers.get("x-magic-token"),
+    new URL(request.url).searchParams.get("token"),
+    request.cookies.get(`dm_tok_${slug}`)?.value ?? null,
+  ].filter((t): t is string => !!t);
+  if (magicCandidates.some((t) => doc.magicToken === hashToken(t))) {
     return { doc, authorized: true };
   }
 
