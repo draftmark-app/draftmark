@@ -15,12 +15,17 @@ export async function generateMetadata({ params }: Props) {
   const doc = await prisma.doc.findUnique({ where: { slug } });
   if (!doc) return { title: "Not found — Draftmark" };
 
-  const title = doc.title || "Untitled";
-  const description = doc.content
-    .replace(/^#.*\n/gm, "")
-    .replace(/[*_`~\[\]]/g, "")
-    .trim()
-    .slice(0, 160);
+  // Never expose private content (title is derived from the first heading, and
+  // the description from the body) in metadata served before the token gate.
+  const isPublic = doc.visibility === "public";
+  const title = isPublic ? doc.title || "Untitled" : "Private document";
+  const description = isPublic
+    ? doc.content
+        .replace(/^#.*\n/gm, "")
+        .replace(/[*_`~\[\]]/g, "")
+        .trim()
+        .slice(0, 160)
+    : "A private document on Draftmark.";
 
   return {
     title: `${title} — Draftmark`,

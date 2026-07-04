@@ -4,6 +4,11 @@ import MarkdownPreview from "@/components/MarkdownPreview";
 import type { Metadata } from "next";
 import Link from "next/link";
 
+// Served from live doc state; avoid caching a render whose doc later goes
+// private (its seoSlug is cleared on that transition, but any cached HTML for
+// the old path must not linger).
+export const dynamic = "force-dynamic";
+
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://draftmark.app";
 
 type Props = {

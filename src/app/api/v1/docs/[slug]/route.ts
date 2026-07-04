@@ -173,6 +173,11 @@ export async function PATCH(
     if (visibility === "private" && !ownerDoc!.shareToken) {
       updateData.shareToken = generateShareToken();
     }
+    // Retract the public SEO slug when going private so it no longer resolves
+    // via /public/[seoSlug] or its OG image.
+    if (visibility === "private") {
+      updateData.seoSlug = null;
+    }
   }
   if (status !== undefined) {
     if (status !== "open" && status !== "review_closed") {
