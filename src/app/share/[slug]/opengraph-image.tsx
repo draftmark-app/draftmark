@@ -2,6 +2,9 @@ import { ImageResponse } from "next/og";
 import { prisma } from "@/lib/prisma";
 
 export const runtime = "nodejs";
+// Rendered from live doc state (visibility can change); never serve a cached
+// image that could retain a now-private doc's title/content.
+export const dynamic = "force-dynamic";
 export const alt = "Draftmark document";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
@@ -17,11 +20,12 @@ export default async function OGImage({
     select: { title: true, content: true, visibility: true },
   });
 
-  const title = doc?.title || "Untitled";
   const isPrivate = doc?.visibility === "private";
+  // Private docs must not reveal title or content in a publicly-fetchable image.
+  const title = isPrivate ? "Private document" : doc?.title || "Untitled";
 
   // Extract a content preview: strip markdown syntax, take first ~200 chars
-  const preview = doc
+  const preview = doc && !isPrivate
     ? doc.content
         .replace(/^#{1,6}\s+.*$/gm, "") // headings
         .replace(/```[\s\S]*?```/g, "") // code blocks

@@ -161,6 +161,37 @@ describe("Doc CRUD", () => {
 
       expect(updated.visibility).toBe("private");
     });
+
+    it("clears the SEO slug when a public doc is switched to private", async () => {
+      // Create through the API so a seoSlug is generated for the public doc.
+      const createRes = await fetch(`${BASE_URL}/api/v1/docs`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          content: "# Retract Me\n\nsecret",
+          title: "Retract Me",
+          visibility: "public",
+        }),
+      });
+      const created = await createRes.json();
+      const before = await prisma.doc.findUnique({ where: { slug: created.slug } });
+      expect(before?.seoSlug).toBeTruthy();
+
+      // Flip to private via the API.
+      const patchRes = await fetch(`${BASE_URL}/api/v1/docs/${created.slug}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          "x-magic-token": created.magic_token,
+        },
+        body: JSON.stringify({ visibility: "private" }),
+      });
+      expect(patchRes.status).toBe(200);
+
+      const after = await prisma.doc.findUnique({ where: { slug: created.slug } });
+      expect(after?.visibility).toBe("private");
+      expect(after?.seoSlug).toBeNull();
+    });
   });
 
   describe("GET /docs/:slug social data", () => {

@@ -15,7 +15,7 @@ type CollectionDocData = {
   label: string | null;
   position: number;
   visibility: string;
-  viewsCount: number;
+  viewsCount: number | null;
   commentsCount: number;
   reviewsCount: number;
   contentPreview: string;
@@ -75,7 +75,7 @@ export default function CollectionView({
                 {doc.contentPreview.length > 120 ? "..." : ""}
               </p>
               <div className="collection-doc-stats">
-                <span>{doc.viewsCount} views</span>
+                {doc.viewsCount !== null && <span>{doc.viewsCount} views</span>}
                 <span>{doc.commentsCount} comments</span>
                 <span>{doc.reviewsCount} reviews</span>
               </div>

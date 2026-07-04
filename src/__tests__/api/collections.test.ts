@@ -241,6 +241,70 @@ describe("Collections API", () => {
     expect(res.status).toBe(401);
   });
 
+  it("PATCH add_docs skips a private doc when no ownership token is provided", async () => {
+    const collection = await createTestCollection();
+    const { doc } = await createTestDoc({ visibility: "private" });
+
+    // Attacker knows the slug but not the doc's magic token.
+    await fetch(`${BASE_URL}/api/v1/collections/${collection.slug}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        "x-magic-token": collection.magic_token,
+      },
+      body: JSON.stringify({ add_docs: [{ slug: doc.slug }] }),
+    });
+
+    const res = await fetch(`${BASE_URL}/api/v1/collections/${collection.slug}`);
+    const data = await res.json();
+    expect(data.docs).toHaveLength(0);
+  });
+
+  it("PATCH add_docs adds a private doc when the correct doc token is provided, and masks its metadata", async () => {
+    const collection = await createTestCollection();
+    const { doc, rawMagicToken } = await createTestDoc({ visibility: "private" });
+
+    await fetch(`${BASE_URL}/api/v1/collections/${collection.slug}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        "x-magic-token": collection.magic_token,
+      },
+      body: JSON.stringify({
+        add_docs: [{ slug: doc.slug, token: rawMagicToken }],
+      }),
+    });
+
+    const res = await fetch(`${BASE_URL}/api/v1/collections/${collection.slug}`);
+    const data = await res.json();
+    expect(data.docs).toHaveLength(1);
+    const member = data.docs[0];
+    expect(member.slug).toBe(doc.slug);
+    expect(member.visibility).toBe("private");
+    // Private members must not leak content-derived title or owner-only views.
+    expect(member.title).toBeNull();
+    expect(member.views_count).toBeNull();
+  });
+
+  it("GET /collections/:slug still exposes public members' title and views_count", async () => {
+    const collection = await createTestCollection();
+    const { doc } = await createTestDoc(); // public
+
+    await fetch(`${BASE_URL}/api/v1/collections/${collection.slug}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        "x-magic-token": collection.magic_token,
+      },
+      body: JSON.stringify({ add_docs: [{ slug: doc.slug }] }),
+    });
+
+    const res = await fetch(`${BASE_URL}/api/v1/collections/${collection.slug}`);
+    const data = await res.json();
+    expect(data.docs[0].title).toBe("Test Doc");
+    expect(typeof data.docs[0].views_count).toBe("number");
+  });
+
   it("PATCH /collections/:slug deduplicates adding same doc twice", async () => {
     const collection = await createTestCollection();
     const { doc } = await createTestDoc();
