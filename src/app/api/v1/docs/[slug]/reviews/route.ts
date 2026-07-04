@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { findDocWithReadAccess, checkAcceptingFeedback } from "@/lib/auth";
+import { feedbackIdentity } from "@/lib/identity";
 
 type RouteContext = { params: Promise<{ slug: string }> };
 
@@ -28,7 +29,6 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
       id: r.id,
       reviewer_name: r.reviewerName,
       reviewer_type: r.reviewerType,
-      identifier: r.identifier,
       created_at: r.createdAt.toISOString(),
     })),
   });
@@ -52,20 +52,19 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
   const feedbackCheck = checkAcceptingFeedback(doc);
   if (feedbackCheck) return feedbackCheck;
 
-  const body = await request.json().catch(() => null);
-  if (!body || !body.identifier) {
-    return NextResponse.json(
-      { error: "identifier is required" },
-      { status: 400 }
-    );
-  }
+  const body = (await request.json().catch(() => null)) ?? {};
 
-  // Upsert: dedup by identifier per doc
+  // Dedup identity is derived server-side (IP + UA), never from the client, so
+  // a caller can't mint unlimited reviews (and flip review_complete) by varying
+  // a localStorage id.
+  const identifier = feedbackIdentity(request);
+
+  // Upsert: one review per identity per doc
   const review = await prisma.review.upsert({
     where: {
       docId_identifier: {
         docId: doc.id,
-        identifier: body.identifier,
+        identifier,
       },
     },
     update: {},
@@ -73,7 +72,7 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
       docId: doc.id,
       reviewerName: body.reviewer_name || "anonymous",
       reviewerType: body.reviewer_type === "agent" ? "agent" : "human",
-      identifier: body.identifier,
+      identifier,
     },
   });
 
@@ -82,7 +81,6 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
       id: review.id,
       reviewer_name: review.reviewerName,
       reviewer_type: review.reviewerType,
-      identifier: review.identifier,
       created_at: review.createdAt.toISOString(),
     },
     { status: 201 }

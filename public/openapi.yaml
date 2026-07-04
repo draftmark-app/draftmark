@@ -373,8 +373,9 @@ paths:
       operationId: addReaction
       summary: Add a reaction
       description: |
-        Deduplicated by `(docId, emoji, identifier)`. If the same reaction already exists,
-        the existing one is returned (no duplicate created). Returns 409 if not accepting feedback.
+        Deduplicated by document, emoji, and a server-derived identity (client IP + user agent).
+        If the same reaction already exists, the existing one is returned (no duplicate created).
+        Returns 409 if not accepting feedback.
       tags: [Reactions]
       security:
         - {}
@@ -431,8 +432,9 @@ paths:
       operationId: markReviewed
       summary: Mark document as reviewed
       description: |
-        Deduplicated by `(docId, identifier)`. If already reviewed by this identifier,
-        the existing review is returned. Returns 409 if not accepting feedback.
+        Deduplicated by document and a server-derived identity (client IP + user agent).
+        If already reviewed by that identity, the existing review is returned.
+        Returns 409 if not accepting feedback.
       tags: [Reviews]
       security:
         - {}
@@ -1162,24 +1164,26 @@ components:
 
     AddReactionRequest:
       type: object
-      required: [emoji, identifier]
+      required: [emoji]
       properties:
         emoji:
           type: string
           enum: [thumbs_up, check, thinking, cross]
         identifier:
           type: string
-          description: Unique identifier for dedup (one per emoji per doc per identifier)
+          deprecated: true
+          description: >-
+            Ignored. Dedup identity is derived server-side from the request
+            (client IP + user agent); a client-supplied identifier is no longer
+            trusted.
 
     Reaction:
       type: object
-      required: [id, emoji, identifier, created_at]
+      required: [id, emoji, created_at]
       properties:
         id:
           type: string
         emoji:
-          type: string
-        identifier:
           type: string
         created_at:
           type: string
@@ -1188,7 +1192,7 @@ components:
     # ── Review schemas ─────────────────────────────────────
     Review:
       type: object
-      required: [id, reviewer_name, reviewer_type, identifier, created_at]
+      required: [id, reviewer_name, reviewer_type, created_at]
       properties:
         id:
           type: string
@@ -1197,19 +1201,20 @@ components:
         reviewer_type:
           type: string
           enum: [human, agent]
-        identifier:
-          type: string
         created_at:
           type: string
           format: date-time
 
     MarkReviewedRequest:
       type: object
-      required: [identifier]
       properties:
         identifier:
           type: string
-          description: Unique identifier for dedup (one review per doc per identifier)
+          deprecated: true
+          description: >-
+            Ignored. Dedup identity is derived server-side from the request
+            (client IP + user agent); a client-supplied identifier is no longer
+            trusted.
         reviewer_name:
           type: string
           default: anonymous

@@ -38,7 +38,8 @@ describe("Reactions API", () => {
     expect(res.status).toBe(201);
     const data = await res.json();
     expect(data.emoji).toBe("thumbs_up");
-    expect(data.identifier).toBe("user-1");
+    // Dedup identity is server-derived; the client identifier is not echoed.
+    expect(data.identifier).toBeUndefined();
   });
 
   it("POST /reactions deduplicates same emoji+identifier", async () => {
@@ -100,16 +101,17 @@ describe("Reactions API", () => {
   it("GET /reactions returns grouped counts", async () => {
     const { doc } = await createTestDoc();
 
+    // Distinct clients are simulated via distinct client IPs (cf-connecting-ip).
     await fetch(`${BASE_URL}/api/v1/docs/${doc.slug}/reactions`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ emoji: "thumbs_up", identifier: "user-1" }),
+      headers: { "Content-Type": "application/json", "cf-connecting-ip": "203.0.113.1" },
+      body: JSON.stringify({ emoji: "thumbs_up" }),
     });
 
     await fetch(`${BASE_URL}/api/v1/docs/${doc.slug}/reactions`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ emoji: "thumbs_up", identifier: "user-2" }),
+      headers: { "Content-Type": "application/json", "cf-connecting-ip": "203.0.113.2" },
+      body: JSON.stringify({ emoji: "thumbs_up" }),
     });
 
     const res = await fetch(`${BASE_URL}/api/v1/docs/${doc.slug}/reactions`);
@@ -119,6 +121,25 @@ describe("Reactions API", () => {
     expect(data.reactions.check).toBe(0);
     expect(data.reactions.thinking).toBe(0);
     expect(data.reactions.cross).toBe(0);
+  });
+
+  it("dedups by server-derived identity even when the client varies its identifier", async () => {
+    const { doc } = await createTestDoc();
+    const ip = "203.0.113.99";
+
+    // Same client IP, three different client-supplied identifiers — the old
+    // exploit. Must still count as ONE reaction.
+    for (const identifier of ["a", "b", "c"]) {
+      await fetch(`${BASE_URL}/api/v1/docs/${doc.slug}/reactions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "cf-connecting-ip": ip },
+        body: JSON.stringify({ emoji: "thumbs_up", identifier }),
+      });
+    }
+
+    const res = await fetch(`${BASE_URL}/api/v1/docs/${doc.slug}/reactions`);
+    const data = await res.json();
+    expect(data.reactions.thumbs_up).toBe(1);
   });
 
   it("requires api_key for private doc reactions", async () => {

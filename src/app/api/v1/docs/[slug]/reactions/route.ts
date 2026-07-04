@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { findDocWithReadAccess, checkAcceptingFeedback } from "@/lib/auth";
+import { feedbackIdentity } from "@/lib/identity";
 
 type RouteContext = { params: Promise<{ slug: string }> };
 
@@ -56,9 +57,9 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
   if (feedbackCheck) return feedbackCheck;
 
   const body = await request.json().catch(() => null);
-  if (!body || !body.emoji || !body.identifier) {
+  if (!body || !body.emoji) {
     return NextResponse.json(
-      { error: "emoji and identifier are required" },
+      { error: "emoji is required" },
       { status: 400 }
     );
   }
@@ -70,20 +71,24 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
     );
   }
 
+  // Dedup identity is derived server-side (IP + UA), never from the client, so
+  // a caller can't mint unlimited reactions by varying a localStorage id.
+  const identifier = feedbackIdentity(request);
+
   // Upsert: if already exists, return existing (dedup)
   const reaction = await prisma.reaction.upsert({
     where: {
       docId_emoji_identifier: {
         docId: doc.id,
         emoji: body.emoji,
-        identifier: body.identifier,
+        identifier,
       },
     },
     update: {},
     create: {
       docId: doc.id,
       emoji: body.emoji,
-      identifier: body.identifier,
+      identifier,
     },
   });
 
@@ -91,7 +96,6 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
     {
       id: reaction.id,
       emoji: reaction.emoji,
-      identifier: reaction.identifier,
       created_at: reaction.createdAt.toISOString(),
     },
     { status: 201 }
