@@ -2,6 +2,9 @@ import { ImageResponse } from "next/og";
 import { prisma } from "@/lib/prisma";
 
 export const runtime = "nodejs";
+// Rendered from live doc state (visibility can change); never serve a cached
+// image that could retain a now-private doc's title/content.
+export const dynamic = "force-dynamic";
 export const alt = "Draftmark document";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";

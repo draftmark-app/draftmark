@@ -55,11 +55,12 @@ export default async function CollectionPage({ params }: Props) {
     const isPublic = cd.doc.visibility === "public";
     return {
       slug: cd.doc.slug,
-      title: cd.doc.title,
+      // A private doc's title is derived from its content — don't expose it.
+      title: isPublic ? cd.doc.title : null,
       label: cd.label,
       position: cd.position,
       visibility: cd.doc.visibility,
-      viewsCount: isPublic ? cd.doc.viewsCount : 0,
+      viewsCount: isPublic ? cd.doc.viewsCount : null,
       commentsCount: cd.doc._count.comments,
       reviewsCount: cd.doc._count.reviews,
       contentPreview: isPublic ? cd.doc.content.slice(0, 200) : "",

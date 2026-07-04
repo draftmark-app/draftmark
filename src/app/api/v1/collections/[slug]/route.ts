@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { authorizeCollectionWithMagicToken } from "@/lib/auth";
+import { authorizeCollectionWithMagicToken, getAuthenticatedUser } from "@/lib/auth";
 import { hashToken } from "@/lib/tokens";
 
 type RouteContext = { params: Promise<{ slug: string }> };
@@ -49,20 +49,24 @@ export async function GET(
     title: collection.title,
     created_at: collection.createdAt.toISOString(),
     updated_at: collection.updatedAt.toISOString(),
-    docs: collection.docs.map((cd) => ({
-      slug: cd.doc.slug,
-      title: cd.doc.title,
-      label: cd.label,
-      position: cd.position,
-      visibility: cd.doc.visibility,
-      // views_count is an owner-only field; this endpoint is unauthenticated,
-      // so only expose it for public docs.
-      views_count: cd.doc.visibility === "public" ? cd.doc.viewsCount : null,
-      comments_count: cd.doc._count.comments,
-      reviews_count: cd.doc._count.reviews,
-      created_at: cd.doc.createdAt.toISOString(),
-      updated_at: cd.doc.updatedAt.toISOString(),
-    })),
+    docs: collection.docs.map((cd) => {
+      // This endpoint is unauthenticated. A private doc's title is auto-derived
+      // from its first heading, so it is content — expose neither it nor the
+      // owner-only view count to anonymous callers.
+      const isPublic = cd.doc.visibility === "public";
+      return {
+        slug: cd.doc.slug,
+        title: isPublic ? cd.doc.title : null,
+        label: cd.label,
+        position: cd.position,
+        visibility: cd.doc.visibility,
+        views_count: isPublic ? cd.doc.viewsCount : null,
+        comments_count: cd.doc._count.comments,
+        reviews_count: cd.doc._count.reviews,
+        created_at: cd.doc.createdAt.toISOString(),
+        updated_at: cd.doc.updatedAt.toISOString(),
+      };
+    }),
   });
 }
 
@@ -105,19 +109,31 @@ export async function PATCH(
     });
     let nextPos = (maxPos?.position ?? -1) + 1;
 
+    // Resolved once; used to let account owners add their own private docs
+    // without having to supply each doc's magic token.
+    const accountUserId = (await getAuthenticatedUser(request))?.id ?? null;
+
     for (const entry of add_docs) {
       const doc = await prisma.doc.findUnique({
         where: { slug: entry.slug },
-        select: { id: true, visibility: true, magicToken: true },
+        select: { id: true, visibility: true, magicToken: true, userId: true },
       });
       if (!doc) continue;
 
-      // A private doc can only be added by someone who proves ownership with
-      // its magic token. Otherwise anyone could attach another user's private
-      // doc to a public collection to expose its metadata.
+      // A private doc can only be added by someone who proves ownership —
+      // either its magic token or an authenticated account that owns it.
+      // Otherwise anyone could attach another user's private doc to a public
+      // collection to expose its metadata.
       if (doc.visibility === "private") {
-        const docToken = entry.token || entry.magic_token;
-        if (!docToken || doc.magicToken !== hashToken(docToken)) continue;
+        const docToken =
+          typeof entry.token === "string"
+            ? entry.token
+            : typeof entry.magic_token === "string"
+              ? entry.magic_token
+              : null;
+        const hasTokenProof = !!docToken && doc.magicToken === hashToken(docToken);
+        const hasAccountProof = !!doc.userId && accountUserId === doc.userId;
+        if (!hasTokenProof && !hasAccountProof) continue;
       }
 
       await prisma.collectionDoc.upsert({

@@ -2,6 +2,9 @@ import { ImageResponse } from "next/og";
 import { prisma } from "@/lib/prisma";
 
 export const runtime = "nodejs";
+// Rendered from live doc state; never serve a cached image for a seoSlug whose
+// doc has since gone private.
+export const dynamic = "force-dynamic";
 export const alt = "Draftmark document";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
