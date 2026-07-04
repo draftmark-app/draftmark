@@ -18,22 +18,31 @@ export function getClientIp(request: NextRequest): string {
   return "unknown";
 }
 
+function requireSecret(): string {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) throw new Error("JWT_SECRET is not set");
+  return secret;
+}
+
 /**
- * Server-derived dedup identity for anonymous feedback (reactions/reviews).
+ * Server-derived dedup identity for ANONYMOUS feedback (reactions/reviews).
  *
  * The client-supplied `identifier` must NOT be trusted: it lives in
  * localStorage, so anyone can clear it (or POST directly) to mint unlimited
- * fresh identities, inflating counts and flipping `review_complete`. We derive
- * the dedup key from the request origin (IP + User-Agent) instead, keyed with
- * a server secret so the stored value is opaque and can't be pre-computed to
- * occupy another visitor's slot.
+ * fresh identities, inflating counts and flipping `review_complete`.
  *
- * Tradeoff: visitors sharing an IP + browser (office NAT) collapse to one
- * identity. Acceptable for a lightweight, account-less feedback signal.
+ * We key on the client IP only — deliberately NOT User-Agent, which is also
+ * client-controlled and would reopen the same spoof (one IP, many UAs → many
+ * identities). Keyed with a required server secret so the stored value is
+ * opaque and can't be pre-computed to occupy another visitor's slot.
+ *
+ * Authenticated callers are deduped by their account id at the call site (see
+ * the reaction/review routes), which is both stronger and avoids collapsing
+ * many agents behind one IP. This anonymous path trades NAT collapse (an
+ * office behind one egress IP counts once) for spoof resistance — the right
+ * call for an account-less abuse signal.
  */
 export function feedbackIdentity(request: NextRequest): string {
   const ip = getClientIp(request);
-  const ua = request.headers.get("user-agent") ?? "";
-  const secret = process.env.JWT_SECRET ?? "";
-  return "anon:" + hashToken(`${ip}|${ua}|${secret}`);
+  return "anon:" + hashToken(`${ip}|${requireSecret()}`);
 }

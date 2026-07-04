@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { findDocWithReadAccess, checkAcceptingFeedback } from "@/lib/auth";
+import { findDocWithReadAccess, checkAcceptingFeedback, getAuthenticatedUser } from "@/lib/auth";
 import { feedbackIdentity } from "@/lib/identity";
 
 type RouteContext = { params: Promise<{ slug: string }> };
@@ -54,10 +54,11 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
 
   const body = (await request.json().catch(() => null)) ?? {};
 
-  // Dedup identity is derived server-side (IP + UA), never from the client, so
-  // a caller can't mint unlimited reviews (and flip review_complete) by varying
-  // a localStorage id.
-  const identifier = feedbackIdentity(request);
+  // Dedup identity is derived server-side, never from the client, so a caller
+  // can't mint unlimited reviews (and flip review_complete) by varying a
+  // localStorage id. Authenticated callers dedup by account; anonymous by IP.
+  const user = await getAuthenticatedUser(request);
+  const identifier = user ? `acct:${user.id}` : feedbackIdentity(request);
 
   // Upsert: one review per identity per doc
   const review = await prisma.review.upsert({

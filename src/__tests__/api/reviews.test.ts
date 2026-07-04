@@ -160,4 +160,21 @@ describe("Reviews API", () => {
     const data = await res.json();
     expect(data.reviews).toHaveLength(1);
   });
+
+  it("dedups same IP across different User-Agents (UA is not a spoofing dimension)", async () => {
+    const { doc } = await createTestDoc();
+    const ip = "203.0.113.88";
+
+    for (const ua of ["Mozilla/5.0 A", "Mozilla/5.0 B", "curl/8.0"]) {
+      await fetch(`${BASE_URL}/api/v1/docs/${doc.slug}/reviews`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "cf-connecting-ip": ip, "user-agent": ua },
+        body: JSON.stringify({ reviewer_name: "Spammer" }),
+      });
+    }
+
+    const res = await fetch(`${BASE_URL}/api/v1/docs/${doc.slug}/reviews`);
+    const data = await res.json();
+    expect(data.reviews).toHaveLength(1);
+  });
 });
