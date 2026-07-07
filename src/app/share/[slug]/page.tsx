@@ -81,15 +81,17 @@ export default async function DocPage({ params, searchParams }: Props) {
   // The magic token normally arrives via the httpOnly cookie set by the
   // middleware token->cookie exchange (kept out of the URL); ?token= is still
   // honored for the first hop / API clients.
-  const { hashToken } = await import("@/lib/tokens");
+  const { hashToken, safeCompare } = await import("@/lib/tokens");
   const { cookies } = await import("next/headers");
   const cookieMagic = (await cookies()).get(`dm_tok_${slug}`)?.value;
   const hasValidToken =
     !!(token && doc.magicToken === hashToken(token)) ||
     !!(cookieMagic && doc.magicToken === hashToken(cookieMagic));
-  // Share token can come via dedicated param or via token param (from prompt form)
-  const hasShareToken = !!(share_token && doc.shareToken === share_token) ||
-    !!(token && token.startsWith("share_") && doc.shareToken === token);
+  // Share token can come via dedicated param or via token param (from prompt
+  // form). Stored unhashed, so compare in constant time.
+  const hasShareToken =
+    !!(share_token && doc.shareToken && safeCompare(doc.shareToken, share_token)) ||
+    !!(token && token.startsWith("share_") && doc.shareToken && safeCompare(doc.shareToken, token));
 
   const session = await getSession();
   const isAccountOwner = !!(session && doc.userId && session.userId === doc.userId);
@@ -134,7 +136,13 @@ export default async function DocPage({ params, searchParams }: Props) {
       <Nav />
       {shareUrl && <ShareBanner url={shareUrl} rawUrl={rawUrl} />}
       <DocView
-        authToken={hasValidToken ? token : undefined}
+        authToken={
+          hasValidToken
+            ? token
+            : hasShareToken
+              ? doc.shareToken ?? undefined
+              : undefined
+        }
         rawUrl={rawUrl}
         doc={{
           slug: doc.slug,

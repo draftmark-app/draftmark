@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { hashToken } from "./tokens";
+import { hashToken, safeCompare } from "./tokens";
 import { prisma } from "./prisma";
 import { getSessionFromRequest } from "./session";
 
@@ -187,20 +187,32 @@ export async function findDocWithReadAccess(
   // Check magic token from any independent source (header, query param, or the
   // httpOnly per-doc cookie set by the middleware token->cookie exchange) so a
   // stray/wrong ?token= can't shadow a valid cookie.
+  const url = new URL(request.url);
   const magicCandidates = [
     request.headers.get("x-magic-token"),
-    new URL(request.url).searchParams.get("token"),
+    url.searchParams.get("token"),
     request.cookies.get(`dm_tok_${slug}`)?.value ?? null,
   ].filter((t): t is string => !!t);
   if (magicCandidates.some((t) => doc.magicToken === hashToken(t))) {
     return { doc, authorized: true };
   }
 
-  // Check share token (unhashed, read-only access for private docs)
-  const shareToken =
-    new URL(request.url).searchParams.get("share_token") ||
-    request.headers.get("x-share-token");
-  if (shareToken && doc.shareToken === shareToken) {
+  // Check share token (unhashed, read-only access for private docs). Dedicated
+  // share_token param / X-Share-Token header are matched directly; the generic
+  // ?token= / X-Magic-Token sources only count as a share token when they carry
+  // the share_ prefix. This mirrors the /docs/:slug GET owner-vs-share split so
+  // the two access paths can't diverge, and the prefix gate means a magic token
+  // on ?token= can never be misread here (it's already been checked above). The
+  // share token is stored unhashed, so compare it in constant time.
+  const shareCandidates = [
+    url.searchParams.get("share_token"),
+    request.headers.get("x-share-token"),
+    ...[url.searchParams.get("token"), request.headers.get("x-magic-token")].filter(
+      (t): t is string => !!t && t.startsWith("share_")
+    ),
+  ].filter((t): t is string => !!t);
+  const storedShareToken = doc.shareToken;
+  if (storedShareToken && shareCandidates.some((t) => safeCompare(storedShareToken, t))) {
     return { doc, authorized: true };
   }
 

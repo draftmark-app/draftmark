@@ -24,6 +24,7 @@ type Props = {
   setReviewerName: (name: string) => void;
   persistReviewerName: (name: string) => void;
   onCommentPosted: () => void;
+  authToken?: string;
 };
 
 export default function LineNumberedMarkdown({
@@ -35,6 +36,7 @@ export default function LineNumberedMarkdown({
   setReviewerName,
   persistReviewerName,
   onCommentPosted,
+  authToken,
 }: Props) {
   const [activeLine, setActiveLine] = useState<number | null>(null);
   const lines = content.split("\n");
@@ -114,6 +116,7 @@ export default function LineNumberedMarkdown({
                 reviewerName={reviewerName}
                 setReviewerName={setReviewerName}
                 persistReviewerName={persistReviewerName}
+                authToken={authToken}
                 onPosted={() => {
                   setActiveLine(null);
                   onCommentPosted();
