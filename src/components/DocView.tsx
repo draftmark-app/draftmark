@@ -197,6 +197,7 @@ export default function DocView({ doc, isOwner, editUrl, authToken, rawUrl }: Do
             reviewerName={reviewerName}
             setReviewerName={setReviewerName}
             persistReviewerName={persistReviewerName}
+            authToken={authToken}
             onCommentPosted={handleCommentPosted}
           />
           {selectionComments.length > 0 && (

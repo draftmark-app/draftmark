@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { authorizeWithMagicToken, getAuthenticatedUser, canAccessPrivateResources } from "@/lib/auth";
-import { hashToken, generateShareToken } from "@/lib/tokens";
+import { hashToken, generateShareToken, safeCompare } from "@/lib/tokens";
 import { extractTitleFromContent } from "@/lib/markdown";
 import { generateSeoSlug } from "@/lib/slug";
 
@@ -41,8 +41,8 @@ export async function GET(
   const shareTokenParam = new URL(request.url).searchParams.get("share_token") ||
     request.headers.get("x-share-token");
   const hasShareToken =
-    !!(shareTokenParam && doc.shareToken === shareTokenParam) ||
-    !!(tokenParam && tokenParam.startsWith("share_") && doc.shareToken === tokenParam);
+    !!(shareTokenParam && doc.shareToken && safeCompare(doc.shareToken, shareTokenParam)) ||
+    !!(tokenParam && tokenParam.startsWith("share_") && doc.shareToken && safeCompare(doc.shareToken, tokenParam));
 
   // Check account ownership (session cookie or acct_ API key)
   const user = await getAuthenticatedUser(request);

@@ -11,6 +11,7 @@ type Props = {
   persistReviewerName: (name: string) => void;
   onPosted: () => void;
   onCancel: () => void;
+  authToken?: string;
 };
 
 export default function InlineCommentForm({
@@ -21,6 +22,7 @@ export default function InlineCommentForm({
   persistReviewerName,
   onPosted,
   onCancel,
+  authToken,
 }: Props) {
   const [body, setBody] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -31,7 +33,8 @@ export default function InlineCommentForm({
     if (!body.trim()) return;
 
     setSubmitting(true);
-    const res = await fetch(`/api/v1/docs/${slug}/comments`, {
+    const tokenParam = authToken ? `?token=${encodeURIComponent(authToken)}` : "";
+    const res = await fetch(`/api/v1/docs/${slug}/comments${tokenParam}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

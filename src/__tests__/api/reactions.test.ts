@@ -168,4 +168,97 @@ describe("Reactions API", () => {
 
     expect(res.status).toBe(201);
   });
+
+  // Regression: share-token reviewers (read-only) post feedback with the share
+  // token on ?token= (same param the client XHRs and /share prompt form use).
+  // findDocWithReadAccess must accept it, or feedback 401s despite valid access.
+  it("allows feedback on private doc with share token via ?token=", async () => {
+    const shareToken = `share_${generateMagicToken()}`;
+    const { doc } = await createTestDoc({ visibility: "private" });
+    await prisma.doc.update({ where: { id: doc.id }, data: { shareToken } });
+
+    const res = await fetch(
+      `${BASE_URL}/api/v1/docs/${doc.slug}/reactions?token=${encodeURIComponent(shareToken)}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ emoji: "thumbs_up", identifier: "user-1" }),
+      }
+    );
+
+    expect(res.status).toBe(201);
+  });
+
+  it("allows feedback on private doc with share token via ?share_token=", async () => {
+    const shareToken = `share_${generateMagicToken()}`;
+    const { doc } = await createTestDoc({ visibility: "private" });
+    await prisma.doc.update({ where: { id: doc.id }, data: { shareToken } });
+
+    const res = await fetch(
+      `${BASE_URL}/api/v1/docs/${doc.slug}/reactions?share_token=${encodeURIComponent(shareToken)}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ emoji: "thumbs_up", identifier: "user-1" }),
+      }
+    );
+
+    expect(res.status).toBe(201);
+  });
+
+  it("allows feedback on private doc with share token via X-Magic-Token header", async () => {
+    const shareToken = `share_${generateMagicToken()}`;
+    const { doc } = await createTestDoc({ visibility: "private" });
+    await prisma.doc.update({ where: { id: doc.id }, data: { shareToken } });
+
+    const res = await fetch(`${BASE_URL}/api/v1/docs/${doc.slug}/reactions`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Magic-Token": shareToken },
+      body: JSON.stringify({ emoji: "thumbs_up", identifier: "user-1" }),
+    });
+
+    expect(res.status).toBe(201);
+  });
+
+  it("rejects feedback on private doc with a wrong share token", async () => {
+    const shareToken = `share_${generateMagicToken()}`;
+    const { doc } = await createTestDoc({ visibility: "private" });
+    await prisma.doc.update({ where: { id: doc.id }, data: { shareToken } });
+
+    const res = await fetch(
+      `${BASE_URL}/api/v1/docs/${doc.slug}/reactions?token=share_wrongtoken`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ emoji: "thumbs_up", identifier: "user-1" }),
+      }
+    );
+
+    expect(res.status).toBe(401);
+  });
+
+  // Owner-boundary: a share token grants read + feedback only. It must never be
+  // usable for owner mutations (PATCH/DELETE), which go through the separate,
+  // hash-based authorizeWithMagicToken. Guards against privilege escalation if
+  // the two auth paths are ever accidentally merged.
+  it("rejects owner mutation (PATCH) authenticated with a share token", async () => {
+    const shareToken = `share_${generateMagicToken()}`;
+    const { doc } = await createTestDoc({ visibility: "private" });
+    await prisma.doc.update({ where: { id: doc.id }, data: { shareToken } });
+
+    const res = await fetch(
+      `${BASE_URL}/api/v1/docs/${doc.slug}?token=${encodeURIComponent(shareToken)}`,
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: "# Hijacked" }),
+      }
+    );
+
+    expect(res.status).toBe(403);
+
+    // Content must be unchanged.
+    const after = await prisma.doc.findUnique({ where: { id: doc.id } });
+    expect(after?.content).not.toContain("Hijacked");
+  });
 });
