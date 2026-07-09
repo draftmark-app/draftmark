@@ -3667,10 +3667,25 @@ button.comment-anchor-chip-btn:hover {
   margin-bottom: 36px;
 }
 
-.usecases-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
+.usecases-carousel {
+  position: relative;
+}
+
+.usecases-track {
+  position: relative;
+  display: flex;
   gap: 16px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  /* vertical room so the hover lift + shadow aren't clipped by overflow */
+  padding: 6px 0 26px;
+}
+
+.usecases-track::-webkit-scrollbar {
+  display: none;
 }
 
 .usecase-card {
@@ -3679,14 +3694,91 @@ button.comment-anchor-chip-btn:hover {
   padding: 28px 24px;
   text-decoration: none;
   color: var(--text);
-  transition: border-color 0.2s;
+  transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
   display: flex;
   flex-direction: column;
   gap: 12px;
+  scroll-snap-align: start;
+  flex: 0 0 calc((100% - 32px) / 3);
+  min-width: 0;
 }
 
 .usecase-card:hover {
   border-color: var(--accent-dim);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+}
+
+.usecases-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 6px;
+}
+
+.usecases-dots {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.usecases-dot {
+  width: 6px;
+  height: 6px;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: var(--border);
+  cursor: pointer;
+  transition: background 0.2s, width 0.2s;
+}
+
+.usecases-dot:hover {
+  background: var(--accent-dim);
+}
+
+.usecases-dot.active {
+  width: 20px;
+  background: var(--accent);
+}
+
+.usecases-arrows {
+  display: flex;
+  gap: 8px;
+}
+
+.usecases-arrow {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 14px;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.usecases-arrow:hover {
+  border-color: var(--accent-dim);
+  color: var(--accent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .usecases-track {
+    scroll-behavior: auto;
+  }
+  .usecase-card,
+  .usecases-dot,
+  .usecases-arrow {
+    transition: none;
+  }
+  .usecase-card:hover {
+    transform: none;
+  }
 }
 
 .usecase-card-icon {
@@ -3734,8 +3826,14 @@ button.comment-anchor-chip-btn:hover {
     padding-right: 20px;
   }
 
-  .usecases-grid {
-    grid-template-columns: 1fr;
+  .usecase-card {
+    flex-basis: 88%;
+  }
+}
+
+@media (min-width: 701px) and (max-width: 960px) {
+  .usecase-card {
+    flex-basis: calc((100% - 16px) / 2);
   }
 }
 

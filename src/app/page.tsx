@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Nav from "@/components/Nav";
 import SiteFooter from "@/components/SiteFooter";
+import UseCasesCarousel from "@/components/UseCasesCarousel";
 
 const jsonLd = {
   "@context": "https://schema.org",
@@ -450,39 +451,15 @@ export default function Home() {
       {/* USE CASES */}
       <section className="usecases-section">
         <div className="usecases-label">// use cases</div>
-        <div className="usecases-grid">
-          <Link href="/prompts" className="usecase-card">
-            <div className="usecase-card-icon">&#9998;</div>
-            <h3>Prompt Sharing</h3>
-            <p>
-              Share, review, and iterate on AI prompts — with inline comments
-              on specific lines and version tracking.
-            </p>
-            <span className="usecase-card-link">learn more &rarr;</span>
-          </Link>
-          <Link href="/rfcs" className="usecase-card">
-            <div className="usecase-card-icon">&#9878;</div>
-            <h3>RFCs &amp; Proposals</h3>
-            <p>
-              Structured async review with deadlines, review tracking, and
-              Mermaid diagrams for technical proposals.
-            </p>
-            <span className="usecase-card-link">learn more &rarr;</span>
-          </Link>
-          <Link href="/writing" className="usecase-card">
-            <div className="usecase-card-icon">&#128221;</div>
-            <h3>Writing &amp; Content</h3>
-            <p>
-              Get honest feedback on drafts before publishing. Reactions,
-              inline comments, and clean share links.
-            </p>
-            <span className="usecase-card-link">learn more &rarr;</span>
-          </Link>
-        </div>
+        <UseCasesCarousel />
         <div className="related-links">
           <Link href="/share-markdown-online">share markdown online</Link>
           <span className="sep">&middot;</span>
           <Link href="/agents">for AI agents</Link>
+          <span className="sep">&middot;</span>
+          <Link href="/cli">the CLI</Link>
+          <span className="sep">&middot;</span>
+          <Link href="/skill">Claude Code skill</Link>
           <span className="sep">&middot;</span>
           <Link href="/vs/github-gist">vs GitHub Gist</Link>
           <span className="sep">&middot;</span>
