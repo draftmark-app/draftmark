@@ -140,7 +140,10 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
     await notifyOwnerOfComment(doc, { postedByOwner });
 
     // Notify reply subscribers, once per distinct parent (per-sub debounce
-    // coalesces multiple replies to the same thread).
+    // coalesces multiple replies to the same thread). No excludeEmail here: batch
+    // has no per-comment opt-in email, so there's no known author to exclude
+    // (unlike the single-POST path). Harmless — an agent batch author isn't a
+    // human subscriber.
     const notifiedParents = new Set<string>();
     for (const c of comments) {
       if (c.parentId && !notifiedParents.has(c.parentId)) {

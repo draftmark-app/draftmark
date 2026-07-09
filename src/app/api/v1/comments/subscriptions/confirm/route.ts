@@ -3,12 +3,23 @@ import { prisma } from "@/lib/prisma";
 import { hashToken } from "@/lib/tokens";
 import { actionResultPage } from "@/lib/actionResultPage";
 
-// GET /api/v1/comments/subscriptions/confirm?token=sub_...
-// Clicked from the double opt-in confirmation email. Activates the subscription.
+// Double opt-in confirmation. Reached from the confirmation email.
+//
+// GET only RENDERS a page (with a confirm button that POSTs) — it never mutates.
+// This matters: email security scanners and link previewers routinely GET links,
+// and a mutating GET would let them auto-confirm a third party, defeating the
+// opt-in. The actual activation happens on POST, which requires a real click.
+// The unguessable token in the URL is the secret, so no separate CSRF token is
+// needed (an attacker without the token can't forge the POST).
+
+function findByToken(token: string) {
+  return prisma.commentSubscription.findUnique({
+    where: { confirmToken: hashToken(token) },
+  });
+}
+
 export async function GET(request: NextRequest) {
   const token = new URL(request.url).searchParams.get("token");
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "";
-
   if (!token) {
     return actionResultPage({
       heading: "Invalid link",
@@ -17,31 +28,60 @@ export async function GET(request: NextRequest) {
     });
   }
 
-  const sub = await prisma.commentSubscription.findUnique({
-    where: { confirmToken: hashToken(token) },
-    include: { comment: { include: { doc: { select: { slug: true, title: true } } } } },
-  });
-
+  const sub = await findByToken(token);
   if (!sub) {
     return actionResultPage({
       heading: "Link expired",
-      message: "This confirmation link is invalid or has already been used.",
+      message: "This confirmation link is invalid or has expired.",
       status: 400,
     });
   }
 
-  // Confirm and consume the token (one-time). Idempotent if clicked twice within
-  // the same request race — confirmedAt is only set once.
-  await prisma.commentSubscription.update({
-    where: { id: sub.id },
-    data: { confirmedAt: sub.confirmedAt ?? new Date(), confirmToken: null },
-  });
+  if (sub.confirmedAt) {
+    return actionResultPage({
+      heading: "Already subscribed",
+      message: "You're already set to receive replies to this comment.",
+    });
+  }
 
-  const slug = sub.comment.doc.slug;
+  return actionResultPage({
+    heading: "Confirm reply notifications",
+    message: "Click below to start receiving an email when someone replies to your comment.",
+    formAction: `/api/v1/comments/subscriptions/confirm?token=${encodeURIComponent(token)}`,
+    formButtonLabel: "Confirm notifications",
+  });
+}
+
+export async function POST(request: NextRequest) {
+  const token = new URL(request.url).searchParams.get("token");
+  if (!token) {
+    return actionResultPage({
+      heading: "Invalid link",
+      message: "This confirmation link is missing its token.",
+      status: 400,
+    });
+  }
+
+  const sub = await findByToken(token);
+  if (!sub) {
+    return actionResultPage({
+      heading: "Link expired",
+      message: "This confirmation link is invalid or has expired.",
+      status: 400,
+    });
+  }
+
+  // Idempotent: set confirmedAt only once. The token is retained so re-clicks
+  // land on the "already subscribed" state rather than a confusing error.
+  if (!sub.confirmedAt) {
+    await prisma.commentSubscription.update({
+      where: { id: sub.id },
+      data: { confirmedAt: new Date() },
+    });
+  }
+
   return actionResultPage({
     heading: "You're subscribed",
-    message: "We'll email you when someone replies to your comment. You can unsubscribe anytime from those emails.",
-    linkUrl: `${baseUrl}/share/${slug}`,
-    linkLabel: "View the document",
+    message: "We'll email you when someone replies to your comment. Every email has a one-click unsubscribe link.",
   });
 }

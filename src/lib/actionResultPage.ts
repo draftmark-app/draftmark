@@ -15,14 +15,24 @@ export function actionResultPage(opts: {
   message: string;
   linkUrl?: string;
   linkLabel?: string;
+  // When set, render a same-origin POST form with a single button instead of a
+  // link. Used so the state-changing step (confirm / unsubscribe) requires a
+  // deliberate click — a GET link-prefetch or email scanner only renders the
+  // page and can't trigger the mutation.
+  formAction?: string;
+  formButtonLabel?: string;
   status?: number;
 }): Response {
-  const link =
-    opts.linkUrl && opts.linkLabel
-      ? `<a href="${esc(opts.linkUrl)}" style="display:inline-block;margin-top:24px;background:#c8b89a;color:#0d0d0d;padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:500;">${esc(
-          opts.linkLabel
-        )}</a>`
-      : "";
+  const btnStyle =
+    "display:inline-block;margin-top:24px;background:#c8b89a;color:#0d0d0d;padding:10px 20px;border-radius:6px;text-decoration:none;border:none;font:inherit;font-weight:500;cursor:pointer;";
+  const action =
+    opts.formAction && opts.formButtonLabel
+      ? `<form method="post" action="${esc(opts.formAction)}"><button type="submit" style="${btnStyle}">${esc(
+          opts.formButtonLabel
+        )}</button></form>`
+      : opts.linkUrl && opts.linkLabel
+        ? `<a href="${esc(opts.linkUrl)}" style="${btnStyle}">${esc(opts.linkLabel)}</a>`
+        : "";
   const html = `<!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -32,7 +42,7 @@ export function actionResultPage(opts: {
   <div style="max-width:480px;margin:0 auto;padding:80px 24px;text-align:center;">
     <h1 style="font-size:22px;margin-bottom:12px;">${esc(opts.heading)}</h1>
     <p style="color:#8a8a8a;line-height:1.5;">${esc(opts.message)}</p>
-    ${link}
+    ${action}
   </div>
 </body></html>`;
   return new Response(html, {

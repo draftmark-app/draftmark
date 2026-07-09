@@ -94,6 +94,31 @@ describe("createReplySubscription (double opt-in)", () => {
     const count = await prisma.commentSubscription.count();
     expect(count).toBe(1);
   });
+
+  it("removes the pending row when the confirmation send fails (no permanent stranding)", async () => {
+    const { doc, comment } = await createDocWithTopComment();
+    confirmMock.mockRejectedValueOnce(new Error("plunk down"));
+
+    const { pending } = await createReplySubscription({
+      doc,
+      targetCommentId: comment.id,
+      email: "sub@example.com",
+    });
+
+    expect(pending).toBe(false);
+    // Row was rolled back, so a later attempt isn't blocked by the guard.
+    expect(await prisma.commentSubscription.count()).toBe(0);
+  });
+
+  it("throttles confirmation emails per address across many docs", async () => {
+    // MAX_PENDING_PER_EMAIL = 3: the 4th distinct doc for the same address is dropped.
+    for (let i = 0; i < 4; i++) {
+      const { doc, comment } = await createDocWithTopComment();
+      await createReplySubscription({ doc, targetCommentId: comment.id, email: "victim@example.com" });
+    }
+    expect(confirmMock).toHaveBeenCalledTimes(3);
+    expect(await prisma.commentSubscription.count()).toBe(3);
+  });
 });
 
 describe("notifyReplySubscribers", () => {
@@ -102,11 +127,13 @@ describe("notifyReplySubscribers", () => {
     notifyMock.mockClear();
   });
 
-  async function subscribeAndConfirm(commentId: string, email: string) {
+  async function subscribeAndConfirm(commentId: string, docId: string, email: string) {
     await prisma.commentSubscription.create({
       data: {
         commentId,
+        docId,
         email,
+        confirmToken: hashToken(`confirm-${email}-${commentId}`),
         unsubToken: `unsub-${email}`,
         confirmedAt: new Date(),
       },
@@ -124,7 +151,7 @@ describe("notifyReplySubscribers", () => {
 
   it("emails a confirmed subscriber on reply, with an unsubscribe link", async () => {
     const { doc, comment } = await createDocWithTopComment();
-    await subscribeAndConfirm(comment.id, "sub@example.com");
+    await subscribeAndConfirm(comment.id, doc.id, "sub@example.com");
 
     await notifyReplySubscribers({ reply: { parentId: comment.id }, doc });
 
@@ -140,7 +167,7 @@ describe("notifyReplySubscribers", () => {
 
   it("excludes the address that posted the reply", async () => {
     const { doc, comment } = await createDocWithTopComment();
-    await subscribeAndConfirm(comment.id, "sub@example.com");
+    await subscribeAndConfirm(comment.id, doc.id, "sub@example.com");
 
     await notifyReplySubscribers({
       reply: { parentId: comment.id },
@@ -153,7 +180,7 @@ describe("notifyReplySubscribers", () => {
 
   it("debounces repeated replies to the same comment", async () => {
     const { doc, comment } = await createDocWithTopComment();
-    await subscribeAndConfirm(comment.id, "sub@example.com");
+    await subscribeAndConfirm(comment.id, doc.id, "sub@example.com");
 
     await notifyReplySubscribers({ reply: { parentId: comment.id }, doc });
     await notifyReplySubscribers({ reply: { parentId: comment.id }, doc });
@@ -164,6 +191,18 @@ describe("notifyReplySubscribers", () => {
   it("is a no-op for a non-reply (no parentId)", async () => {
     const { doc } = await createDocWithTopComment();
     await notifyReplySubscribers({ reply: { parentId: null }, doc });
+    expect(notifyMock).not.toHaveBeenCalled();
+  });
+
+  it("does not email subscribers when the doc is no longer public", async () => {
+    const { doc, comment } = await createDocWithTopComment();
+    await subscribeAndConfirm(comment.id, doc.id, "sub@example.com");
+
+    await notifyReplySubscribers({
+      reply: { parentId: comment.id },
+      doc: { ...doc, visibility: "private" },
+    });
+
     expect(notifyMock).not.toHaveBeenCalled();
   });
 });

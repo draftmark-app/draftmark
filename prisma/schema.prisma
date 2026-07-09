@@ -114,8 +114,9 @@ model Comment {
 model CommentSubscription {
   id             String    @id @default(cuid())
   commentId      String    @map("comment_id") // the (top-level) comment whose replies the subscriber wants
+  docId          String    @map("doc_id") // denormalized from comment for per-(doc,email) constraint + throttle queries
   email          String
-  confirmToken   String?   @unique @map("confirm_token") // hashed; present until confirmed (double opt-in)
+  confirmToken   String    @unique @map("confirm_token") // hashed; kept after confirm so re-clicks are idempotent (double opt-in)
   unsubToken     String    @unique @map("unsub_token")   // unhashed random (like share_token); embedded in the notify email sent later
   confirmedAt    DateTime? @map("confirmed_at")
   lastNotifiedAt DateTime? @map("last_notified_at")       // per-subscription notify debounce
@@ -123,6 +124,10 @@ model CommentSubscription {
   comment        Comment   @relation(fields: [commentId], references: [id], onDelete: Cascade)
 
   @@index([commentId])
+  @@index([email])
+  // A partial unique index (doc_id, email) WHERE confirmed_at IS NULL is added
+  // in the migration SQL — it makes the "one pending confirmation per (email,
+  // doc)" guard atomic. Prisma can't express partial indexes, so it lives in SQL.
   @@map("comment_subscriptions")
 }
 
