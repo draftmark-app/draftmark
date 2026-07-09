@@ -2884,6 +2884,40 @@ footer nav ul a { font-size: 14px; }
   border: 1px solid rgba(200, 160, 80, 0.25);
 }
 
+/* Anchor chip on inline comments in the unified comments panel */
+.comment-anchor-chip {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 11px;
+  padding: 1px 6px;
+  border-radius: 3px;
+  background: rgba(120, 160, 220, 0.12);
+  color: var(--accent, #7aa0dc);
+  border: 1px solid rgba(120, 160, 220, 0.25);
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+button.comment-anchor-chip-btn {
+  cursor: pointer;
+  transition: background 0.1s, border-color 0.1s;
+}
+
+button.comment-anchor-chip-btn:hover {
+  background: rgba(120, 160, 220, 0.22);
+  border-color: rgba(120, 160, 220, 0.45);
+}
+
+.line-jump-flash {
+  animation: line-jump-flash 1.6s ease-out;
+}
+
+@keyframes line-jump-flash {
+  0%, 30% { background: rgba(120, 160, 220, 0.28); }
+  100% { background: transparent; }
+}
+
 /* SEO LANDING PAGE */
 .seo-page {
   max-width: 780px;

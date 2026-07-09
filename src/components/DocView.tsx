@@ -90,6 +90,40 @@ export default function DocView({ doc, isOwner, editUrl, authToken, rawUrl }: Do
     setRefreshKey((k) => k + 1);
   }, []);
 
+  // Jump from the unified comments panel to where an inline comment lives.
+  // Line comments live on the source tab; selection comments on the preview tab.
+  // After switching tabs the target isn't in the DOM yet (and selection
+  // highlights mount on their own timer), so poll until it appears.
+  const handleJumpToComment = useCallback((c: InlineComment) => {
+    if (c.anchor_type === "line" && c.anchor_ref != null) {
+      const target = c.anchor_ref;
+      setActiveTab("source");
+      whenElementReady(
+        () => document.getElementById(`line-${target}`),
+        (el) => {
+          el.scrollIntoView({ behavior: "smooth", block: "center" });
+          el.classList.add("line-jump-flash");
+          setTimeout(() => el.classList.remove("line-jump-flash"), 1600);
+        }
+      );
+    } else if (c.anchor_type === "selection") {
+      // Highlights are keyed by the FIRST comment sharing this anchor_text
+      // (CommentHighlighter groups by anchor_text), which may differ from c.id
+      // when several selection comments annotate the same passage. Resolve the
+      // same group id here or the jump would silently find nothing.
+      const groupId =
+        selectionComments.find((sc) => sc.anchor_text === c.anchor_text)?.id ?? c.id;
+      setActiveTab("preview");
+      whenElementReady(
+        () =>
+          previewRef.current?.querySelector(
+            `[data-comment-group="${CSS.escape(groupId)}"]`
+          ) as HTMLElement | null,
+        (el) => el.scrollIntoView({ behavior: "smooth", block: "center" })
+      );
+    }
+  }, [selectionComments]);
+
   return (
     <ToastProvider>
     <div className="doc-view">
@@ -242,6 +276,7 @@ export default function DocView({ doc, isOwner, editUrl, authToken, rawUrl }: Do
         setReviewerName={setReviewerName}
         persistReviewerName={persistReviewerName}
         onInlineCommentsLoaded={handleInlineCommentsLoaded}
+        onJumpToComment={handleJumpToComment}
         authToken={authToken}
       />
 
@@ -255,6 +290,27 @@ export default function DocView({ doc, isOwner, editUrl, authToken, rawUrl }: Do
     </div>
     </ToastProvider>
   );
+}
+
+// Poll (via rAF) for an element that appears after a tab switch or async
+// highlight mount, then run onReady once. Gives up after timeoutMs so a
+// missing target (e.g. an unhighlightable selection) just no-ops quietly.
+function whenElementReady(
+  getEl: () => HTMLElement | null,
+  onReady: (el: HTMLElement) => void,
+  timeoutMs = 800
+) {
+  const start = performance.now();
+  const tick = () => {
+    const el = getEl();
+    if (el) {
+      onReady(el);
+      return;
+    }
+    if (performance.now() - start > timeoutMs) return;
+    requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
 }
 
 function getTimeAgo(date: Date): string {
