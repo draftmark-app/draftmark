@@ -178,7 +178,10 @@ export default function CommentSection({ slug, currentVersion, reviewerName, set
                 {c.cross_ref_line ? `:${c.cross_ref_line}` : ""}
               </a>
             )}
-            {!isReply && !c.anchor_type && (
+            {/* Replies nest one level under any top-level comment — general,
+                line, or selection. The reply is posted with parent_id (no
+                anchor), so it threads under the parent in this panel. */}
+            {!isReply && (
               <button
                 type="button"
                 className="comment-reply-btn"
