@@ -94,6 +94,23 @@ const components: Components = {
   },
 };
 
+// When `demoteH1` is set, in-content H1s render as H2s so a page whose template
+// already owns the single <h1> (the doc title) never emits a second one. Uses
+// the AST node (not a text regex) so `#` inside code blocks is left untouched.
+const componentsWithDemotedH1: Components = {
+  ...components,
+  h1({ children }) {
+    const text = textContent(children);
+    const id = slugify(text);
+    return (
+      <h2 id={id}>
+        <a href={`#${id}`} className="heading-anchor">#</a>
+        {children}
+      </h2>
+    );
+  },
+};
+
 type Section = {
   heading: string; // raw markdown heading line
   headingText: string; // plain text for summary
@@ -174,7 +191,13 @@ function splitIntoSections(content: string): { preamble: string; sections: Secti
   return { preamble, sections };
 }
 
-function CollapsibleSection({ section }: { section: Section }) {
+function CollapsibleSection({
+  section,
+  components: activeComponents,
+}: {
+  section: Section;
+  components: Components;
+}) {
   const [isOpen, setIsOpen] = useState(true);
 
   return (
@@ -199,7 +222,7 @@ function CollapsibleSection({ section }: { section: Section }) {
           <ReactMarkdown
             remarkPlugins={[remarkGfm]}
             rehypePlugins={[rehypeHighlight]}
-            components={components}
+            components={activeComponents}
           >
             {section.content}
           </ReactMarkdown>
@@ -209,7 +232,14 @@ function CollapsibleSection({ section }: { section: Section }) {
   );
 }
 
-export default function MarkdownPreview({ content }: { content: string }) {
+export default function MarkdownPreview({
+  content,
+  demoteH1 = false,
+}: {
+  content: string;
+  demoteH1?: boolean;
+}) {
+  const activeComponents = demoteH1 ? componentsWithDemotedH1 : components;
   const { preamble, sections } = splitIntoSections(content);
   const hasCollapsible = sections.length >= 1;
 
@@ -219,7 +249,7 @@ export default function MarkdownPreview({ content }: { content: string }) {
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
           rehypePlugins={[rehypeHighlight]}
-          components={components}
+          components={activeComponents}
         >
           {content}
         </ReactMarkdown>
@@ -233,13 +263,17 @@ export default function MarkdownPreview({ content }: { content: string }) {
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
           rehypePlugins={[rehypeHighlight]}
-          components={components}
+          components={activeComponents}
         >
           {preamble}
         </ReactMarkdown>
       )}
       {sections.map((section) => (
-        <CollapsibleSection key={section.headingId} section={section} />
+        <CollapsibleSection
+          key={section.headingId}
+          section={section}
+          components={activeComponents}
+        />
       ))}
     </div>
   );
