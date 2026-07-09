@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { findDocWithReadAccess, checkAcceptingFeedback } from "@/lib/auth";
 import { enforceRateLimit, LIMITS } from "@/lib/ratelimit";
+import { parseNullableInt } from "@/lib/validation";
 
 type RouteContext = { params: Promise<{ slug: string }> };
 
@@ -80,6 +81,18 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
     );
   }
 
+  // anchor_ref/cross_ref_line map to Int columns — validate before the
+  // Prisma write so a bad value (e.g. selection text sent in anchor_ref by
+  // a buggy client) returns a clear 400 instead of an unhandled 500.
+  const anchorRef = parseNullableInt(body.anchor_ref, "anchor_ref");
+  if ("error" in anchorRef) {
+    return NextResponse.json({ error: anchorRef.error }, { status: 400 });
+  }
+  const crossRefLine = parseNullableInt(body.cross_ref_line, "cross_ref_line");
+  if ("error" in crossRefLine) {
+    return NextResponse.json({ error: crossRefLine.error }, { status: 400 });
+  }
+
   // Get current version number
   const latestVersion = await prisma.docVersion.findFirst({
     where: { docId: doc.id },
@@ -106,12 +119,12 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
       author: body.author || "anonymous",
       authorType: body.author_type === "agent" ? "agent" : "human",
       anchorType: body.anchor_type || null,
-      anchorRef: body.anchor_ref ?? null,
+      anchorRef: anchorRef.value,
       anchorText: body.anchor_text || null,
       docVersion: latestVersion?.versionNumber ?? 1,
       status: "open",
       crossRefSlug: body.cross_ref_slug || null,
-      crossRefLine: body.cross_ref_line ?? null,
+      crossRefLine: crossRefLine.value,
       parentId: body.parent_id || null,
     },
   });

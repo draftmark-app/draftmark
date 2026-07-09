@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { findDocWithReadAccess, checkAcceptingFeedback } from "@/lib/auth";
 import { enforceRateLimit, LIMITS } from "@/lib/ratelimit";
+import { parseNullableInt } from "@/lib/validation";
 
 type RouteContext = { params: Promise<{ slug: string }> };
 
@@ -41,6 +42,7 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
   }
 
   // Validate all comments before creating any
+  const parsed: { anchorRef: number | null; crossRefLine: number | null }[] = [];
   for (let i = 0; i < body.comments.length; i++) {
     const c = body.comments[i];
     if (!c.body || typeof c.body !== "string") {
@@ -49,6 +51,21 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
         { status: 400 }
       );
     }
+    const anchorRef = parseNullableInt(c.anchor_ref, "anchor_ref");
+    if ("error" in anchorRef) {
+      return NextResponse.json(
+        { error: `Comment at index ${i}: ${anchorRef.error}` },
+        { status: 400 }
+      );
+    }
+    const crossRefLine = parseNullableInt(c.cross_ref_line, "cross_ref_line");
+    if ("error" in crossRefLine) {
+      return NextResponse.json(
+        { error: `Comment at index ${i}: ${crossRefLine.error}` },
+        { status: 400 }
+      );
+    }
+    parsed.push({ anchorRef: anchorRef.value, crossRefLine: crossRefLine.value });
   }
 
   const latestVersion = await prisma.docVersion.findFirst({
@@ -58,7 +75,8 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
 
   try {
     const comments = [];
-    for (const c of body.comments) {
+    for (let i = 0; i < body.comments.length; i++) {
+      const c = body.comments[i];
       const comment = await prisma.comment.create({
         data: {
           docId: doc.id,
@@ -66,12 +84,12 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
           author: (c.author as string) || "anonymous",
           authorType: c.author_type === "agent" ? "agent" : "human",
           anchorType: (c.anchor_type as string) || null,
-          anchorRef: c.anchor_ref != null ? Number(c.anchor_ref) : null,
+          anchorRef: parsed[i].anchorRef,
           anchorText: (c.anchor_text as string) || null,
           docVersion: latestVersion?.versionNumber ?? 1,
           status: "open",
           crossRefSlug: (c.cross_ref_slug as string) || null,
-          crossRefLine: c.cross_ref_line != null ? Number(c.cross_ref_line) : null,
+          crossRefLine: parsed[i].crossRefLine,
           parentId: (c.parent_id as string) || null,
         },
       });
