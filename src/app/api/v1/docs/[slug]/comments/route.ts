@@ -8,6 +8,7 @@ import {
 } from "@/lib/auth";
 import { commentIdentity } from "@/lib/identity";
 import { notifyOwnerOfComment } from "@/lib/notify";
+import { createReplySubscription, notifyReplySubscribers } from "@/lib/subscriptions";
 import { enforceRateLimit, LIMITS } from "@/lib/ratelimit";
 import { parseNullableInt } from "@/lib/validation";
 
@@ -151,6 +152,31 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
   const postedByOwner = await isDocOwner(request, doc, user);
   await notifyOwnerOfComment(doc, { postedByOwner });
 
+  // Opt-in reply notifications (double opt-in). Subscribe the commenter to the
+  // thread they're in: the parent comment if this is a reply, else their own
+  // new comment.
+  const notifyEmail =
+    typeof body.notify_email === "string" ? body.notify_email : null;
+  let notifyPending = false;
+  if (notifyEmail) {
+    const { pending } = await createReplySubscription({
+      doc,
+      targetCommentId: comment.parentId ?? comment.id,
+      email: notifyEmail,
+    });
+    notifyPending = pending;
+  }
+
+  // If this is a reply, email confirmed subscribers of the parent comment
+  // (excluding the person who just replied).
+  if (comment.parentId) {
+    await notifyReplySubscribers({
+      reply: comment,
+      doc,
+      excludeEmail: notifyEmail,
+    });
+  }
+
   return NextResponse.json(
     {
       id: comment.id,
@@ -165,6 +191,7 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
       cross_ref_slug: comment.crossRefSlug,
       cross_ref_line: comment.crossRefLine,
       parent_id: comment.parentId,
+      notify_pending: notifyPending,
       created_at: comment.createdAt.toISOString(),
     },
     { status: 201 }

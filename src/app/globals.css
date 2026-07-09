@@ -1175,6 +1175,10 @@ footer nav ul a { font-size: 14px; }
   text-decoration: underline;
 }
 
+.comment-notify-input {
+  margin-top: 8px;
+}
+
 .doc-view-comment {
   display: flex;
   gap: 12px;

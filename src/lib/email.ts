@@ -88,6 +88,63 @@ export async function sendCommentNotificationEmail(
   );
 }
 
+export async function sendReplyConfirmationEmail(
+  email: string,
+  opts: { docTitle: string | null; confirmUrl: string }
+): Promise<void> {
+  const title = opts.docTitle?.trim() || "a document";
+  await sendEmail(
+    email,
+    "notifications@draftmark.app",
+    "Confirm reply notifications on Draftmark",
+    `
+        <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; padding: 40px 20px;">
+          <h2 style="margin-bottom: 24px;">Confirm reply notifications</h2>
+          <p style="color: #666; margin-bottom: 24px;">
+            You asked to be emailed when someone replies to your comment on
+            <strong>${escapeHtml(title)}</strong>. Confirm to start receiving them.
+          </p>
+          <a href="${escapeHtml(opts.confirmUrl)}"
+             style="display: inline-block; background: #c8b89a; color: #0d0d0d; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 500;">
+            Confirm notifications
+          </a>
+          <p style="color: #999; font-size: 13px; margin-top: 32px;">
+            If you didn't request this, you can safely ignore this email — no notifications will be sent.
+          </p>
+        </div>
+      `,
+    { label: "Reply Confirmation", detail: opts.confirmUrl }
+  );
+}
+
+export async function sendReplyNotificationEmail(
+  email: string,
+  opts: { docTitle: string | null; docUrl: string; unsubUrl: string }
+): Promise<void> {
+  const title = opts.docTitle?.trim() || "a document";
+  await sendEmail(
+    email,
+    "notifications@draftmark.app",
+    `New reply on "${title}"`,
+    `
+        <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; padding: 40px 20px;">
+          <h2 style="margin-bottom: 24px;">New reply on Draftmark</h2>
+          <p style="color: #666; margin-bottom: 24px;">
+            Someone replied to your comment on <strong>${escapeHtml(title)}</strong>.
+          </p>
+          <a href="${escapeHtml(opts.docUrl)}"
+             style="display: inline-block; background: #c8b89a; color: #0d0d0d; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 500;">
+            View the reply
+          </a>
+          <p style="color: #999; font-size: 13px; margin-top: 32px;">
+            <a href="${escapeHtml(opts.unsubUrl)}" style="color: #999;">Unsubscribe from replies to this comment</a>
+          </p>
+        </div>
+      `,
+    { label: "Reply Notification", detail: opts.docUrl }
+  );
+}
+
 function escapeHtml(s: string): string {
   return s
     .replace(/&/g, "&amp;")

@@ -8,6 +8,7 @@ import {
 } from "@/lib/auth";
 import { commentIdentity } from "@/lib/identity";
 import { notifyOwnerOfComment } from "@/lib/notify";
+import { notifyReplySubscribers } from "@/lib/subscriptions";
 import { enforceRateLimit, LIMITS } from "@/lib/ratelimit";
 import { parseNullableInt } from "@/lib/validation";
 
@@ -137,6 +138,16 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
     // the owner posted it. Reuse the already-resolved `user`.
     const postedByOwner = await isDocOwner(request, doc, user);
     await notifyOwnerOfComment(doc, { postedByOwner });
+
+    // Notify reply subscribers, once per distinct parent (per-sub debounce
+    // coalesces multiple replies to the same thread).
+    const notifiedParents = new Set<string>();
+    for (const c of comments) {
+      if (c.parentId && !notifiedParents.has(c.parentId)) {
+        notifiedParents.add(c.parentId);
+        await notifyReplySubscribers({ reply: c, doc });
+      }
+    }
 
     return NextResponse.json(
       {

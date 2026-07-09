@@ -17,6 +17,7 @@ beforeEach(async () => {
   await prisma.collection.deleteMany();
   await prisma.reaction.deleteMany();
   await prisma.review.deleteMany();
+  await prisma.commentSubscription.deleteMany();
   await prisma.comment.deleteMany();
   await prisma.docVersion.deleteMany();
   await prisma.doc.deleteMany();
@@ -30,6 +31,7 @@ afterAll(async () => {
   await prisma.collection.deleteMany();
   await prisma.reaction.deleteMany();
   await prisma.review.deleteMany();
+  await prisma.commentSubscription.deleteMany();
   await prisma.comment.deleteMany();
   await prisma.docVersion.deleteMany();
   await prisma.doc.deleteMany();

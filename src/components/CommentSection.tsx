@@ -40,6 +40,9 @@ export default function CommentSection({ slug, currentVersion, reviewerName, set
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyBody, setReplyBody] = useState("");
   const [replySubmitting, setReplySubmitting] = useState(false);
+  // Opt-in "email me on replies" (double opt-in — a confirmation email follows).
+  const [notifyEmail, setNotifyEmail] = useState("");
+  const [replyNotifyEmail, setReplyNotifyEmail] = useState("");
   const { showToast } = useToast();
 
   const seenKey = `draftmark:comments_seen:${slug}`;
@@ -130,14 +133,21 @@ export default function CommentSection({ slug, currentVersion, reviewerName, set
       body: JSON.stringify({
         body: body.trim(),
         author: reviewerName.trim() || undefined,
+        notify_email: notifyEmail.trim() || undefined,
       }),
     });
 
     if (res.ok) {
+      const data = await res.json().catch(() => null);
       setBody("");
+      setNotifyEmail("");
       persistReviewerName(reviewerName);
       fetchComments();
-      showToast("comment posted");
+      showToast(
+        data?.notify_pending
+          ? "comment posted — check your email to confirm reply notifications"
+          : "comment posted"
+      );
     } else {
       const data = await res.json().catch(() => null);
       setError(data?.error || "Failed to post comment");
@@ -159,15 +169,22 @@ export default function CommentSection({ slug, currentVersion, reviewerName, set
         body: replyBody.trim(),
         author: reviewerName.trim() || undefined,
         parent_id: parentId,
+        notify_email: replyNotifyEmail.trim() || undefined,
       }),
     });
 
     if (res.ok) {
+      const data = await res.json().catch(() => null);
       setReplyBody("");
+      setReplyNotifyEmail("");
       setReplyingTo(null);
       persistReviewerName(reviewerName);
       fetchComments();
-      showToast("reply posted");
+      showToast(
+        data?.notify_pending
+          ? "reply posted — check your email to confirm reply notifications"
+          : "reply posted"
+      );
     }
     setReplySubmitting(false);
   }
@@ -259,6 +276,13 @@ export default function CommentSection({ slug, currentVersion, reviewerName, set
               rows={2}
               autoFocus
             />
+            <input
+              type="email"
+              value={replyNotifyEmail}
+              onChange={(e) => setReplyNotifyEmail(e.target.value)}
+              placeholder="email me when someone replies (optional)"
+              className="comment-author-input comment-notify-input"
+            />
             <div className="comment-reply-actions">
               <button
                 type="button"
@@ -317,6 +341,13 @@ export default function CommentSection({ slug, currentVersion, reviewerName, set
           placeholder="leave a comment..."
           className="comment-textarea"
           rows={3}
+        />
+        <input
+          type="email"
+          value={notifyEmail}
+          onChange={(e) => setNotifyEmail(e.target.value)}
+          placeholder="email me when someone replies (optional)"
+          className="comment-author-input comment-notify-input"
         />
         {error && <div className="create-error">{error}</div>}
         <button

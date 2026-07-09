@@ -106,8 +106,24 @@ model Comment {
   doc          Doc       @relation(fields: [docId], references: [id], onDelete: Cascade)
   parent       Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
   replies      Comment[] @relation("CommentReplies")
+  subscriptions CommentSubscription[]
 
   @@map("comments")
+}
+
+model CommentSubscription {
+  id             String    @id @default(cuid())
+  commentId      String    @map("comment_id") // the (top-level) comment whose replies the subscriber wants
+  email          String
+  confirmToken   String?   @unique @map("confirm_token") // hashed; present until confirmed (double opt-in)
+  unsubToken     String    @unique @map("unsub_token")   // unhashed random (like share_token); embedded in the notify email sent later
+  confirmedAt    DateTime? @map("confirmed_at")
+  lastNotifiedAt DateTime? @map("last_notified_at")       // per-subscription notify debounce
+  createdAt      DateTime  @default(now()) @map("created_at")
+  comment        Comment   @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+  @@index([commentId])
+  @@map("comment_subscriptions")
 }
 
 model Reaction {
