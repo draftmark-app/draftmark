@@ -236,7 +236,7 @@ export default function CommentSection({ slug, currentVersion, reviewerName, set
 
   return (
     <div className="doc-view-comments">
-      <h3>comments ({topLevel.length})</h3>
+      <h3>comments ({comments.length})</h3>
 
       {topLevel.map((c) => renderComment(c))}
 
