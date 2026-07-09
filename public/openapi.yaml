@@ -296,6 +296,23 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
 
+    delete:
+      operationId: deleteComment
+      summary: Delete comment
+      description: Permanently delete a comment. Replies to the comment are deleted too. Requires the doc-level API key.
+      tags: [Comments]
+      security:
+        - BearerApiKey: []
+      responses:
+        "204":
+          description: Comment deleted
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
   /docs/{slug}/comments/batch:
     parameters:
       - $ref: "#/components/parameters/Slug"
@@ -805,6 +822,13 @@ components:
 
     Unauthorized:
       description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+    Forbidden:
+      description: Authenticated but not authorized (e.g. wrong API key)
       content:
         application/json:
           schema:

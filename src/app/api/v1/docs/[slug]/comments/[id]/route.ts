@@ -53,3 +53,27 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
     created_at: updated.createdAt.toISOString(),
   });
 }
+
+// Owner-only hard delete (same api-key auth as PATCH). Replies cascade via the
+// Comment self-relation's onDelete: Cascade, so deleting a parent removes its
+// thread too.
+export async function DELETE(request: NextRequest, { params }: RouteContext) {
+  const { slug, id } = await params;
+  const auth = await authorizeWithApiKey(request, slug);
+
+  if (!auth.authorized) {
+    return NextResponse.json({ error: auth.error }, { status: auth.status });
+  }
+
+  const comment = await prisma.comment.findFirst({
+    where: { id, docId: auth.doc!.id },
+  });
+
+  if (!comment) {
+    return NextResponse.json({ error: "Comment not found" }, { status: 404 });
+  }
+
+  await prisma.comment.delete({ where: { id } });
+
+  return new NextResponse(null, { status: 204 });
+}
