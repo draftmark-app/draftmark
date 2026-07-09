@@ -1,3 +1,25 @@
+---
+tags:
+  - Next.js
+  - PostgreSQL
+  - Prisma
+  - markdown
+  - Mermaid
+projects:
+  - Draftmark
+  - PixelVault
+  - ContentVitals
+  - Rumbo Labs
+frameworks:
+  - Next.js
+  - React
+tools:
+  - Docker
+  - Prisma
+  - Vitest
+  - OpenAPI
+  - Redoc
+---
 # CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
@@ -17,7 +39,7 @@ MVP complete. All core features implemented.
 - **ORM:** Prisma v7 with `@prisma/adapter-pg` (driver adapters required in v7)
 - **Markdown rendering:** react-markdown + remark-gfm + rehype-highlight
 - **Diagrams:** Mermaid.js (client-side, lazy loaded)
-- **Auth model:** No user accounts. Magic tokens + API keys only (both SHA-256 hashed)
+- **Auth model:** Per-doc magic tokens + doc API keys + read-only share tokens (all SHA-256 hashed except share tokens, which are stored unhashed for constant-time compare). Optional lightweight **user accounts** also exist: passwordless email magic-login (`User`/`LoginToken`) plus account API keys (`acct_` prefix); a `Doc` can be owned by a user (`Doc.userId`). Accounts are optional — docs still work token-only.
 - **Testing:** Vitest (unit + integration split via `projects` config)
 - **Domain:** draftmark.app
 - **Hosting:** Hetzner (shared instance with other Rumbo Labs projects)
@@ -92,7 +114,7 @@ Commands: `create`, `update`, `status`, `comments`, `comment`, `react`, `review`
 
 Config resolves from: CLI flags → env vars (`DM_API_KEY`, `DM_MAGIC_TOKEN`) → `.draftmark.json` → global config (`~/.config/draftmark/config.json` via `dm login`).
 
-Key features: stdin support (`dm create -`), `--agent` flag (auto-inherited by comment/review), `--meta <json>`, `--format table|json|minimal`, `--since` date filter, `-q` quiet mode, `--base-url` override, structured JSON errors, exit codes (0 ok, 1 error, 2 auth, 3 not found, 4 conflict).
+Key features: stdin support (`dm create -`), `--agent` flag (create-only — for agent-authored feedback use `--author-type agent` on `comment` and `--type agent` on `review`; not auto-inherited), `--meta <json>`, `--format table|json|minimal`, `--since` date filter, `-q` quiet mode, `--base-url` override, structured JSON errors, exit codes (0 ok, 1 error, 2 auth, 3 not found, 4 conflict). Note: `comment` and `react` take a required second arg (`<body>`/`<emoji>`), so the slug must be passed explicitly for those two even when `.draftmark.json` exists. `dm login` saves an `--api-key`/`--magic-token` you already have (it does not send a magic email link).
 
 ## API Documentation
 
@@ -100,7 +122,7 @@ OpenAPI 3.1 spec at `openapi.yaml` (source of truth) and `public/openapi.yaml` (
 
 ## Cross-Session Context
 
-`.draftmark.json` convention: agents write this file after creating a doc so future sessions can discover pending reviews. Stores api_key (not magic_token). Should be `.gitignore`d.
+`.draftmark.json` convention: agents write this file after creating a doc so future sessions can discover pending reviews. `dm create` stores `slug`, `url`, `api_key`, `magic_token`, and `author_type` per doc. Should be `.gitignore`d (it contains a magic token).
 
 ## Landing Page
 
