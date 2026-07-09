@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import MarkdownPreview from "@/components/MarkdownPreview";
+import { buildMetaDescription } from "@/lib/seo";
 import type { Metadata } from "next";
 import Link from "next/link";
 
@@ -48,11 +49,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 
   const title = doc.title || "Untitled";
-  const description = doc.content
-    .replace(/^#.*\n/gm, "")
-    .replace(/[*_`~\[\]]/g, "")
-    .trim()
-    .slice(0, 160);
+  const description = buildMetaDescription(doc);
   const url = `${BASE_URL}/public/${seoSlug}`;
 
   return {
@@ -143,7 +140,12 @@ export default async function SEODocPage({ params }: Props) {
             </div>
           </header>
 
-          <MarkdownPreview content={stripMatchingH1(doc.content, doc.title)} />
+          {/* demoteH1: the page title above is the sole <h1>; any in-content
+              H1 renders as <h2> so public pages have exactly one H1 for SEO. */}
+          <MarkdownPreview
+            content={stripMatchingH1(doc.content, doc.title)}
+            demoteH1
+          />
 
           <SeoReactions reactions={doc.reactions} />
           <SeoComments comments={doc.comments} totalCount={doc._count.comments} />

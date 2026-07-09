@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
+import { buildMetaDescription } from "@/lib/seo";
 import Nav from "@/components/Nav";
 import DocView from "@/components/DocView";
 import ShareBanner from "@/components/ShareBanner";
@@ -20,11 +21,7 @@ export async function generateMetadata({ params }: Props) {
   const isPublic = doc.visibility === "public";
   const title = isPublic ? doc.title || "Untitled" : "Private document";
   const description = isPublic
-    ? doc.content
-        .replace(/^#.*\n/gm, "")
-        .replace(/[*_`~\[\]]/g, "")
-        .trim()
-        .slice(0, 160)
+    ? buildMetaDescription(doc)
     : "A private document on Draftmark.";
 
   return {
