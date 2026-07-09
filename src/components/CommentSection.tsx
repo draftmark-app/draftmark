@@ -27,10 +27,11 @@ type Props = {
   setReviewerName: (name: string) => void;
   persistReviewerName: (name: string) => void;
   onInlineCommentsLoaded?: (comments: Comment[]) => void;
+  onJumpToComment?: (comment: Comment) => void;
   authToken?: string;
 };
 
-export default function CommentSection({ slug, currentVersion, reviewerName, setReviewerName, persistReviewerName, onInlineCommentsLoaded, authToken }: Props) {
+export default function CommentSection({ slug, currentVersion, reviewerName, setReviewerName, persistReviewerName, onInlineCommentsLoaded, onJumpToComment, authToken }: Props) {
   const [comments, setComments] = useState<Comment[]>([]);
   const [body, setBody] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -58,9 +59,12 @@ export default function CommentSection({ slug, currentVersion, reviewerName, set
     fetchComments();
   }, [fetchComments]);
 
-  const generalComments = comments.filter((c) => !c.anchor_type || c.anchor_type === null);
-  const topLevel = generalComments.filter((c) => !c.parent_id);
-  const repliesByParent = generalComments.reduce<Record<string, Comment[]>>((acc, c) => {
+  // Show every comment here — general, line-anchored, and selection-anchored —
+  // so reviewers have one place that surfaces all feedback regardless of which
+  // tab it was left on. Only general comments use parent_id threading; inline
+  // comments (line/selection) render top-level with an anchor badge + jump link.
+  const topLevel = comments.filter((c) => !c.parent_id);
+  const repliesByParent = comments.reduce<Record<string, Comment[]>>((acc, c) => {
     if (c.parent_id) {
       if (!acc[c.parent_id]) acc[c.parent_id] = [];
       acc[c.parent_id].push(c);
@@ -138,6 +142,20 @@ export default function CommentSection({ slug, currentVersion, reviewerName, set
               {c.author_type === "agent" && (
                 <span className="badge-agent">agent</span>
               )}
+              {c.anchor_type && (
+                onJumpToComment ? (
+                  <button
+                    type="button"
+                    className="comment-anchor-chip comment-anchor-chip-btn"
+                    onClick={() => onJumpToComment(c)}
+                    title="jump to this comment"
+                  >
+                    {anchorLabel(c)}
+                  </button>
+                ) : (
+                  <span className="comment-anchor-chip">{anchorLabel(c)}</span>
+                )
+              )}
               {c.status !== "open" && (
                 <span className="comment-tag">{c.status}</span>
               )}
@@ -160,7 +178,7 @@ export default function CommentSection({ slug, currentVersion, reviewerName, set
                 {c.cross_ref_line ? `:${c.cross_ref_line}` : ""}
               </a>
             )}
-            {!isReply && (
+            {!isReply && !c.anchor_type && (
               <button
                 type="button"
                 className="comment-reply-btn"
@@ -218,7 +236,7 @@ export default function CommentSection({ slug, currentVersion, reviewerName, set
 
   return (
     <div className="doc-view-comments">
-      <h3>comments ({generalComments.length})</h3>
+      <h3>comments ({topLevel.length})</h3>
 
       {topLevel.map((c) => renderComment(c))}
 
@@ -248,6 +266,18 @@ export default function CommentSection({ slug, currentVersion, reviewerName, set
       </form>
     </div>
   );
+}
+
+function anchorLabel(c: Comment): string {
+  if (c.anchor_type === "line" && c.anchor_ref != null) {
+    return `📌 line ${c.anchor_ref}`;
+  }
+  if (c.anchor_type === "selection") {
+    const quote = (c.anchor_text || "").trim();
+    const truncated = quote.length > 40 ? `${quote.slice(0, 40)}…` : quote;
+    return truncated ? `✎ “${truncated}”` : "✎ selection";
+  }
+  return "";
 }
 
 function getTimeAgo(date: Date): string {

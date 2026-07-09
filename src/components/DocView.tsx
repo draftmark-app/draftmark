@@ -90,6 +90,35 @@ export default function DocView({ doc, isOwner, editUrl, authToken, rawUrl }: Do
     setRefreshKey((k) => k + 1);
   }, []);
 
+  // Jump from the unified comments panel to where an inline comment lives.
+  // Line comments live on the source tab; selection comments on the preview tab.
+  const handleJumpToComment = useCallback((c: InlineComment) => {
+    if (c.anchor_type === "line" && c.anchor_ref != null) {
+      const target = c.anchor_ref;
+      setActiveTab("source");
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          const el = document.getElementById(`line-${target}`);
+          if (!el) return;
+          el.scrollIntoView({ behavior: "smooth", block: "center" });
+          el.classList.add("line-jump-flash");
+          setTimeout(() => el.classList.remove("line-jump-flash"), 1600);
+        }, 60);
+      });
+    } else if (c.anchor_type === "selection") {
+      const id = c.id;
+      setActiveTab("preview");
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          const el = previewRef.current?.querySelector(
+            `[data-comment-group="${id}"]`
+          ) as HTMLElement | null;
+          el?.scrollIntoView({ behavior: "smooth", block: "center" });
+        }, 120);
+      });
+    }
+  }, []);
+
   return (
     <ToastProvider>
     <div className="doc-view">
@@ -242,6 +271,7 @@ export default function DocView({ doc, isOwner, editUrl, authToken, rawUrl }: Do
         setReviewerName={setReviewerName}
         persistReviewerName={persistReviewerName}
         onInlineCommentsLoaded={handleInlineCommentsLoaded}
+        onJumpToComment={handleJumpToComment}
         authToken={authToken}
       />
 

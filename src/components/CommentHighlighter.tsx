@@ -62,56 +62,12 @@ export default function CommentHighlighter({ containerRef, comments, currentVers
       // Remove any existing highlights first
       removeHighlights(container);
 
-      const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT);
-      const textNodes: Text[] = [];
-      let node: Node | null;
-      while ((node = walker.nextNode())) {
-        textNodes.push(node as Text);
-      }
-
+      // Each anchor is located and wrapped independently against the current
+      // DOM state, so a match may span multiple text nodes (e.g. when the
+      // selected passage crosses **bold**, a [link](url), or a line break).
       for (const anchorText of texts) {
         const commentGroup = commentsByText[anchorText];
-        const groupId = commentGroup[0].id;
-        let found = false;
-
-        for (const textNode of textNodes) {
-          if (found) break;
-          const nodeText = textNode.textContent || "";
-          const idx = nodeText.indexOf(anchorText);
-          if (idx === -1) continue;
-
-          // Don't highlight inside code blocks
-          if (textNode.parentElement?.closest("pre, code")) continue;
-
-          const before = nodeText.slice(0, idx);
-          const match = nodeText.slice(idx, idx + anchorText.length);
-          const after = nodeText.slice(idx + anchorText.length);
-
-          const span = document.createElement("span");
-          span.className = "comment-highlight-wrap";
-          span.setAttribute("data-comment-group", groupId);
-
-          const highlightSpan = document.createElement("span");
-          highlightSpan.className = "comment-highlight";
-          highlightSpan.textContent = match;
-
-          const bubble = document.createElement("span");
-          bubble.className = "comment-bubble";
-          bubble.textContent = String(commentGroup.length);
-
-          span.appendChild(highlightSpan);
-          span.appendChild(bubble);
-
-          const parent = textNode.parentNode;
-          if (!parent) continue;
-
-          if (before) parent.insertBefore(document.createTextNode(before), textNode);
-          parent.insertBefore(span, textNode);
-          if (after) parent.insertBefore(document.createTextNode(after), textNode);
-          parent.removeChild(textNode);
-
-          found = true;
-        }
+        highlightAnchor(container, anchorText, commentGroup[0].id, commentGroup.length);
       }
 
       highlightedRef.current = true;
@@ -266,6 +222,82 @@ export default function CommentHighlighter({ containerRef, comments, currentVers
       </form>
     </div>
   );
+}
+
+// Locate `anchorText` across the container's text nodes — even when it spans
+// several nodes because of inline formatting — and wrap each intersecting
+// segment in a highlight span sharing the same data-comment-group.
+function highlightAnchor(
+  container: HTMLElement,
+  anchorText: string,
+  groupId: string,
+  count: number
+) {
+  const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT);
+  const segments: { node: Text; start: number; end: number }[] = [];
+  let full = "";
+  let node: Node | null;
+  while ((node = walker.nextNode())) {
+    const textNode = node as Text;
+    // Skip code blocks and text already inside an existing highlight.
+    if (textNode.parentElement?.closest("pre, code, .comment-highlight-wrap")) {
+      continue;
+    }
+    const text = textNode.textContent || "";
+    segments.push({ node: textNode, start: full.length, end: full.length + text.length });
+    full += text;
+  }
+
+  const matchStart = full.indexOf(anchorText);
+  if (matchStart === -1) return;
+  const matchEnd = matchStart + anchorText.length;
+
+  const overlapping = segments.filter((s) => s.end > matchStart && s.start < matchEnd);
+  overlapping.forEach((seg, i) => {
+    const isLast = i === overlapping.length - 1;
+    const localStart = Math.max(0, matchStart - seg.start);
+    const localEnd = Math.min(seg.node.textContent?.length ?? 0, matchEnd - seg.start);
+    wrapNodePortion(seg.node, localStart, localEnd, groupId, isLast ? count : null);
+  });
+}
+
+function wrapNodePortion(
+  textNode: Text,
+  localStart: number,
+  localEnd: number,
+  groupId: string,
+  bubbleCount: number | null
+) {
+  const nodeText = textNode.textContent || "";
+  const match = nodeText.slice(localStart, localEnd);
+  if (!match) return;
+  const parent = textNode.parentNode;
+  if (!parent) return;
+
+  const before = nodeText.slice(0, localStart);
+  const after = nodeText.slice(localEnd);
+
+  const wrap = document.createElement("span");
+  wrap.className = "comment-highlight-wrap";
+  wrap.setAttribute("data-comment-group", groupId);
+
+  const highlightSpan = document.createElement("span");
+  highlightSpan.className = "comment-highlight";
+  highlightSpan.textContent = match;
+  wrap.appendChild(highlightSpan);
+
+  // Bubble only on the final segment so multi-node matches show one count.
+  if (bubbleCount != null) {
+    const bubble = document.createElement("span");
+    bubble.className = "comment-bubble";
+    bubble.textContent = String(bubbleCount);
+    wrap.appendChild(bubble);
+  }
+
+  if (before) parent.insertBefore(document.createTextNode(before), textNode);
+  parent.insertBefore(wrap, textNode);
+  if (after) parent.insertBefore(document.createTextNode(after), textNode);
+  parent.removeChild(textNode);
 }
 
 function removeHighlights(container: HTMLElement) {

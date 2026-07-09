@@ -72,6 +72,7 @@ export default function LineNumberedMarkdown({
         return (
           <div key={lineNum}>
             <div
+              id={`line-${lineNum}`}
               className={`lined-row ${hasComments ? "has-comments" : ""} ${activeLine === lineNum ? "active" : ""}`}
               onClick={() => handleLineClick(lineNum)}
             >
