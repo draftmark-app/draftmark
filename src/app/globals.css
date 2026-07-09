@@ -1146,6 +1146,39 @@ footer nav ul a { font-size: 14px; }
   margin-bottom: 0;
 }
 
+.comments-unread-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 12px 0 4px;
+  padding: 10px 14px;
+  border: 1px solid var(--accent-dim);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  color: var(--text);
+  font-size: 13px;
+}
+
+.comments-unread-dismiss {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 2px 4px;
+}
+
+.comments-unread-dismiss:hover {
+  text-decoration: underline;
+}
+
+.comment-notify-input {
+  margin-top: 8px;
+}
+
 .doc-view-comment {
   display: flex;
   gap: 12px;

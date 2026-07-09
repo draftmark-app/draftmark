@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { findDocWithReadAccess, checkAcceptingFeedback } from "@/lib/auth";
+import {
+  findDocWithReadAccess,
+  checkAcceptingFeedback,
+  isDocOwner,
+  getAuthenticatedUser,
+} from "@/lib/auth";
+import { commentIdentity } from "@/lib/identity";
+import { notifyOwnerOfComment } from "@/lib/notify";
+import { notifyReplySubscribers } from "@/lib/subscriptions";
 import { enforceRateLimit, LIMITS } from "@/lib/ratelimit";
 import { parseNullableInt } from "@/lib/validation";
 
@@ -68,32 +76,80 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
     parsed.push({ anchorRef: anchorRef.value, crossRefLine: crossRefLine.value });
   }
 
+  // Validate parent_ids up front (mirrors the single-POST contract): every
+  // referenced parent must be an existing comment on THIS doc, so a batch can't
+  // thread replies under another doc's comment (which would misattribute the
+  // "replies to your comments" badge) or a nonexistent id.
+  const parentIds: string[] = [
+    ...new Set(
+      (body.comments as Array<Record<string, unknown>>)
+        .map((c) => c.parent_id)
+        .filter((p): p is string => typeof p === "string" && p.length > 0)
+    ),
+  ];
+  if (parentIds.length > 0) {
+    const found = await prisma.comment.findMany({
+      where: { id: { in: parentIds }, docId: doc.id },
+      select: { id: true },
+    });
+    if (found.length !== parentIds.length) {
+      return NextResponse.json(
+        { error: "One or more parent_id values are not valid comments on this document" },
+        { status: 400 }
+      );
+    }
+  }
+
   const latestVersion = await prisma.docVersion.findFirst({
     where: { docId: doc.id },
     orderBy: { versionNumber: "desc" },
   });
 
+  const user = await getAuthenticatedUser(request);
+  const identifier = commentIdentity(request, user);
+
   try {
-    const comments = [];
-    for (let i = 0; i < body.comments.length; i++) {
-      const c = body.comments[i];
-      const comment = await prisma.comment.create({
-        data: {
-          docId: doc.id,
-          body: c.body as string,
-          author: (c.author as string) || "anonymous",
-          authorType: c.author_type === "agent" ? "agent" : "human",
-          anchorType: (c.anchor_type as string) || null,
-          anchorRef: parsed[i].anchorRef,
-          anchorText: (c.anchor_text as string) || null,
-          docVersion: latestVersion?.versionNumber ?? 1,
-          status: "open",
-          crossRefSlug: (c.cross_ref_slug as string) || null,
-          crossRefLine: parsed[i].crossRefLine,
-          parentId: (c.parent_id as string) || null,
-        },
-      });
-      comments.push(comment);
+    // All-or-nothing: a mid-batch failure must not leave partial comments
+    // persisted (which would also mean the owner is notified about a batch that
+    // didn't fully land).
+    const comments = await prisma.$transaction(
+      body.comments.map((c: Record<string, unknown>, i: number) =>
+        prisma.comment.create({
+          data: {
+            docId: doc.id,
+            body: c.body as string,
+            author: (c.author as string) || "anonymous",
+            authorType: c.author_type === "agent" ? "agent" : "human",
+            anchorType: (c.anchor_type as string) || null,
+            anchorRef: parsed[i].anchorRef,
+            anchorText: (c.anchor_text as string) || null,
+            docVersion: latestVersion?.versionNumber ?? 1,
+            status: "open",
+            crossRefSlug: (c.cross_ref_slug as string) || null,
+            crossRefLine: parsed[i].crossRefLine,
+            parentId: (c.parent_id as string) || null,
+            identifier,
+          },
+        })
+      )
+    );
+
+    // One notification for the whole batch (debounced anyway), suppressed when
+    // the owner posted it. Reuse the already-resolved `user`.
+    const postedByOwner = await isDocOwner(request, doc, user);
+    await notifyOwnerOfComment(doc, { postedByOwner });
+
+    // Notify reply subscribers, once per distinct parent (per-sub debounce
+    // coalesces multiple replies to the same thread). No excludeEmail here: batch
+    // has no per-comment opt-in email, so there's no known author to exclude
+    // (unlike the single-POST path). Harmless — an agent batch author isn't a
+    // human subscriber.
+    const notifiedParents = new Set<string>();
+    for (const c of comments) {
+      if (c.parentId && !notifiedParents.has(c.parentId)) {
+        notifiedParents.add(c.parentId);
+        await notifyReplySubscribers({ reply: c, doc });
+      }
     }
 
     return NextResponse.json(

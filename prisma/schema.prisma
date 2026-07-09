@@ -62,6 +62,7 @@ model Doc {
   reviewDeadline  DateTime? @map("review_deadline")
   meta            Json?     @db.JsonB
   userId          String?   @map("user_id")
+  commentNotifiedAt DateTime? @map("comment_notified_at") // debounce for owner comment notifications
   createdAt   DateTime     @default(now()) @map("created_at")
   updatedAt   DateTime     @updatedAt @map("updated_at")
   user           User?      @relation(fields: [userId], references: [id], onDelete: SetNull)
@@ -100,12 +101,34 @@ model Comment {
   crossRefSlug String?   @map("cross_ref_slug")
   crossRefLine Int?      @map("cross_ref_line")
   parentId     String?   @map("parent_id")
+  identifier   String?   // server-derived poster identity (acct:<id> or anon IP hash) for "your comments" detection
   createdAt    DateTime  @default(now()) @map("created_at")
   doc          Doc       @relation(fields: [docId], references: [id], onDelete: Cascade)
   parent       Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
   replies      Comment[] @relation("CommentReplies")
+  subscriptions CommentSubscription[]
 
   @@map("comments")
+}
+
+model CommentSubscription {
+  id             String    @id @default(cuid())
+  commentId      String    @map("comment_id") // the (top-level) comment whose replies the subscriber wants
+  docId          String    @map("doc_id") // denormalized from comment for per-(doc,email) constraint + throttle queries
+  email          String
+  confirmToken   String    @unique @map("confirm_token") // hashed; kept after confirm so re-clicks are idempotent (double opt-in)
+  unsubToken     String    @unique @map("unsub_token")   // unhashed random (like share_token); embedded in the notify email sent later
+  confirmedAt    DateTime? @map("confirmed_at")
+  lastNotifiedAt DateTime? @map("last_notified_at")       // per-subscription notify debounce
+  createdAt      DateTime  @default(now()) @map("created_at")
+  comment        Comment   @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+  @@index([commentId])
+  @@index([email])
+  // A partial unique index (doc_id, email) WHERE confirmed_at IS NULL is added
+  // in the migration SQL — it makes the "one pending confirmation per (email,
+  // doc)" guard atomic. Prisma can't express partial indexes, so it lives in SQL.
+  @@map("comment_subscriptions")
 }
 
 model Reaction {

@@ -46,3 +46,22 @@ export function feedbackIdentity(request: NextRequest): string {
   const ip = getClientIp(request);
   return "anon:" + hashToken(`${ip}|${requireSecret()}`);
 }
+
+/**
+ * Poster identity for the "your comments" display signal: the account id for
+ * authenticated callers, otherwise the anonymous IP-derived identity. Unlike the
+ * reaction/review dedup identity this is display-only (highlighting replies to
+ * your own comments), so it degrades to null rather than throwing if the server
+ * secret is missing — a missing badge is never worth a 500 on the comments feed.
+ */
+export function commentIdentity(
+  request: NextRequest,
+  user: { id: string } | null
+): string | null {
+  if (user) return "acct:" + user.id;
+  try {
+    return feedbackIdentity(request);
+  } catch {
+    return null;
+  }
+}

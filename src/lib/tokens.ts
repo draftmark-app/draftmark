@@ -41,3 +41,7 @@ export function generateAccountApiKey(): string {
 export function generateShareToken(): string {
   return generateToken("share");
 }
+
+export function generateSubscriptionToken(): string {
+  return generateToken("sub");
+}

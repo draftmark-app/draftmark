@@ -162,6 +162,35 @@ export async function isAccountOwner(
 }
 
 /**
+ * True when the request is made by the doc's owner — either a valid magic token
+ * holder (any independent source: header, ?token=, or the per-doc cookie) or the
+ * authenticated account owner. Used to suppress self-notifications: don't email
+ * an owner about a comment they posted themselves.
+ */
+export async function isDocOwner(
+  request: NextRequest,
+  doc: { slug: string; magicToken: string; userId: string | null },
+  // Callers that already resolved the authenticated user pass it here to avoid a
+  // second getAuthenticatedUser round-trip (and duplicate API-key lastUsedAt writes).
+  resolvedUser?: AuthenticatedUser | null
+): Promise<boolean> {
+  const url = new URL(request.url);
+  const magicCandidates = [
+    request.headers.get("x-magic-token"),
+    url.searchParams.get("token"),
+    request.cookies.get(`dm_tok_${doc.slug}`)?.value ?? null,
+  ].filter((t): t is string => !!t);
+  if (magicCandidates.some((t) => doc.magicToken === hashToken(t))) return true;
+
+  if (doc.userId) {
+    const user =
+      resolvedUser !== undefined ? resolvedUser : await getAuthenticatedUser(request);
+    if (user?.id === doc.userId) return true;
+  }
+  return false;
+}
+
+/**
  * Find a doc and authorize read access for feedback endpoints (comments, reactions, reviews).
  * Checks: public visibility, API key (Bearer key_...), magic token (?token= or X-Magic-Token),
  * account API key (Bearer acct_...), or session cookie (account owner).
