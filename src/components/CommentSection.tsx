@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useToast } from "./Toast";
 import CommentMarkdown from "./CommentMarkdown";
 
@@ -17,6 +17,7 @@ type Comment = {
   cross_ref_slug: string | null;
   cross_ref_line: number | null;
   parent_id: string | null;
+  mine?: boolean;
   created_at: string;
 };
 
@@ -40,6 +41,27 @@ export default function CommentSection({ slug, currentVersion, reviewerName, set
   const [replyBody, setReplyBody] = useState("");
   const [replySubmitting, setReplySubmitting] = useState(false);
   const { showToast } = useToast();
+
+  const seenKey = `draftmark:comments_seen:${slug}`;
+
+  // Timestamp (ms) the viewer last acknowledged this doc's comments. Persisted
+  // per-doc in localStorage so returning to the page can surface replies to
+  // your own comments that arrived while you were away. No PII: "your comments"
+  // is resolved server-side (see `mine`), never from anything the client stores.
+  // Lazily initialized from storage; first visit baselines to "now" so we only
+  // surface replies that arrive from here on, not the entire backlog.
+  const [seenAt, setSeenAt] = useState<number>(() => {
+    if (typeof window === "undefined") return 0;
+    const stored = localStorage.getItem(seenKey);
+    return stored ? parseInt(stored, 10) : Date.now();
+  });
+
+  // Persist the initial baseline once (no setState → no cascading render).
+  useEffect(() => {
+    if (typeof window !== "undefined" && !localStorage.getItem(seenKey)) {
+      localStorage.setItem(seenKey, String(seenAt));
+    }
+  }, [seenKey, seenAt]);
 
   const fetchComments = useCallback(async () => {
     const tokenParam = authToken ? `?token=${encodeURIComponent(authToken)}` : "";
@@ -71,6 +93,28 @@ export default function CommentSection({ slug, currentVersion, reviewerName, set
     }
     return acc;
   }, {});
+
+  // Replies to *your* comments that landed since you last acknowledged them.
+  // Your own replies are excluded (`!c.mine`) so answering doesn't re-notify.
+  const unreadReplies = useMemo(() => {
+    if (!seenAt) return [];
+    const myTopLevel = new Set(
+      comments.filter((c) => !c.parent_id && c.mine).map((c) => c.id)
+    );
+    return comments.filter(
+      (c) =>
+        c.parent_id &&
+        myTopLevel.has(c.parent_id) &&
+        !c.mine &&
+        new Date(c.created_at).getTime() > seenAt
+    );
+  }, [comments, seenAt]);
+
+  const markRepliesRead = useCallback(() => {
+    const now = Date.now();
+    localStorage.setItem(seenKey, String(now));
+    setSeenAt(now);
+  }, [seenKey]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -240,6 +284,22 @@ export default function CommentSection({ slug, currentVersion, reviewerName, set
   return (
     <div className="doc-view-comments">
       <h3>comments ({comments.length})</h3>
+
+      {unreadReplies.length > 0 && (
+        <div className="comments-unread-banner" role="status">
+          <span>
+            🔔 {unreadReplies.length} new{" "}
+            {unreadReplies.length === 1 ? "reply" : "replies"} to your comments
+          </span>
+          <button
+            type="button"
+            className="comments-unread-dismiss"
+            onClick={markRepliesRead}
+          >
+            mark read
+          </button>
+        </div>
+      )}
 
       {topLevel.map((c) => renderComment(c))}
 

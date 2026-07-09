@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { findDocWithReadAccess, checkAcceptingFeedback } from "@/lib/auth";
+import {
+  findDocWithReadAccess,
+  checkAcceptingFeedback,
+  isDocOwner,
+  getAuthenticatedUser,
+} from "@/lib/auth";
+import { commentIdentity } from "@/lib/identity";
+import { notifyOwnerOfComment } from "@/lib/notify";
 import { enforceRateLimit, LIMITS } from "@/lib/ratelimit";
 import { parseNullableInt } from "@/lib/validation";
 
@@ -33,6 +40,12 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
     orderBy: { createdAt: "asc" },
   });
 
+  // Derive the requester's identity so we can flag which comments are theirs
+  // ("your comments") without ever exposing the raw identifier. This powers the
+  // client-side "new replies to your comments" badge.
+  const user = await getAuthenticatedUser(request);
+  const me = commentIdentity(request, user);
+
   return NextResponse.json({
     comments: comments.map((c) => ({
       id: c.id,
@@ -47,6 +60,7 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
       cross_ref_slug: c.crossRefSlug,
       cross_ref_line: c.crossRefLine,
       parent_id: c.parentId,
+      mine: !!me && c.identifier === me,
       created_at: c.createdAt.toISOString(),
     })),
   });
@@ -112,6 +126,7 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
     }
   }
 
+  const user = await getAuthenticatedUser(request);
   const comment = await prisma.comment.create({
     data: {
       docId: doc.id,
@@ -126,8 +141,15 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
       crossRefSlug: body.cross_ref_slug || null,
       crossRefLine: crossRefLine.value,
       parentId: body.parent_id || null,
+      identifier: commentIdentity(request, user),
     },
   });
+
+  // Notify the account owner (if any) that new feedback arrived. Best-effort and
+  // debounced; suppressed when the owner is the one commenting. Reuse the `user`
+  // already resolved above so we don't re-authenticate.
+  const postedByOwner = await isDocOwner(request, doc, user);
+  await notifyOwnerOfComment(doc, { postedByOwner });
 
   return NextResponse.json(
     {

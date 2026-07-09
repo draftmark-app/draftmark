@@ -62,6 +62,7 @@ model Doc {
   reviewDeadline  DateTime? @map("review_deadline")
   meta            Json?     @db.JsonB
   userId          String?   @map("user_id")
+  commentNotifiedAt DateTime? @map("comment_notified_at") // debounce for owner comment notifications
   createdAt   DateTime     @default(now()) @map("created_at")
   updatedAt   DateTime     @updatedAt @map("updated_at")
   user           User?      @relation(fields: [userId], references: [id], onDelete: SetNull)
@@ -100,6 +101,7 @@ model Comment {
   crossRefSlug String?   @map("cross_ref_slug")
   crossRefLine Int?      @map("cross_ref_line")
   parentId     String?   @map("parent_id")
+  identifier   String?   // server-derived poster identity (acct:<id> or anon IP hash) for "your comments" detection
   createdAt    DateTime  @default(now()) @map("created_at")
   doc          Doc       @relation(fields: [docId], references: [id], onDelete: Cascade)
   parent       Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
