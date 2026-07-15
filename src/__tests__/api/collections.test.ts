@@ -340,4 +340,137 @@ describe("Collections API", () => {
     expect(data.docs).toHaveLength(1);
     expect(data.docs[0].label).toBe("Updated");
   });
+
+  describe("GET /collections/:slug?format=okf", () => {
+    async function createDocWithMeta(overrides: {
+      visibility?: string;
+      meta?: Record<string, unknown>;
+      content?: string;
+    } = {}) {
+      const slug = generateSlug();
+      const rawMagicToken = generateMagicToken();
+      const doc = await prisma.doc.create({
+        data: {
+          slug,
+          title: "Meta Doc",
+          content: overrides.content ?? "# Meta Doc\n\nBody.",
+          visibility: overrides.visibility ?? "public",
+          magicToken: hashToken(rawMagicToken),
+          apiKey: hashToken(generateApiKey()),
+          meta: overrides.meta,
+        },
+      });
+      return { doc, rawMagicToken };
+    }
+
+    async function addDoc(
+      collectionSlug: string,
+      magicToken: string,
+      entry: Record<string, unknown>
+    ) {
+      await fetch(`${BASE_URL}/api/v1/collections/${collectionSlug}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", "x-magic-token": magicToken },
+        body: JSON.stringify({ add_docs: [entry] }),
+      });
+    }
+
+    it("returns a manifest with index.md and one concept file per public doc", async () => {
+      const collection = await createTestCollection();
+      const { doc: d1 } = await createDocWithMeta({
+        meta: { type: "Runbook", description: "First." },
+      });
+      const { doc: d2 } = await createDocWithMeta();
+
+      await addDoc(collection.slug, collection.magic_token, { slug: d1.slug, label: "Chapter 1" });
+      await addDoc(collection.slug, collection.magic_token, { slug: d2.slug });
+
+      const res = await fetch(`${BASE_URL}/api/v1/collections/${collection.slug}?format=okf`);
+      expect(res.status).toBe(200);
+      const m = await res.json();
+
+      expect(m.okf_version).toBe("0.1");
+      expect(m.bundle).toBe(collection.slug);
+      const paths = m.files.map((f: { path: string }) => f.path);
+      expect(paths).toEqual([
+        "index.md",
+        `concepts/${d1.slug}.md`,
+        `concepts/${d2.slug}.md`,
+      ]);
+
+      const index = m.files.find((f: { path: string }) => f.path === "index.md").content;
+      expect(index).toContain("# Test Collection");
+      expect(index).toContain(`* [Chapter 1](/concepts/${d1.slug}.md) - First.`);
+
+      const concept = m.files.find(
+        (f: { path: string }) => f.path === `concepts/${d1.slug}.md`
+      ).content;
+      expect(concept).toMatch(/^---\ntype: "Runbook"\n/);
+    });
+
+    it("excludes private docs for anonymous callers (no content leak)", async () => {
+      const collection = await createTestCollection();
+      const { doc: pub } = await createDocWithMeta();
+      const { doc: priv, rawMagicToken: privToken } = await createDocWithMeta({
+        visibility: "private",
+        content: "# Secret Runbook\n\nclassified",
+        meta: { type: "Secret" },
+      });
+
+      await addDoc(collection.slug, collection.magic_token, { slug: pub.slug });
+      // Private doc requires its own token proof to attach.
+      await addDoc(collection.slug, collection.magic_token, { slug: priv.slug, token: privToken });
+
+      const res = await fetch(`${BASE_URL}/api/v1/collections/${collection.slug}?format=okf`);
+      const m = await res.json();
+      const paths = m.files.map((f: { path: string }) => f.path);
+
+      expect(paths).toContain(`concepts/${pub.slug}.md`);
+      expect(paths).not.toContain(`concepts/${priv.slug}.md`);
+      expect(JSON.stringify(m)).not.toContain("classified");
+      expect(JSON.stringify(m)).not.toContain(priv.slug);
+    });
+
+    it("includes private docs for the collection owner (magic token)", async () => {
+      const collection = await createTestCollection();
+      const { doc: priv, rawMagicToken: privToken } = await createDocWithMeta({
+        visibility: "private",
+        content: "# Secret Runbook\n\nclassified",
+        meta: { type: "Secret" },
+      });
+      await addDoc(collection.slug, collection.magic_token, { slug: priv.slug, token: privToken });
+
+      const res = await fetch(
+        `${BASE_URL}/api/v1/collections/${collection.slug}?format=okf&token=${collection.magic_token}`
+      );
+      const m = await res.json();
+      const paths = m.files.map((f: { path: string }) => f.path);
+      expect(paths).toContain(`concepts/${priv.slug}.md`);
+      const concept = m.files.find(
+        (f: { path: string }) => f.path === `concepts/${priv.slug}.md`
+      ).content;
+      expect(concept).toContain("classified");
+    });
+
+    it("includes private docs for the collection owner (api key)", async () => {
+      const collection = await createTestCollection();
+      const { doc: priv, rawMagicToken: privToken } = await createDocWithMeta({
+        visibility: "private",
+        content: "# Secret\n\nclassified",
+      });
+      await addDoc(collection.slug, collection.magic_token, { slug: priv.slug, token: privToken });
+
+      const res = await fetch(`${BASE_URL}/api/v1/collections/${collection.slug}?format=okf`, {
+        headers: { Authorization: `Bearer ${collection.api_key}` },
+      });
+      const m = await res.json();
+      const paths = m.files.map((f: { path: string }) => f.path);
+      expect(paths).toContain(`concepts/${priv.slug}.md`);
+    });
+
+    it("returns 404 for an unknown collection", async () => {
+      const res = await fetch(`${BASE_URL}/api/v1/collections/does-not-exist?format=okf`);
+      expect(res.status).toBe(404);
+    });
+  });
 });

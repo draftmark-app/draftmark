@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { authorizeCollectionWithMagicToken, getAuthenticatedUser } from "@/lib/auth";
 import { hashToken } from "@/lib/tokens";
+import { buildOkfBundle } from "@/lib/okf";
 
 type RouteContext = { params: Promise<{ slug: string }> };
 
@@ -10,6 +11,17 @@ export async function GET(
   { params }: RouteContext
 ) {
   const { slug } = await params;
+
+  // OKF bundle export — a manifest of markdown files (index.md + one concept
+  // doc per member). Private member docs are included only for a caller who
+  // proves collection ownership; anonymous callers get public docs only,
+  // matching the privacy stance of the JSON response below. See
+  // docs/OKF_EXPORT_SPEC.md §7.
+  const format = new URL(request.url).searchParams.get("format");
+  if (format === "okf") {
+    return exportOkfBundle(request, slug);
+  }
+
   const collection = await prisma.collection.findUnique({
     where: { slug },
     include: {
@@ -68,6 +80,63 @@ export async function GET(
       };
     }),
   });
+}
+
+async function exportOkfBundle(request: NextRequest, slug: string) {
+  const collection = await prisma.collection.findUnique({
+    where: { slug },
+    include: {
+      docs: {
+        orderBy: { position: "asc" },
+        include: {
+          doc: {
+            select: {
+              slug: true,
+              title: true,
+              content: true,
+              meta: true,
+              updatedAt: true,
+              visibility: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  if (!collection) {
+    return NextResponse.json({ error: "Collection not found" }, { status: 404 });
+  }
+
+  // Collection ownership — magic token, collection API key, or owning account.
+  // A private doc can only be added to a collection by someone who proved that
+  // doc's ownership (see PATCH add_docs), so an owner exporting private members
+  // sees nothing they couldn't already read via the doc's own credential.
+  const url = new URL(request.url);
+  const magicToken = request.headers.get("x-magic-token") || url.searchParams.get("token");
+  const isMagicOwner = !!magicToken && collection.magicToken === hashToken(magicToken);
+
+  const authHeader = request.headers.get("authorization");
+  const apiKey = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
+  const isApiKeyOwner = !!(apiKey && !apiKey.startsWith("acct_") && collection.apiKey === hashToken(apiKey));
+
+  const user = await getAuthenticatedUser(request);
+  const isAccountOwner = !!(user && collection.userId && user.id === collection.userId);
+
+  const isOwner = isMagicOwner || isApiKeyOwner || isAccountOwner;
+
+  const members = collection.docs
+    .map((cd) => ({ ...cd.doc, label: cd.label }))
+    .filter((d) => isOwner || d.visibility === "public");
+
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || url.origin;
+  const manifest = buildOkfBundle(
+    { slug: collection.slug, title: collection.title },
+    members,
+    baseUrl
+  );
+
+  return NextResponse.json(manifest);
 }
 
 export async function PATCH(
