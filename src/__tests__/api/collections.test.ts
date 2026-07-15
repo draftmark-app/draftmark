@@ -510,6 +510,23 @@ describe("Collections API", () => {
       expect(tar).toContain(`${collection.slug}/index.md`);
     });
 
+    it("rewrites intra-bundle links to concept paths", async () => {
+      const collection = await createTestCollection();
+      const { doc: target } = await createDocWithMeta();
+      const { doc: source } = await createDocWithMeta({
+        content: `# Source\n\nSee [the target](/share/${target.slug}) for more.`,
+      });
+      await addDoc(collection.slug, collection.magic_token, { slug: target.slug });
+      await addDoc(collection.slug, collection.magic_token, { slug: source.slug });
+
+      const res = await fetch(`${BASE_URL}/api/v1/collections/${collection.slug}?format=okf`);
+      const m = await res.json();
+      const concept = m.files.find(
+        (f: { path: string }) => f.path === `concepts/${source.slug}.md`
+      ).content;
+      expect(concept).toContain(`See [the target](/concepts/${target.slug}.md) for more.`);
+    });
+
     it("excludes private docs from an anonymous tarball", async () => {
       const collection = await createTestCollection();
       const { doc: priv, rawMagicToken: privToken } = await createDocWithMeta({

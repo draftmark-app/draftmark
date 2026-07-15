@@ -175,6 +175,73 @@ describe("buildOkfBundle", () => {
   });
 });
 
+describe("buildOkfBundle — intra-bundle link rewriting", () => {
+  function bundleWith(content: string, extraMembers: string[] = ["b"]) {
+    const members = [
+      member({ slug: "a", content }),
+      ...extraMembers.map((s) => member({ slug: s, content: `# ${s}` })),
+    ];
+    const m = buildOkfBundle({ slug: "coll", title: "Coll" }, members, BASE);
+    return m.files.find((f) => f.path === "concepts/a.md")!.content;
+  }
+
+  it("rewrites an absolute share link to a sibling member", () => {
+    const out = bundleWith("See [other](https://draftmark.app/share/b) for details.");
+    expect(out).toContain("See [other](/concepts/b.md) for details.");
+  });
+
+  it("rewrites site-relative and raw-markdown share links", () => {
+    const out = bundleWith("[x](/share/b) and [y](/share/b.md) and [z](/share/b.okf.md)");
+    expect(out).toContain("[x](/concepts/b.md) and [y](/concepts/b.md) and [z](/concepts/b.md)");
+  });
+
+  it("preserves a #fragment when rewriting", () => {
+    const out = bundleWith("[sec](https://draftmark.app/share/b#section-2)");
+    expect(out).toContain("[sec](/concepts/b.md#section-2)");
+  });
+
+  it("leaves links to non-member docs untouched", () => {
+    const out = bundleWith("[external doc](https://draftmark.app/share/zzz)");
+    expect(out).toContain("[external doc](https://draftmark.app/share/zzz)");
+  });
+
+  it("leaves genuinely external links untouched", () => {
+    const out = bundleWith("[google](https://google.com/share/b)");
+    expect(out).toContain("[google](https://google.com/share/b)");
+  });
+
+  it("does not rewrite a share link carrying a query string", () => {
+    const out = bundleWith("[tok](https://draftmark.app/share/b?token=secret)");
+    expect(out).toContain("[tok](https://draftmark.app/share/b?token=secret)");
+  });
+
+  it("does not touch links inside fenced code blocks", () => {
+    const content = [
+      "Prose link [a](/share/b).",
+      "",
+      "```md",
+      "example: [a](/share/b)",
+      "```",
+      "",
+      "Trailing [c](/share/b).",
+    ].join("\n");
+    const out = bundleWith(content);
+    expect(out).toContain("Prose link [a](/concepts/b.md).");
+    expect(out).toContain("example: [a](/share/b)"); // fenced — preserved
+    expect(out).toContain("Trailing [c](/concepts/b.md)."); // fence closed, rewriting resumes
+  });
+
+  it("rewrites reference-style link definitions", () => {
+    const out = bundleWith("See [ref][1].\n\n[1]: https://draftmark.app/share/b");
+    expect(out).toContain("[1]: /concepts/b.md");
+  });
+
+  it("rewrites angle-bracketed link targets", () => {
+    const out = bundleWith("[x](<https://draftmark.app/share/b>)");
+    expect(out).toContain("[x](</concepts/b.md>)");
+  });
+});
+
 /** Parse a POSIX ustar archive into name→content entries, verifying each
  * header's checksum along the way (a corrupt writer would fail this). */
 function parseTar(bytes: Uint8Array): Record<string, string> {

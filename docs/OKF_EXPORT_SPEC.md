@@ -157,7 +157,13 @@ Frontmatter synthesis pulls `title`, `description`, `tags`, and `resource` — a
 
 OKF prefers intra-bundle links as bundle-relative paths (`/concepts/other.md`). Draftmark doc bodies contain free-form markdown, sometimes with absolute `draftmark.app/share/…` URLs.
 
-**v1 leaves links untouched.** Absolute share URLs remain valid links (they resolve on the public web), just not bundle-relative. OKF requires consumers to tolerate any link. Auto-rewriting a `share/{slug}` link to `/concepts/{slug}.md` when the target is in the same collection is a clean, well-scoped follow-up (§9) — deferred because link rewriting is where correctness bugs hide.
+~~**v1 leaves links untouched.**~~ **Implemented.** When assembling a bundle, `rewriteBundleLinks` (in `src/lib/okf.ts`) rewrites a doc-body link to `/concepts/{slug}.md` iff it targets a Draftmark share URL (`/share/{slug}`, `.md`, or `.okf.md`) whose slug is another **member of the same bundle**. Everything else is left byte-for-byte:
+
+- Only site-relative links or absolute links to the bundle's **own origin** are considered — a third-party `https://elsewhere/share/{slug}` is never captured by a slug collision (trusted-host check).
+- Links with a **query string** are skipped (they carry server-side meaning, e.g. `?token=`).
+- Fenced code blocks (` ``` ` / `~~~`) are protected, so example markdown in tutorials is preserved. `#fragment`s and angle-bracketed / reference-style link targets are handled.
+
+The standalone concept export (`?format=okf` on a single doc) is unchanged — it has no sibling context to rewrite against.
 
 ## 9. Marketing & documentation surfaces
 
@@ -186,7 +192,7 @@ Ship §9.1 mentions alongside the API work; the `/okf` page can land in the same
 
 ## 10. Follow-ups (out of scope)
 
-- **Intra-bundle link rewriting** — rewrite same-collection share links to bundle-relative paths. Medium.
+- ~~**Intra-bundle link rewriting**~~ — ✅ Done (see §8). Rewrites same-collection share links to bundle-relative concept paths.
 - **`log.md` generation** — derive a per-doc or bundle changelog from `DocVersion` rows (`versionNote`, `versionNumber`, `createdAt`). Small–Medium.
 - **First-class `Doc.type`** — promote option 2 from §5 if product need emerges. Migration + UI + CLI.
 - **OKF consumer / import** — `POST /collections?format=okf` to ingest an external bundle into a new collection. Separate, larger feature.

@@ -95,6 +95,137 @@ export function buildOkfConceptDoc(doc: OkfDocInput, baseUrl: string): string {
   return `${front.join("\n")}\n\n${doc.content}\n`;
 }
 
+// ── Intra-bundle link rewriting ─────────────────────────────────────────────
+// OKF prefers links between bundle members to be bundle-relative concept paths
+// (`/concepts/{slug}.md`) rather than absolute web URLs. When assembling a
+// bundle we rewrite a doc-body link to `/concepts/{slug}.md` iff it points at a
+// Draftmark share URL whose slug is another member of the same bundle. Every
+// other link — external, or to a doc outside the bundle — is left byte-for-byte
+// untouched (OKF §links: consumers must tolerate any link, so we never guess).
+// This runs only in the bundle assembler; a standalone concept export has no
+// sibling context to rewrite against. See docs/OKF_EXPORT_SPEC.md §8.
+
+const SHARE_PATH = /^\/share\/([A-Za-z0-9_-]{1,64})(?:\.okf\.md|\.md)?$/;
+
+/**
+ * If `rawUrl` targets a bundle member's share page, return the bundle-relative
+ * concept path (preserving any `#fragment`); otherwise return null. Conservative
+ * by design: only site-relative links or absolute links to a `trustedHosts`
+ * origin are considered (so `https://other-site/share/{slug}` is never rewritten
+ * on a slug collision), and anything with a query string, a non-share path, or a
+ * bare relative target is left alone.
+ */
+function memberConceptPath(
+  rawUrl: string,
+  members: Set<string>,
+  trustedHosts: Set<string>
+): string | null {
+  let url = rawUrl.trim();
+  if (!url) return null;
+
+  let hash = "";
+  const hashIdx = url.indexOf("#");
+  if (hashIdx !== -1) {
+    hash = url.slice(hashIdx);
+    url = url.slice(0, hashIdx);
+  }
+  if (url.includes("?")) return null; // query params carry server-side meaning — don't rewrite
+
+  let pathname: string;
+  if (/^https?:\/\//i.test(url) || url.startsWith("//")) {
+    try {
+      const parsed = new URL(url.startsWith("//") ? `https:${url}` : url);
+      if (!trustedHosts.has(parsed.host.toLowerCase())) return null; // different site
+      pathname = parsed.pathname;
+    } catch {
+      return null;
+    }
+  } else if (url.startsWith("/")) {
+    pathname = url; // site-relative → same origin as the bundle
+  } else {
+    return null; // relative link (e.g. "other.md") — no reliable share mapping
+  }
+
+  const m = pathname.match(SHARE_PATH);
+  if (!m || !members.has(m[1])) return null;
+  return `/concepts/${m[1]}.md${hash}`;
+}
+
+/** Rewrite member links in a run of markdown that is known not to be code. */
+function rewriteLinksInText(
+  text: string,
+  members: Set<string>,
+  trustedHosts: Set<string>
+): string {
+  const swap = (raw: string): string => {
+    const angled = raw.startsWith("<") && raw.endsWith(">");
+    const bare = angled ? raw.slice(1, -1) : raw;
+    const replacement = memberConceptPath(bare, members, trustedHosts);
+    if (!replacement) return raw;
+    return angled ? `<${replacement}>` : replacement;
+  };
+
+  // Inline links: ](url) or ](<url> "title") / ('title') / ((title)).
+  text = text.replace(
+    /(\]\(\s*)(<[^>]*>|[^\s)]+)(\s*(?:"[^"]*"|'[^']*'|\([^)]*\))?\s*\))/g,
+    (_whole, open: string, target: string, close: string) => `${open}${swap(target)}${close}`
+  );
+
+  // Reference definitions: [id]: url "optional title" (up to 3 leading spaces).
+  text = text.replace(
+    /^([ \t]{0,3}\[[^\]]+\]:[ \t]*)(<[^>]*>|\S+)/gm,
+    (_whole, prefix: string, target: string) => `${prefix}${swap(target)}`
+  );
+
+  return text;
+}
+
+/**
+ * Rewrite intra-bundle links across a doc body, skipping fenced code blocks
+ * (``` / ~~~) so example markdown in tutorials is preserved verbatim. Inline
+ * code spans are not specially protected — a full `](/share/x)` link construct
+ * inside a backtick span is vanishingly rare — but fenced blocks, the common
+ * case for showing markdown, are.
+ */
+export function rewriteBundleLinks(
+  content: string,
+  members: Set<string>,
+  trustedHosts: Set<string>
+): string {
+  if (members.size === 0) return content;
+
+  const lines = content.split("\n");
+  const out: string[] = [];
+  let buffer: string[] = [];
+  let fenceChar: string | null = null;
+
+  const flush = () => {
+    if (buffer.length) {
+      out.push(rewriteLinksInText(buffer.join("\n"), members, trustedHosts));
+      buffer = [];
+    }
+  };
+
+  for (const line of lines) {
+    const open = line.match(/^[ \t]*(`{3,}|~{3,})/);
+    if (fenceChar === null) {
+      if (open) {
+        flush();
+        fenceChar = open[1][0];
+        out.push(line);
+      } else {
+        buffer.push(line);
+      }
+    } else {
+      out.push(line);
+      const close = line.match(/^[ \t]*(`{3,}|~{3,})[ \t]*$/);
+      if (close && close[1][0] === fenceChar) fenceChar = null;
+    }
+  }
+  flush();
+  return out.join("\n");
+}
+
 /** A doc as it appears inside a collection bundle. */
 export type OkfBundleDocInput = OkfDocInput & { label: string | null };
 
@@ -118,6 +249,17 @@ export function buildOkfBundle(
   baseUrl: string
 ): OkfManifest {
   const files: { path: string; content: string }[] = [];
+  const memberSlugs = new Set(docs.map((d) => d.slug));
+
+  // Only links to the bundle's own origin (or site-relative links) are rewritten
+  // — a third-party URL that happens to share the `/share/{slug}` path shape must
+  // not be captured by a slug collision.
+  const trustedHosts = new Set<string>();
+  try {
+    trustedHosts.add(new URL(baseUrl).host.toLowerCase());
+  } catch {
+    // baseUrl not absolute — only site-relative links will be rewritten.
+  }
 
   const indexLines: string[] = [`# ${bundle.title}`, ""];
   for (const d of docs) {
@@ -130,9 +272,12 @@ export function buildOkfBundle(
   files.push({ path: "index.md", content: `${indexLines.join("\n")}\n` });
 
   for (const d of docs) {
+    // Links to sibling members become bundle-relative concept paths so the
+    // bundle is navigable offline; everything else is left as written.
+    const content = rewriteBundleLinks(d.content, memberSlugs, trustedHosts);
     files.push({
       path: `concepts/${d.slug}.md`,
-      content: buildOkfConceptDoc(d, baseUrl),
+      content: buildOkfConceptDoc({ ...d, content }, baseUrl),
     });
   }
 
