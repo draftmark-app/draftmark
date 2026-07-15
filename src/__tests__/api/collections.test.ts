@@ -472,5 +472,107 @@ describe("Collections API", () => {
       const res = await fetch(`${BASE_URL}/api/v1/collections/does-not-exist?format=okf`);
       expect(res.status).toBe(404);
     });
+
+    it("returns a gzipped tarball with ?archive=tar", async () => {
+      const collection = await createTestCollection();
+      const { doc: d1 } = await createDocWithMeta({ meta: { type: "Runbook" } });
+      await addDoc(collection.slug, collection.magic_token, { slug: d1.slug });
+
+      const res = await fetch(
+        `${BASE_URL}/api/v1/collections/${collection.slug}?format=okf&archive=tar`
+      );
+      expect(res.status).toBe(200);
+      expect(res.headers.get("content-type")).toContain("application/gzip");
+      expect(res.headers.get("content-disposition")).toContain(
+        `${collection.slug}.okf.tar.gz`
+      );
+
+      const { gunzipSync } = await import("node:zlib");
+      const tar = gunzipSync(Buffer.from(await res.arrayBuffer()));
+      const text = tar.toString("binary");
+      // ustar magic proves it is a real tar; entries are nested under {bundle}/.
+      expect(text).toContain("ustar");
+      expect(text).toContain(`${collection.slug}/okf.json`);
+      expect(text).toContain(`${collection.slug}/concepts/${d1.slug}.md`);
+    });
+
+    it("serves the tarball via the /c/:slug.okf download route", async () => {
+      const collection = await createTestCollection();
+      const { doc: d1 } = await createDocWithMeta();
+      await addDoc(collection.slug, collection.magic_token, { slug: d1.slug });
+
+      const res = await fetch(`${BASE_URL}/c/${collection.slug}.okf`);
+      expect(res.status).toBe(200);
+      expect(res.headers.get("content-type")).toContain("application/gzip");
+
+      const { gunzipSync } = await import("node:zlib");
+      const tar = gunzipSync(Buffer.from(await res.arrayBuffer())).toString("binary");
+      expect(tar).toContain(`${collection.slug}/index.md`);
+    });
+
+    it("rewrites intra-bundle links to concept paths", async () => {
+      const collection = await createTestCollection();
+      const { doc: target } = await createDocWithMeta();
+      const { doc: source } = await createDocWithMeta({
+        content: `# Source\n\nSee [the target](/share/${target.slug}) for more.`,
+      });
+      await addDoc(collection.slug, collection.magic_token, { slug: target.slug });
+      await addDoc(collection.slug, collection.magic_token, { slug: source.slug });
+
+      const res = await fetch(`${BASE_URL}/api/v1/collections/${collection.slug}?format=okf`);
+      const m = await res.json();
+      const concept = m.files.find(
+        (f: { path: string }) => f.path === `concepts/${source.slug}.md`
+      ).content;
+      expect(concept).toContain(`See [the target](/concepts/${target.slug}.md) for more.`);
+    });
+
+    it("includes a log.md changelog built from version history", async () => {
+      const collection = await createTestCollection();
+      const { doc } = await createDocWithMeta();
+      await prisma.docVersion.createMany({
+        data: [
+          {
+            docId: doc.id,
+            content: "v1",
+            versionNumber: 1,
+            versionNote: null,
+            createdAt: new Date("2026-05-01T10:00:00Z"),
+          },
+          {
+            docId: doc.id,
+            content: "v2",
+            versionNumber: 2,
+            versionNote: "Clarified the intro",
+            createdAt: new Date("2026-05-09T10:00:00Z"),
+          },
+        ],
+      });
+      await addDoc(collection.slug, collection.magic_token, { slug: doc.slug, label: "Guide" });
+
+      const res = await fetch(`${BASE_URL}/api/v1/collections/${collection.slug}?format=okf`);
+      const m = await res.json();
+      const log = m.files.find((f: { path: string }) => f.path === "log.md")?.content;
+      expect(log).toBeDefined();
+      expect(log).toContain("# Log");
+      expect(log).toContain(`* [Guide](/concepts/${doc.slug}.md) v2 — Clarified the intro`);
+      // Newest day heading precedes the older one.
+      expect(log.indexOf("## 2026-05-09")).toBeLessThan(log.indexOf("## 2026-05-01"));
+    });
+
+    it("excludes private docs from an anonymous tarball", async () => {
+      const collection = await createTestCollection();
+      const { doc: priv, rawMagicToken: privToken } = await createDocWithMeta({
+        visibility: "private",
+        content: "# Secret\n\nclassified",
+      });
+      await addDoc(collection.slug, collection.magic_token, { slug: priv.slug, token: privToken });
+
+      const res = await fetch(`${BASE_URL}/c/${collection.slug}.okf`);
+      const { gunzipSync } = await import("node:zlib");
+      const tar = gunzipSync(Buffer.from(await res.arrayBuffer())).toString("binary");
+      expect(tar).not.toContain("classified");
+      expect(tar).not.toContain(priv.slug);
+    });
   });
 });

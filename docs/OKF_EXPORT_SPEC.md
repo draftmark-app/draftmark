@@ -60,7 +60,7 @@ Draftmark already produces OKF's atomic unit. A `/share/{slug}.md` response is *
 | `tags` | `Doc.meta.tags` (optional) | JSONB list passthrough |
 | `timestamp` | `Doc.updatedAt` (ISO 8601) | direct |
 | `index.md` | generated from `CollectionDoc` rows | uses `label` + `position` |
-| `log.md` | *deferred* — derivable from `DocVersion.versionNote` | see §9 |
+| `log.md` | generated from `DocVersion` rows | ✅ done — date-grouped changelog, see §10 |
 | markdown links | doc body content | left as-is in v1 (see §7) |
 
 ## 5. The one schema decision: where `type` comes from
@@ -140,7 +140,9 @@ Content negotiation: default to a **JSON manifest** (cheapest to ship, easiest f
 
 5. Declare `okf_version: "0.1"` on the **manifest** (top-level JSON field), *not* inside `index.md`. OKF's reserved `index.md` structure is frontmatter-free, so putting the version there would either violate that or require a special-case frontmatter exception. Keeping it on the manifest keeps `index.md` conformant. When a tarball surface is added (§10), the version-declaration location can be revisited (e.g. an `okf.json` sidecar).
 
-> **Implemented** in `src/lib/okf.ts` (`buildOkfBundle`) + `GET /api/v1/collections/:slug?format=okf`. Returns the JSON manifest; tarball / `/c/:slug.okf` remain follow-ups (§10).
+> **Implemented** in `src/lib/okf.ts` (`buildOkfBundle`) + `GET /api/v1/collections/:slug?format=okf`. Returns the JSON manifest by default.
+>
+> **Tarball also implemented.** `buildOkfTar` (a hand-rolled POSIX ustar writer, no tar dependency) packs the manifest into a gzipped tar. Negotiated via `?format=okf&archive=tar`, an `Accept: application/gzip` header, or the browser-friendly `GET /c/:slug.okf` route (a middleware rewrite setting `x-format: okf` + `x-archive: tar`). Every entry is nested under a `{slug}/` root directory, and an `okf.json` sidecar (`{okf_version, bundle}`) carries the version — keeping the reserved `index.md` frontmatter-free (resolves the §6.2.5 "revisit when a tarball is added" note). Verified round-trip through GNU `tar -xz`.
 
 ## 7. Privacy (the sharp edge)
 
@@ -155,7 +157,13 @@ Frontmatter synthesis pulls `title`, `description`, `tags`, and `resource` — a
 
 OKF prefers intra-bundle links as bundle-relative paths (`/concepts/other.md`). Draftmark doc bodies contain free-form markdown, sometimes with absolute `draftmark.app/share/…` URLs.
 
-**v1 leaves links untouched.** Absolute share URLs remain valid links (they resolve on the public web), just not bundle-relative. OKF requires consumers to tolerate any link. Auto-rewriting a `share/{slug}` link to `/concepts/{slug}.md` when the target is in the same collection is a clean, well-scoped follow-up (§9) — deferred because link rewriting is where correctness bugs hide.
+~~**v1 leaves links untouched.**~~ **Implemented.** When assembling a bundle, `rewriteBundleLinks` (in `src/lib/okf.ts`) rewrites a doc-body link to `/concepts/{slug}.md` iff it targets a Draftmark share URL (`/share/{slug}`, `.md`, or `.okf.md`) whose slug is another **member of the same bundle**. Everything else is left byte-for-byte:
+
+- Only site-relative links or absolute links to the bundle's **own origin** are considered — a third-party `https://elsewhere/share/{slug}` is never captured by a slug collision (trusted-host check).
+- Links with a **query string** are skipped (they carry server-side meaning, e.g. `?token=`).
+- Fenced code blocks (` ``` ` / `~~~`) are protected, so example markdown in tutorials is preserved. `#fragment`s and angle-bracketed / reference-style link targets are handled.
+
+The standalone concept export (`?format=okf` on a single doc) is unchanged — it has no sibling context to rewrite against.
 
 ## 9. Marketing & documentation surfaces
 
@@ -184,8 +192,8 @@ Ship §9.1 mentions alongside the API work; the `/okf` page can land in the same
 
 ## 10. Follow-ups (out of scope)
 
-- **Intra-bundle link rewriting** — rewrite same-collection share links to bundle-relative paths. Medium.
-- **`log.md` generation** — derive a per-doc or bundle changelog from `DocVersion` rows (`versionNote`, `versionNumber`, `createdAt`). Small–Medium.
+- ~~**Intra-bundle link rewriting**~~ — ✅ Done (see §8). Rewrites same-collection share links to bundle-relative concept paths.
+- ~~**`log.md` generation**~~ — ✅ Done. `buildOkfLog` (in `src/lib/okf.ts`) aggregates every member's `DocVersion` history into the reserved bundle-root `log.md`: date-grouped (`## YYYY-MM-DD`, UTC), newest day and newest change first, each entry `* [label](/concepts/{slug}.md) v{n} — {note}`. v1 is the doc's creation. Version metadata only (never `content`), so it discloses nothing beyond the concept docs; private members are already filtered out for anonymous callers before the log is built. Omitted entirely when no member carries history.
 - **First-class `Doc.type`** — promote option 2 from §5 if product need emerges. Migration + UI + CLI.
 - **OKF consumer / import** — `POST /collections?format=okf` to ingest an external bundle into a new collection. Separate, larger feature.
 - **CLI** — `dm export <collection-slug> --format okf -o ./bundle/` in the separate CLI repo, reusing the collection endpoint. Small once the API exists.
@@ -196,7 +204,8 @@ Ship §9.1 mentions alongside the API work; the `/okf` page can land in the same
 |---|---|---|
 | Per-doc `?format=okf` | frontmatter synthesis + `.okf.md` rewrite + tests | Quick (~0.5 day) |
 | Collection bundle (JSON, public-only) | assembler + `index.md` + privacy gate + tests | Short (1–2 days) |
-| Tarball + `/c/:slug.okf` + CLI export | streaming tar, download route, CLI subcommand | Short |
+| Tarball + `/c/:slug.okf` | hand-rolled ustar + gzip, download route | ✅ Done |
+| CLI export | `dm export` subcommand (separate repo) | Short |
 | "OKF compatible" mentions (§9.1) | docs, homepage/agents line, README, openapi enum | Quick |
 | `/okf` landing page (§9.2) | `page.tsx` + `opengraph-image.tsx` + nav/footer/sitemap wiring | Short |
 | Follow-ups (§10) | each | Medium+ |

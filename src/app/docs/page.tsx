@@ -388,11 +388,15 @@ export default function DocsPage() {
             <code>index.md</code> plus one <code>concepts/&#123;slug&#125;.md</code>{" "}
             per member. Anonymous callers get public docs only; a collection
             owner (magic token, collection API key, or owning account) also gets
-            private members.
+            private members. Add <code>&amp;archive=tar</code> (or hit{" "}
+            <code>/c/:slug.okf</code>) for the same bundle as a gzipped tarball.
           </p>
           <div className="md-code">
             {`curl "https://draftmark.app/api/v1/collections/abc123?format=okf"
-# → { "okf_version": "0.1", "bundle": "abc123", "files": [...] }`}
+# → { "okf_version": "0.1", "bundle": "abc123", "files": [...] }
+
+curl -L https://draftmark.app/c/abc123.okf | tar -xz
+# → abc123/index.md, abc123/log.md, abc123/concepts/*.md, abc123/okf.json`}
           </div>
 
           <h3>

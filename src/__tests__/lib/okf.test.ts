@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   buildOkfConceptDoc,
   buildOkfBundle,
+  buildOkfTar,
   OKF_VERSION,
   type OkfDocInput,
   type OkfBundleDocInput,
@@ -171,5 +172,225 @@ describe("buildOkfBundle", () => {
     );
     const concept = m.files.find((f) => f.path === "concepts/a.md")!.content;
     expect(concept).toMatch(/^---\ntype: "Runbook"\n/);
+  });
+});
+
+describe("buildOkfBundle — log.md changelog", () => {
+  const v = (
+    versionNumber: number,
+    createdAt: string,
+    versionNote: string | null = null
+  ) => ({ versionNumber, versionNote, createdAt: new Date(createdAt) });
+
+  function logOf(members: OkfBundleDocInput[]): string | undefined {
+    const m = buildOkfBundle({ slug: "coll", title: "Coll" }, members, BASE);
+    return m.files.find((f) => f.path === "log.md")?.content;
+  }
+
+  it("omits log.md when no member has version history", () => {
+    expect(logOf([member({ slug: "a" })])).toBeUndefined();
+  });
+
+  it("emits a date-grouped changelog, newest day first", () => {
+    const log = logOf([
+      member({
+        slug: "a",
+        title: "Alpha",
+        versions: [v(1, "2026-05-01T10:00:00Z"), v(2, "2026-05-10T09:00:00Z", "tweaked")],
+      }),
+      member({ slug: "b", title: "Beta", versions: [v(1, "2026-05-05T12:00:00Z")] }),
+    ])!;
+    expect(log).toMatch(/^# Log$/m);
+    // Day order: 05-10, then 05-05, then 05-01.
+    const days = [...log.matchAll(/^## (\d{4}-\d\d-\d\d)$/gm)].map((mm) => mm[1]);
+    expect(days).toEqual(["2026-05-10", "2026-05-05", "2026-05-01"]);
+  });
+
+  it("links each entry to its concept doc with version number and note", () => {
+    const log = logOf([
+      member({
+        slug: "a",
+        label: "Alpha",
+        versions: [v(3, "2026-05-10T09:00:00Z", "Added revenue column")],
+      }),
+    ])!;
+    expect(log).toContain("* [Alpha](/concepts/a.md) v3 — Added revenue column");
+  });
+
+  it("orders multiple same-day changes newest-first", () => {
+    const log = logOf([
+      member({
+        slug: "a",
+        title: "A",
+        versions: [v(1, "2026-05-10T08:00:00Z", "first"), v(2, "2026-05-10T15:00:00Z", "second")],
+      }),
+    ])!;
+    const firstIdx = log.indexOf("v2 — second");
+    const secondIdx = log.indexOf("v1 — first");
+    expect(firstIdx).toBeGreaterThan(-1);
+    expect(firstIdx).toBeLessThan(secondIdx);
+  });
+
+  it("sanitizes note and label so they cannot break the entry", () => {
+    const log = logOf([
+      member({
+        slug: "a",
+        label: "we[i]rd",
+        versions: [v(1, "2026-05-10T08:00:00Z", "multi\nline note")],
+      }),
+    ])!;
+    expect(log).toContain("* [we\\[i\\]rd](/concepts/a.md) v1 — multi line note");
+  });
+});
+
+describe("buildOkfBundle — intra-bundle link rewriting", () => {
+  function bundleWith(content: string, extraMembers: string[] = ["b"]) {
+    const members = [
+      member({ slug: "a", content }),
+      ...extraMembers.map((s) => member({ slug: s, content: `# ${s}` })),
+    ];
+    const m = buildOkfBundle({ slug: "coll", title: "Coll" }, members, BASE);
+    return m.files.find((f) => f.path === "concepts/a.md")!.content;
+  }
+
+  it("rewrites an absolute share link to a sibling member", () => {
+    const out = bundleWith("See [other](https://draftmark.app/share/b) for details.");
+    expect(out).toContain("See [other](/concepts/b.md) for details.");
+  });
+
+  it("rewrites site-relative and raw-markdown share links", () => {
+    const out = bundleWith("[x](/share/b) and [y](/share/b.md) and [z](/share/b.okf.md)");
+    expect(out).toContain("[x](/concepts/b.md) and [y](/concepts/b.md) and [z](/concepts/b.md)");
+  });
+
+  it("preserves a #fragment when rewriting", () => {
+    const out = bundleWith("[sec](https://draftmark.app/share/b#section-2)");
+    expect(out).toContain("[sec](/concepts/b.md#section-2)");
+  });
+
+  it("leaves links to non-member docs untouched", () => {
+    const out = bundleWith("[external doc](https://draftmark.app/share/zzz)");
+    expect(out).toContain("[external doc](https://draftmark.app/share/zzz)");
+  });
+
+  it("leaves genuinely external links untouched", () => {
+    const out = bundleWith("[google](https://google.com/share/b)");
+    expect(out).toContain("[google](https://google.com/share/b)");
+  });
+
+  it("does not rewrite a share link carrying a query string", () => {
+    const out = bundleWith("[tok](https://draftmark.app/share/b?token=secret)");
+    expect(out).toContain("[tok](https://draftmark.app/share/b?token=secret)");
+  });
+
+  it("does not touch links inside fenced code blocks", () => {
+    const content = [
+      "Prose link [a](/share/b).",
+      "",
+      "```md",
+      "example: [a](/share/b)",
+      "```",
+      "",
+      "Trailing [c](/share/b).",
+    ].join("\n");
+    const out = bundleWith(content);
+    expect(out).toContain("Prose link [a](/concepts/b.md).");
+    expect(out).toContain("example: [a](/share/b)"); // fenced — preserved
+    expect(out).toContain("Trailing [c](/concepts/b.md)."); // fence closed, rewriting resumes
+  });
+
+  it("rewrites reference-style link definitions", () => {
+    const out = bundleWith("See [ref][1].\n\n[1]: https://draftmark.app/share/b");
+    expect(out).toContain("[1]: /concepts/b.md");
+  });
+
+  it("rewrites angle-bracketed link targets", () => {
+    const out = bundleWith("[x](<https://draftmark.app/share/b>)");
+    expect(out).toContain("[x](</concepts/b.md>)");
+  });
+});
+
+/** Parse a POSIX ustar archive into name→content entries, verifying each
+ * header's checksum along the way (a corrupt writer would fail this). */
+function parseTar(bytes: Uint8Array): Record<string, string> {
+  const dec = new TextDecoder();
+  const readStr = (o: number, len: number) =>
+    dec.decode(bytes.slice(o, o + len)).replace(/\0.*$/, "");
+  const out: Record<string, string> = {};
+
+  for (let pos = 0; pos + 512 <= bytes.length; ) {
+    const header = bytes.slice(pos, pos + 512);
+    if (header.every((b) => b === 0)) break; // end-of-archive
+
+    const name = readStr(pos, 100);
+    const size = parseInt(readStr(pos + 124, 12).trim() || "0", 8);
+
+    // Verify checksum: field read as an octal number must equal the byte sum
+    // computed with that field blanked to spaces.
+    const stored = parseInt(readStr(pos + 148, 8).trim() || "0", 8);
+    let sum = 0;
+    for (let i = 0; i < 512; i++) sum += i >= 148 && i < 156 ? 0x20 : header[i];
+    expect(sum).toBe(stored);
+
+    const bodyStart = pos + 512;
+    out[name] = dec.decode(bytes.slice(bodyStart, bodyStart + size));
+    pos = bodyStart + Math.ceil(size / 512) * 512;
+  }
+  return out;
+}
+
+describe("buildOkfTar", () => {
+  const manifest = () =>
+    buildOkfBundle(
+      { slug: "sales", title: "Sales" },
+      [member({ slug: "orders", meta: { type: "Runbook" } }), member({ slug: "customers" })],
+      BASE
+    );
+
+  it("nests every file under a {bundle}/ root and appends an okf.json sidecar", () => {
+    const files = parseTar(buildOkfTar(manifest()));
+    expect(Object.keys(files).sort()).toEqual([
+      "sales/concepts/customers.md",
+      "sales/concepts/orders.md",
+      "sales/index.md",
+      "sales/okf.json",
+    ]);
+  });
+
+  it("carries okf_version in the sidecar, not in index.md", () => {
+    const files = parseTar(buildOkfTar(manifest()));
+    expect(JSON.parse(files["sales/okf.json"])).toEqual({
+      okf_version: OKF_VERSION,
+      bundle: "sales",
+    });
+    expect(files["sales/index.md"]).not.toMatch(/okf_version/);
+  });
+
+  it("preserves concept-doc content byte-for-byte through the archive", () => {
+    const m = manifest();
+    const files = parseTar(buildOkfTar(m));
+    expect(files["sales/concepts/orders.md"]).toBe(
+      m.files.find((f) => f.path === "concepts/orders.md")!.content
+    );
+  });
+
+  it("is 512-byte aligned and terminated by two zero blocks", () => {
+    const tar = buildOkfTar(manifest());
+    expect(tar.length % 512).toBe(0);
+    const tail = tar.slice(tar.length - 1024);
+    expect(tail.every((b) => b === 0)).toBe(true);
+  });
+
+  it("is deterministic for the same input (fixed mtime)", () => {
+    const a = buildOkfTar(manifest(), { mtime: new Date("2026-01-01T00:00:00Z") });
+    const b = buildOkfTar(manifest(), { mtime: new Date("2026-01-01T00:00:00Z") });
+    expect(Buffer.from(a).equals(Buffer.from(b))).toBe(true);
+  });
+
+  it("rejects a path that would overflow the ustar name field", () => {
+    const long = "x".repeat(120);
+    expect(() =>
+      buildOkfTar(buildOkfBundle({ slug: "b", title: "B" }, [member({ slug: long })], BASE))
+    ).toThrow(/ustar/);
   });
 });

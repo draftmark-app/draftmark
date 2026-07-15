@@ -44,6 +44,20 @@ export async function middleware(request: NextRequest) {
     return NextResponse.rewrite(url, { request: { headers } });
   }
 
+  // Rewrite /c/{slug}.okf → API OKF collection bundle as a gzipped tarball.
+  // A browser-friendly download URL; `x-archive: tar` selects the tar over the
+  // JSON manifest and `x-format: okf` mirrors the doc-route header convention.
+  const collectionOkfMatch = pathname.match(/^\/c\/([^/]+)\.okf$/);
+  if (collectionOkfMatch) {
+    const slug = collectionOkfMatch[1];
+    const url = request.nextUrl.clone();
+    url.pathname = `/api/v1/collections/${slug}`;
+    const headers = new Headers(request.headers);
+    headers.set("x-format", "okf");
+    headers.set("x-archive", "tar");
+    return NextResponse.rewrite(url, { request: { headers } });
+  }
+
   // Rewrite /share/{slug}.md → API raw markdown endpoint
   const mdMatch = pathname.match(/^\/share\/([^/]+)\.md$/);
   if (mdMatch) {
@@ -65,5 +79,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/share/:path*", "/dashboard/:path*"],
+  matcher: ["/share/:path*", "/c/:path*", "/dashboard/:path*"],
 };

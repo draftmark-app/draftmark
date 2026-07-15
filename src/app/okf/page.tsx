@@ -170,9 +170,14 @@ export default function OkfPage() {
             <p>
               Ask a <Link href="/docs">collection</Link> for{" "}
               <code>?format=okf</code> and Draftmark returns a bundle manifest —
-              a generated <code>index.md</code> plus one{" "}
+              a generated <code>index.md</code>, a <code>log.md</code> changelog
+              built from edit history, and one{" "}
               <code>concepts/&#123;slug&#125;.md</code> per member, ordered as
-              you arranged them. Labels become the index entries.
+              you arranged them. Labels become the index entries, and links
+              between members are rewritten to bundle-relative paths so the tree
+              navigates offline. Want the whole thing as a file? Hit{" "}
+              <code>/c/&#123;slug&#125;.okf</code> for a gzipped tarball you can{" "}
+              <code>tar -xz</code> straight into a repo.
             </p>
             <div className="agents-code">
               <span className="code-method">$</span> curl
@@ -220,14 +225,19 @@ export default function OkfPage() {
             <h3>Any agent consumes it</h3>
             <p>
               The output is plain markdown. Feed a concept doc into a prompt,
-              stream a bundle into a vector store, or commit it to a repo your
-              agents already read. Nothing about it is Draftmark-specific.
+              stream a bundle into a vector store, or unpack the tarball into a
+              repo your agents already read. Nothing about it is
+              Draftmark-specific.
             </p>
             <div className="agents-code">
-              <span className="code-method">$</span> curl
-              draftmark.app/share/a1b2c3d4.okf.md \
+              <span className="code-method">$</span> curl -L
+              draftmark.app/c/sales.okf \
               <br />
-              &nbsp;&nbsp;| your-agent --add-context -
+              &nbsp;&nbsp;| tar -xz
+              <br />
+              <span className="code-comment">
+                # → sales/index.md, sales/log.md, sales/concepts/…
+              </span>
             </div>
           </div>
         </div>
