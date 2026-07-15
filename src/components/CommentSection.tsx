@@ -30,9 +30,10 @@ type Props = {
   onInlineCommentsLoaded?: (comments: Comment[]) => void;
   onJumpToComment?: (comment: Comment) => void;
   authToken?: string;
+  isOwner?: boolean;
 };
 
-export default function CommentSection({ slug, currentVersion, reviewerName, setReviewerName, persistReviewerName, onInlineCommentsLoaded, onJumpToComment, authToken }: Props) {
+export default function CommentSection({ slug, currentVersion, reviewerName, setReviewerName, persistReviewerName, onInlineCommentsLoaded, onJumpToComment, authToken, isOwner }: Props) {
   const [comments, setComments] = useState<Comment[]>([]);
   const [body, setBody] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -189,6 +190,25 @@ export default function CommentSection({ slug, currentVersion, reviewerName, set
     setReplySubmitting(false);
   }
 
+  // Owner-only: mark a comment resolved/dismissed, or reopen it. Uses the same
+  // magic token the fetch/POST paths do; the endpoint also accepts the doc API
+  // key (CLI) and account ownership.
+  async function handleSetStatus(commentId: string, status: string) {
+    const tokenParam = authToken ? `?token=${encodeURIComponent(authToken)}` : "";
+    const res = await fetch(`/api/v1/docs/${slug}/comments/${commentId}${tokenParam}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status }),
+    });
+    if (res.ok) {
+      fetchComments();
+      showToast(status === "open" ? "comment reopened" : `comment ${status}`);
+    } else {
+      const data = await res.json().catch(() => null);
+      showToast(data?.error || "failed to update comment");
+    }
+  }
+
   function renderComment(c: Comment, isReply = false) {
     const replies = repliesByParent[c.id] || [];
     return (
@@ -241,19 +261,49 @@ export default function CommentSection({ slug, currentVersion, reviewerName, set
             )}
             {/* Replies nest one level under any top-level comment — general,
                 line, or selection. The reply is posted with parent_id (no
-                anchor), so it threads under the parent in this panel. */}
-            {!isReply && (
-              <button
-                type="button"
-                className="comment-reply-btn"
-                onClick={() => {
-                  setReplyingTo(replyingTo === c.id ? null : c.id);
-                  setReplyBody("");
-                }}
-              >
-                reply
-              </button>
-            )}
+                anchor), so it threads under the parent in this panel. Owner-only
+                resolve/dismiss/reopen controls sit alongside reply. */}
+            <div className="comment-actions">
+              {!isReply && (
+                <button
+                  type="button"
+                  className="comment-reply-btn"
+                  onClick={() => {
+                    setReplyingTo(replyingTo === c.id ? null : c.id);
+                    setReplyBody("");
+                  }}
+                >
+                  reply
+                </button>
+              )}
+              {isOwner &&
+                (c.status === "open" ? (
+                  <>
+                    <button
+                      type="button"
+                      className="comment-reply-btn"
+                      onClick={() => handleSetStatus(c.id, "resolved")}
+                    >
+                      resolve
+                    </button>
+                    <button
+                      type="button"
+                      className="comment-reply-btn"
+                      onClick={() => handleSetStatus(c.id, "dismissed")}
+                    >
+                      dismiss
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    type="button"
+                    className="comment-reply-btn"
+                    onClick={() => handleSetStatus(c.id, "open")}
+                  >
+                    reopen
+                  </button>
+                ))}
+            </div>
           </div>
         </div>
 

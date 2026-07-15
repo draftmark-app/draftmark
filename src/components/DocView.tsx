@@ -278,6 +278,7 @@ export default function DocView({ doc, isOwner, editUrl, authToken, rawUrl }: Do
         onInlineCommentsLoaded={handleInlineCommentsLoaded}
         onJumpToComment={handleJumpToComment}
         authToken={authToken}
+        isOwner={isOwner}
       />
 
       <ReviewsSection
