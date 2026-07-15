@@ -819,6 +819,9 @@ footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
+  row-gap: 16px;
+  column-gap: 24px;
   width: 100%;
   max-width: 1040px;
   margin: 0 auto;
@@ -833,12 +836,15 @@ footer p {
   display: flex;
   align-items: center;
   gap: 6px;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 footer p span { color: var(--muted); }
 
-footer nav { border-bottom: none; position: static; background: transparent; backdrop-filter: none; padding: 0; }
-footer nav ul { gap: 20px; position: static; transform: none; }
+footer nav { border-bottom: none; position: static; background: transparent; backdrop-filter: none; padding: 0; flex: 1 1 100%; justify-content: center; }
+footer nav ul { gap: 20px; position: static; transform: none; flex-wrap: wrap; justify-content: center; }
+footer nav ul li { white-space: nowrap; flex-shrink: 0; }
 footer nav ul a { font-size: 14px; }
 
 @keyframes fadeUp {
