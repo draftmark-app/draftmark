@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { authorizeCollectionWithMagicToken, getAuthenticatedUser } from "@/lib/auth";
 import { hashToken } from "@/lib/tokens";
-import { buildOkfBundle } from "@/lib/okf";
+import { buildOkfBundle, buildOkfTar } from "@/lib/okf";
+import { gzipSync } from "node:zlib";
 
 type RouteContext = { params: Promise<{ slug: string }> };
 
@@ -13,11 +14,13 @@ export async function GET(
   const { slug } = await params;
 
   // OKF bundle export — a manifest of markdown files (index.md + one concept
-  // doc per member). Private member docs are included only for a caller who
-  // proves collection ownership; anonymous callers get public docs only,
-  // matching the privacy stance of the JSON response below. See
-  // docs/OKF_EXPORT_SPEC.md §7.
-  const format = new URL(request.url).searchParams.get("format");
+  // doc per member), or a gzipped tar of the same tree. Private member docs are
+  // included only for a caller who proves collection ownership; anonymous
+  // callers get public docs only, matching the privacy stance of the JSON
+  // response below. See docs/OKF_EXPORT_SPEC.md §7. The `x-format` header is a
+  // fallback for the `/c/:slug.okf` middleware rewrite, mirroring the doc route.
+  const format =
+    new URL(request.url).searchParams.get("format") || request.headers.get("x-format");
   if (format === "okf") {
     return exportOkfBundle(request, slug);
   }
@@ -135,6 +138,27 @@ async function exportOkfBundle(request: NextRequest, slug: string) {
     members,
     baseUrl
   );
+
+  // Content negotiation: a gzipped tarball when asked for via the `archive=tar`
+  // param, an `Accept: application/gzip` header, or the `/c/:slug.okf`
+  // middleware rewrite (`x-archive: tar`). JSON manifest otherwise.
+  const accept = request.headers.get("accept") || "";
+  const wantsTarball =
+    url.searchParams.get("archive") === "tar" ||
+    request.headers.get("x-archive") === "tar" ||
+    accept.includes("application/gzip") ||
+    accept.includes("application/x-tar");
+
+  if (wantsTarball) {
+    const tar = buildOkfTar(manifest, { mtime: collection.updatedAt });
+    const gz = gzipSync(tar);
+    return new NextResponse(new Uint8Array(gz), {
+      headers: {
+        "Content-Type": "application/gzip",
+        "Content-Disposition": `attachment; filename="${collection.slug}.okf.tar.gz"`,
+      },
+    });
+  }
 
   return NextResponse.json(manifest);
 }

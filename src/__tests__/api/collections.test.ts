@@ -472,5 +472,57 @@ describe("Collections API", () => {
       const res = await fetch(`${BASE_URL}/api/v1/collections/does-not-exist?format=okf`);
       expect(res.status).toBe(404);
     });
+
+    it("returns a gzipped tarball with ?archive=tar", async () => {
+      const collection = await createTestCollection();
+      const { doc: d1 } = await createDocWithMeta({ meta: { type: "Runbook" } });
+      await addDoc(collection.slug, collection.magic_token, { slug: d1.slug });
+
+      const res = await fetch(
+        `${BASE_URL}/api/v1/collections/${collection.slug}?format=okf&archive=tar`
+      );
+      expect(res.status).toBe(200);
+      expect(res.headers.get("content-type")).toContain("application/gzip");
+      expect(res.headers.get("content-disposition")).toContain(
+        `${collection.slug}.okf.tar.gz`
+      );
+
+      const { gunzipSync } = await import("node:zlib");
+      const tar = gunzipSync(Buffer.from(await res.arrayBuffer()));
+      const text = tar.toString("binary");
+      // ustar magic proves it is a real tar; entries are nested under {bundle}/.
+      expect(text).toContain("ustar");
+      expect(text).toContain(`${collection.slug}/okf.json`);
+      expect(text).toContain(`${collection.slug}/concepts/${d1.slug}.md`);
+    });
+
+    it("serves the tarball via the /c/:slug.okf download route", async () => {
+      const collection = await createTestCollection();
+      const { doc: d1 } = await createDocWithMeta();
+      await addDoc(collection.slug, collection.magic_token, { slug: d1.slug });
+
+      const res = await fetch(`${BASE_URL}/c/${collection.slug}.okf`);
+      expect(res.status).toBe(200);
+      expect(res.headers.get("content-type")).toContain("application/gzip");
+
+      const { gunzipSync } = await import("node:zlib");
+      const tar = gunzipSync(Buffer.from(await res.arrayBuffer())).toString("binary");
+      expect(tar).toContain(`${collection.slug}/index.md`);
+    });
+
+    it("excludes private docs from an anonymous tarball", async () => {
+      const collection = await createTestCollection();
+      const { doc: priv, rawMagicToken: privToken } = await createDocWithMeta({
+        visibility: "private",
+        content: "# Secret\n\nclassified",
+      });
+      await addDoc(collection.slug, collection.magic_token, { slug: priv.slug, token: privToken });
+
+      const res = await fetch(`${BASE_URL}/c/${collection.slug}.okf`);
+      const { gunzipSync } = await import("node:zlib");
+      const tar = gunzipSync(Buffer.from(await res.arrayBuffer())).toString("binary");
+      expect(tar).not.toContain("classified");
+      expect(tar).not.toContain(priv.slug);
+    });
   });
 });

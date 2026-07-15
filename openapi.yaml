@@ -526,6 +526,12 @@ paths:
         per member. Anonymous callers get public docs only; a collection owner
         (magic token, collection API key, or owning account) also gets private
         members.
+
+        Add `&archive=tar` (or send `Accept: application/gzip`) to receive the
+        same bundle as a gzipped tarball instead of the JSON manifest: a
+        self-contained `{slug}/` tree of `index.md`, `concepts/*.md`, and an
+        `okf.json` sidecar. The `/c/{slug}.okf` route is a browser-friendly
+        shortcut for the tarball.
       tags: [Collections]
       security:
         - {}
@@ -538,16 +544,27 @@ paths:
           schema:
             type: string
             enum: [okf]
-          description: Set to `okf` to return an OKF bundle manifest instead of the collection JSON.
+          description: Set to `okf` to return an OKF bundle instead of the collection JSON.
+        - name: archive
+          in: query
+          schema:
+            type: string
+            enum: [tar]
+          description: With `format=okf`, set to `tar` to return a gzipped tarball instead of the JSON manifest.
       responses:
         "200":
-          description: Collection with ordered documents, or an OKF bundle manifest when `format=okf`.
+          description: Collection with ordered documents, or an OKF bundle when `format=okf`.
           content:
             application/json:
               schema:
                 oneOf:
                   - $ref: "#/components/schemas/Collection"
                   - $ref: "#/components/schemas/OkfBundle"
+            application/gzip:
+              schema:
+                type: string
+                format: binary
+              description: Gzipped tar of the OKF bundle (`format=okf&archive=tar`).
         "404":
           $ref: "#/components/responses/NotFound"
 

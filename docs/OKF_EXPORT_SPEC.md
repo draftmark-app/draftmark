@@ -140,7 +140,9 @@ Content negotiation: default to a **JSON manifest** (cheapest to ship, easiest f
 
 5. Declare `okf_version: "0.1"` on the **manifest** (top-level JSON field), *not* inside `index.md`. OKF's reserved `index.md` structure is frontmatter-free, so putting the version there would either violate that or require a special-case frontmatter exception. Keeping it on the manifest keeps `index.md` conformant. When a tarball surface is added (§10), the version-declaration location can be revisited (e.g. an `okf.json` sidecar).
 
-> **Implemented** in `src/lib/okf.ts` (`buildOkfBundle`) + `GET /api/v1/collections/:slug?format=okf`. Returns the JSON manifest; tarball / `/c/:slug.okf` remain follow-ups (§10).
+> **Implemented** in `src/lib/okf.ts` (`buildOkfBundle`) + `GET /api/v1/collections/:slug?format=okf`. Returns the JSON manifest by default.
+>
+> **Tarball also implemented.** `buildOkfTar` (a hand-rolled POSIX ustar writer, no tar dependency) packs the manifest into a gzipped tar. Negotiated via `?format=okf&archive=tar`, an `Accept: application/gzip` header, or the browser-friendly `GET /c/:slug.okf` route (a middleware rewrite setting `x-format: okf` + `x-archive: tar`). Every entry is nested under a `{slug}/` root directory, and an `okf.json` sidecar (`{okf_version, bundle}`) carries the version — keeping the reserved `index.md` frontmatter-free (resolves the §6.2.5 "revisit when a tarball is added" note). Verified round-trip through GNU `tar -xz`.
 
 ## 7. Privacy (the sharp edge)
 
@@ -196,7 +198,8 @@ Ship §9.1 mentions alongside the API work; the `/okf` page can land in the same
 |---|---|---|
 | Per-doc `?format=okf` | frontmatter synthesis + `.okf.md` rewrite + tests | Quick (~0.5 day) |
 | Collection bundle (JSON, public-only) | assembler + `index.md` + privacy gate + tests | Short (1–2 days) |
-| Tarball + `/c/:slug.okf` + CLI export | streaming tar, download route, CLI subcommand | Short |
+| Tarball + `/c/:slug.okf` | hand-rolled ustar + gzip, download route | ✅ Done |
+| CLI export | `dm export` subcommand (separate repo) | Short |
 | "OKF compatible" mentions (§9.1) | docs, homepage/agents line, README, openapi enum | Quick |
 | `/okf` landing page (§9.2) | `page.tsx` + `opengraph-image.tsx` + nav/footer/sitemap wiring | Short |
 | Follow-ups (§10) | each | Medium+ |

@@ -138,3 +138,88 @@ export function buildOkfBundle(
 
   return { okf_version: OKF_VERSION, bundle: bundle.slug, files };
 }
+
+// ── Tarball packaging ───────────────────────────────────────────────────────
+// A bundle is a directory tree, so the natural binary form is a tar archive
+// (git/tar is OKF's preferred distribution channel). We hand-roll a minimal
+// POSIX ustar writer rather than pull in a tar dependency — the same stance as
+// the hand-rolled YAML above. Draftmark slugs are short (the deepest path,
+// `{bundle}/concepts/{slug}.md`, stays well under the 100-byte ustar name
+// limit), so long-name extensions are unnecessary.
+
+function concatBytes(chunks: Uint8Array[]): Uint8Array {
+  const total = chunks.reduce((n, c) => n + c.length, 0);
+  const out = new Uint8Array(total);
+  let offset = 0;
+  for (const c of chunks) {
+    out.set(c, offset);
+    offset += c.length;
+  }
+  return out;
+}
+
+/** Build one 512-byte ustar header block for a regular file. */
+function tarHeader(name: string, size: number, mtime: number): Uint8Array {
+  const enc = new TextEncoder();
+  const nameBytes = enc.encode(name);
+  if (nameBytes.length > 100) {
+    // Guarded rather than silently truncated: slugs keep us far from this, and
+    // a truncated path would corrupt the archive.
+    throw new Error(`OKF tar: path exceeds ustar 100-byte name limit (${name})`);
+  }
+
+  const header = new Uint8Array(512);
+  const write = (offset: number, str: string) => header.set(enc.encode(str), offset);
+  // Octal fields are null-terminated; `len` counts the terminator.
+  const writeOctal = (offset: number, value: number, len: number) =>
+    write(offset, value.toString(8).padStart(len - 1, "0") + "\0");
+
+  header.set(nameBytes, 0); // name (0..100)
+  write(100, "0000644\0"); // mode
+  write(108, "0000000\0"); // uid
+  write(116, "0000000\0"); // gid
+  writeOctal(124, size, 12); // size
+  writeOctal(136, mtime, 12); // mtime
+  // Checksum field is treated as 8 spaces while summing.
+  for (let i = 148; i < 156; i++) header[i] = 0x20;
+  write(156, "0"); // typeflag: regular file
+  write(257, "ustar\0"); // magic
+  write(263, "00"); // version
+
+  let sum = 0;
+  for (let i = 0; i < 512; i++) sum += header[i];
+  write(148, sum.toString(8).padStart(6, "0") + "\0 "); // 6 octal digits, NUL, space
+
+  return header;
+}
+
+/**
+ * Pack an OKF manifest into an uncompressed tar archive. Every entry is nested
+ * under a `{bundle}/` root directory so extraction yields one self-contained
+ * tree, and an `okf.json` sidecar carries `okf_version` — kept out of the
+ * frontmatter-free `index.md` (see docs/OKF_EXPORT_SPEC.md §6.2). Callers gzip
+ * the result. `mtime` (defaulting to the epoch for reproducibility) stamps
+ * every file header.
+ */
+export function buildOkfTar(manifest: OkfManifest, opts: { mtime?: Date } = {}): Uint8Array {
+  const mtime = Math.max(0, Math.floor((opts.mtime?.getTime() ?? 0) / 1000));
+  const root = manifest.bundle;
+  const sidecar =
+    JSON.stringify({ okf_version: manifest.okf_version, bundle: manifest.bundle }, null, 2) + "\n";
+
+  const entries = [{ path: "okf.json", content: sidecar }, ...manifest.files];
+  const blocks: Uint8Array[] = [];
+  const encoder = new TextEncoder();
+
+  for (const entry of entries) {
+    const body = encoder.encode(entry.content);
+    blocks.push(tarHeader(`${root}/${entry.path}`, body.length, mtime));
+    blocks.push(body);
+    const remainder = body.length % 512;
+    if (remainder !== 0) blocks.push(new Uint8Array(512 - remainder));
+  }
+  // Two zero blocks mark end-of-archive.
+  blocks.push(new Uint8Array(512), new Uint8Array(512));
+
+  return concatBytes(blocks);
+}

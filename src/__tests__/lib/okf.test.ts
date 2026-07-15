@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   buildOkfConceptDoc,
   buildOkfBundle,
+  buildOkfTar,
   OKF_VERSION,
   type OkfDocInput,
   type OkfBundleDocInput,
@@ -171,5 +172,90 @@ describe("buildOkfBundle", () => {
     );
     const concept = m.files.find((f) => f.path === "concepts/a.md")!.content;
     expect(concept).toMatch(/^---\ntype: "Runbook"\n/);
+  });
+});
+
+/** Parse a POSIX ustar archive into name→content entries, verifying each
+ * header's checksum along the way (a corrupt writer would fail this). */
+function parseTar(bytes: Uint8Array): Record<string, string> {
+  const dec = new TextDecoder();
+  const readStr = (o: number, len: number) =>
+    dec.decode(bytes.slice(o, o + len)).replace(/\0.*$/, "");
+  const out: Record<string, string> = {};
+
+  for (let pos = 0; pos + 512 <= bytes.length; ) {
+    const header = bytes.slice(pos, pos + 512);
+    if (header.every((b) => b === 0)) break; // end-of-archive
+
+    const name = readStr(pos, 100);
+    const size = parseInt(readStr(pos + 124, 12).trim() || "0", 8);
+
+    // Verify checksum: field read as an octal number must equal the byte sum
+    // computed with that field blanked to spaces.
+    const stored = parseInt(readStr(pos + 148, 8).trim() || "0", 8);
+    let sum = 0;
+    for (let i = 0; i < 512; i++) sum += i >= 148 && i < 156 ? 0x20 : header[i];
+    expect(sum).toBe(stored);
+
+    const bodyStart = pos + 512;
+    out[name] = dec.decode(bytes.slice(bodyStart, bodyStart + size));
+    pos = bodyStart + Math.ceil(size / 512) * 512;
+  }
+  return out;
+}
+
+describe("buildOkfTar", () => {
+  const manifest = () =>
+    buildOkfBundle(
+      { slug: "sales", title: "Sales" },
+      [member({ slug: "orders", meta: { type: "Runbook" } }), member({ slug: "customers" })],
+      BASE
+    );
+
+  it("nests every file under a {bundle}/ root and appends an okf.json sidecar", () => {
+    const files = parseTar(buildOkfTar(manifest()));
+    expect(Object.keys(files).sort()).toEqual([
+      "sales/concepts/customers.md",
+      "sales/concepts/orders.md",
+      "sales/index.md",
+      "sales/okf.json",
+    ]);
+  });
+
+  it("carries okf_version in the sidecar, not in index.md", () => {
+    const files = parseTar(buildOkfTar(manifest()));
+    expect(JSON.parse(files["sales/okf.json"])).toEqual({
+      okf_version: OKF_VERSION,
+      bundle: "sales",
+    });
+    expect(files["sales/index.md"]).not.toMatch(/okf_version/);
+  });
+
+  it("preserves concept-doc content byte-for-byte through the archive", () => {
+    const m = manifest();
+    const files = parseTar(buildOkfTar(m));
+    expect(files["sales/concepts/orders.md"]).toBe(
+      m.files.find((f) => f.path === "concepts/orders.md")!.content
+    );
+  });
+
+  it("is 512-byte aligned and terminated by two zero blocks", () => {
+    const tar = buildOkfTar(manifest());
+    expect(tar.length % 512).toBe(0);
+    const tail = tar.slice(tar.length - 1024);
+    expect(tail.every((b) => b === 0)).toBe(true);
+  });
+
+  it("is deterministic for the same input (fixed mtime)", () => {
+    const a = buildOkfTar(manifest(), { mtime: new Date("2026-01-01T00:00:00Z") });
+    const b = buildOkfTar(manifest(), { mtime: new Date("2026-01-01T00:00:00Z") });
+    expect(Buffer.from(a).equals(Buffer.from(b))).toBe(true);
+  });
+
+  it("rejects a path that would overflow the ustar name field", () => {
+    const long = "x".repeat(120);
+    expect(() =>
+      buildOkfTar(buildOkfBundle({ slug: "b", title: "B" }, [member({ slug: long })], BASE))
+    ).toThrow(/ustar/);
   });
 });

@@ -77,7 +77,7 @@ POST   /docs/:slug/reviews        # Mark as reviewed
 
 ```
 POST   /collections              # Create collection
-GET    /collections/:slug        # Get collection with docs (?format=okf for an OKF bundle manifest)
+GET    /collections/:slug        # Get collection with docs (?format=okf for an OKF bundle; &archive=tar for a tarball)
 PATCH  /collections/:slug        # Add/remove/reorder docs
 DELETE /collections/:slug        # Delete collection
 ```
@@ -87,12 +87,14 @@ DELETE /collections/:slug        # Delete collection
 Draftmark is a producer of [OKF](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md) — an open, vendor-neutral markdown format for agent knowledge.
 
 ```
-GET /share/:slug.okf.md              # A doc as an OKF concept document (frontmatter + body)
-GET /docs/:slug?format=okf           # Same, via the API
-GET /collections/:slug?format=okf    # A collection as an OKF bundle manifest (index.md + concept docs)
+GET /share/:slug.okf.md                     # A doc as an OKF concept document (frontmatter + body)
+GET /docs/:slug?format=okf                  # Same, via the API
+GET /collections/:slug?format=okf           # A collection as an OKF bundle manifest (index.md + concept docs)
+GET /collections/:slug?format=okf&archive=tar  # The same bundle as a gzipped tarball
+GET /c/:slug.okf                            # Tarball download (browser-friendly shortcut)
 ```
 
-Anonymous exports include public docs only; collection owners also get private members. See [`/okf`](https://draftmark.app/okf) and [`docs/OKF_EXPORT_SPEC.md`](docs/OKF_EXPORT_SPEC.md).
+The tarball is a self-contained `{slug}/` tree (`index.md`, `concepts/*.md`, and an `okf.json` sidecar carrying `okf_version`) — `tar -xzf` it or `curl … | tar -xz`. Anonymous exports include public docs only; collection owners also get private members. See [`/okf`](https://draftmark.app/okf) and [`docs/OKF_EXPORT_SPEC.md`](docs/OKF_EXPORT_SPEC.md).
 
 ### Auth
 
