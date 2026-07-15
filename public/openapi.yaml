@@ -273,10 +273,15 @@ paths:
     patch:
       operationId: updateCommentStatus
       summary: Update comment status
-      description: Resolve or dismiss a comment. Requires the doc-level API key.
+      description: |
+        Resolve, dismiss, or reopen a comment. Requires proof of doc ownership:
+        the doc-level API key, the magic token, or an authenticated account that
+        owns the doc.
       tags: [Comments]
       security:
         - BearerApiKey: []
+        - MagicTokenHeader: []
+        - MagicTokenQuery: []
       requestBody:
         required: true
         content:
@@ -287,7 +292,7 @@ paths:
               properties:
                 status:
                   type: string
-                  enum: [resolved, dismissed]
+                  enum: [open, resolved, dismissed]
       responses:
         "200":
           description: Updated comment
@@ -299,16 +304,23 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/NotFound"
 
     delete:
       operationId: deleteComment
       summary: Delete comment
-      description: Permanently delete a comment. Replies to the comment are deleted too. Requires the doc-level API key.
+      description: |
+        Permanently delete a comment. Replies to the comment are deleted too.
+        Requires proof of doc ownership: the doc-level API key, the magic token,
+        or an authenticated account that owns the doc.
       tags: [Comments]
       security:
         - BearerApiKey: []
+        - MagicTokenHeader: []
+        - MagicTokenQuery: []
       responses:
         "204":
           description: Comment deleted

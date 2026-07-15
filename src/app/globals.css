@@ -4360,6 +4360,13 @@ button.comment-anchor-chip-btn:hover {
   border-left: 2px solid var(--border);
 }
 
+.comment-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+}
+
 .comment-reply-btn {
   font-family: var(--font-geist-mono), monospace;
   font-size: 12px;
