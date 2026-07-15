@@ -100,6 +100,12 @@ async function exportOkfBundle(request: NextRequest, slug: string) {
               meta: true,
               updatedAt: true,
               visibility: true,
+              // Version history feeds the bundle's reserved log.md changelog.
+              // Metadata only — no content — so it leaks nothing extra.
+              versions: {
+                select: { versionNumber: true, versionNote: true, createdAt: true },
+                orderBy: { versionNumber: "asc" },
+              },
             },
           },
         },

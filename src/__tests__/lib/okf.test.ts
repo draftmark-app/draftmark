@@ -175,6 +175,74 @@ describe("buildOkfBundle", () => {
   });
 });
 
+describe("buildOkfBundle — log.md changelog", () => {
+  const v = (
+    versionNumber: number,
+    createdAt: string,
+    versionNote: string | null = null
+  ) => ({ versionNumber, versionNote, createdAt: new Date(createdAt) });
+
+  function logOf(members: OkfBundleDocInput[]): string | undefined {
+    const m = buildOkfBundle({ slug: "coll", title: "Coll" }, members, BASE);
+    return m.files.find((f) => f.path === "log.md")?.content;
+  }
+
+  it("omits log.md when no member has version history", () => {
+    expect(logOf([member({ slug: "a" })])).toBeUndefined();
+  });
+
+  it("emits a date-grouped changelog, newest day first", () => {
+    const log = logOf([
+      member({
+        slug: "a",
+        title: "Alpha",
+        versions: [v(1, "2026-05-01T10:00:00Z"), v(2, "2026-05-10T09:00:00Z", "tweaked")],
+      }),
+      member({ slug: "b", title: "Beta", versions: [v(1, "2026-05-05T12:00:00Z")] }),
+    ])!;
+    expect(log).toMatch(/^# Log$/m);
+    // Day order: 05-10, then 05-05, then 05-01.
+    const days = [...log.matchAll(/^## (\d{4}-\d\d-\d\d)$/gm)].map((mm) => mm[1]);
+    expect(days).toEqual(["2026-05-10", "2026-05-05", "2026-05-01"]);
+  });
+
+  it("links each entry to its concept doc with version number and note", () => {
+    const log = logOf([
+      member({
+        slug: "a",
+        label: "Alpha",
+        versions: [v(3, "2026-05-10T09:00:00Z", "Added revenue column")],
+      }),
+    ])!;
+    expect(log).toContain("* [Alpha](/concepts/a.md) v3 — Added revenue column");
+  });
+
+  it("orders multiple same-day changes newest-first", () => {
+    const log = logOf([
+      member({
+        slug: "a",
+        title: "A",
+        versions: [v(1, "2026-05-10T08:00:00Z", "first"), v(2, "2026-05-10T15:00:00Z", "second")],
+      }),
+    ])!;
+    const firstIdx = log.indexOf("v2 — second");
+    const secondIdx = log.indexOf("v1 — first");
+    expect(firstIdx).toBeGreaterThan(-1);
+    expect(firstIdx).toBeLessThan(secondIdx);
+  });
+
+  it("sanitizes note and label so they cannot break the entry", () => {
+    const log = logOf([
+      member({
+        slug: "a",
+        label: "we[i]rd",
+        versions: [v(1, "2026-05-10T08:00:00Z", "multi\nline note")],
+      }),
+    ])!;
+    expect(log).toContain("* [we\\[i\\]rd](/concepts/a.md) v1 — multi line note");
+  });
+});
+
 describe("buildOkfBundle — intra-bundle link rewriting", () => {
   function bundleWith(content: string, extraMembers: string[] = ["b"]) {
     const members = [

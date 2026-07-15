@@ -527,6 +527,39 @@ describe("Collections API", () => {
       expect(concept).toContain(`See [the target](/concepts/${target.slug}.md) for more.`);
     });
 
+    it("includes a log.md changelog built from version history", async () => {
+      const collection = await createTestCollection();
+      const { doc } = await createDocWithMeta();
+      await prisma.docVersion.createMany({
+        data: [
+          {
+            docId: doc.id,
+            content: "v1",
+            versionNumber: 1,
+            versionNote: null,
+            createdAt: new Date("2026-05-01T10:00:00Z"),
+          },
+          {
+            docId: doc.id,
+            content: "v2",
+            versionNumber: 2,
+            versionNote: "Clarified the intro",
+            createdAt: new Date("2026-05-09T10:00:00Z"),
+          },
+        ],
+      });
+      await addDoc(collection.slug, collection.magic_token, { slug: doc.slug, label: "Guide" });
+
+      const res = await fetch(`${BASE_URL}/api/v1/collections/${collection.slug}?format=okf`);
+      const m = await res.json();
+      const log = m.files.find((f: { path: string }) => f.path === "log.md")?.content;
+      expect(log).toBeDefined();
+      expect(log).toContain("# Log");
+      expect(log).toContain(`* [Guide](/concepts/${doc.slug}.md) v2 — Clarified the intro`);
+      // Newest day heading precedes the older one.
+      expect(log.indexOf("## 2026-05-09")).toBeLessThan(log.indexOf("## 2026-05-01"));
+    });
+
     it("excludes private docs from an anonymous tarball", async () => {
       const collection = await createTestCollection();
       const { doc: priv, rawMagicToken: privToken } = await createDocWithMeta({

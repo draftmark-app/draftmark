@@ -226,8 +226,67 @@ export function rewriteBundleLinks(
   return out.join("\n");
 }
 
+/** One entry of a doc's edit history, for the bundle changelog. */
+export type OkfVersionInput = {
+  versionNumber: number;
+  versionNote: string | null;
+  createdAt: Date;
+};
+
 /** A doc as it appears inside a collection bundle. */
-export type OkfBundleDocInput = OkfDocInput & { label: string | null };
+export type OkfBundleDocInput = OkfDocInput & {
+  label: string | null;
+  /** Ascending version history; omitted when unavailable. */
+  versions?: OkfVersionInput[];
+};
+
+/**
+ * Build the OKF reserved `log.md` (a bundle-root changelog) by aggregating every
+ * member's version history into date groups, newest day first and newest change
+ * first within a day. Each `DocVersion` becomes one entry linking to the concept
+ * doc, showing its version number and note (v1 is the doc's creation). Returns
+ * null when no member carries version history, so the caller can omit the file.
+ * Only version metadata is used — never `content` — so it leaks nothing beyond
+ * what the concept docs already expose.
+ */
+function buildOkfLog(docs: OkfBundleDocInput[]): string | null {
+  type Entry = { slug: string; label: string; version: OkfVersionInput };
+  const entries: Entry[] = [];
+  for (const d of docs) {
+    const label = d.label ?? d.title ?? d.slug;
+    for (const version of d.versions ?? []) entries.push({ slug: d.slug, label, version });
+  }
+  if (entries.length === 0) return null;
+
+  entries.sort((a, b) => {
+    const byTime = b.version.createdAt.getTime() - a.version.createdAt.getTime();
+    return byTime !== 0 ? byTime : b.version.versionNumber - a.version.versionNumber;
+  });
+
+  // Sorted newest-first, so first sight of each day is in the right order and
+  // Map insertion order carries it through.
+  const byDay = new Map<string, Entry[]>();
+  for (const e of entries) {
+    const day = e.version.createdAt.toISOString().slice(0, 10); // YYYY-MM-DD (UTC)
+    const bucket = byDay.get(day);
+    if (bucket) bucket.push(e);
+    else byDay.set(day, [e]);
+  }
+
+  const lines: string[] = ["# Log", ""];
+  for (const [day, dayEntries] of byDay) {
+    lines.push(`## ${day}`, "");
+    for (const e of dayEntries) {
+      const note = e.version.versionNote?.trim();
+      const suffix = note ? ` — ${inlineDescription(note)}` : "";
+      lines.push(
+        `* [${inlineText(e.label)}](/concepts/${e.slug}.md) v${e.version.versionNumber}${suffix}`
+      );
+    }
+    lines.push("");
+  }
+  return lines.join("\n").trimEnd() + "\n";
+}
 
 export type OkfManifest = {
   okf_version: string;
@@ -270,6 +329,10 @@ export function buildOkfBundle(
     indexLines.push(`* [${inlineText(labelSource)}](/concepts/${d.slug}.md)${suffix}`);
   }
   files.push({ path: "index.md", content: `${indexLines.join("\n")}\n` });
+
+  // Reserved changelog, kept alongside index.md at the bundle root.
+  const log = buildOkfLog(docs);
+  if (log) files.push({ path: "log.md", content: log });
 
   for (const d of docs) {
     // Links to sibling members become bundle-relative concept paths so the

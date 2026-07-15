@@ -60,7 +60,7 @@ Draftmark already produces OKF's atomic unit. A `/share/{slug}.md` response is *
 | `tags` | `Doc.meta.tags` (optional) | JSONB list passthrough |
 | `timestamp` | `Doc.updatedAt` (ISO 8601) | direct |
 | `index.md` | generated from `CollectionDoc` rows | uses `label` + `position` |
-| `log.md` | *deferred* — derivable from `DocVersion.versionNote` | see §9 |
+| `log.md` | generated from `DocVersion` rows | ✅ done — date-grouped changelog, see §10 |
 | markdown links | doc body content | left as-is in v1 (see §7) |
 
 ## 5. The one schema decision: where `type` comes from
@@ -193,7 +193,7 @@ Ship §9.1 mentions alongside the API work; the `/okf` page can land in the same
 ## 10. Follow-ups (out of scope)
 
 - ~~**Intra-bundle link rewriting**~~ — ✅ Done (see §8). Rewrites same-collection share links to bundle-relative concept paths.
-- **`log.md` generation** — derive a per-doc or bundle changelog from `DocVersion` rows (`versionNote`, `versionNumber`, `createdAt`). Small–Medium.
+- ~~**`log.md` generation**~~ — ✅ Done. `buildOkfLog` (in `src/lib/okf.ts`) aggregates every member's `DocVersion` history into the reserved bundle-root `log.md`: date-grouped (`## YYYY-MM-DD`, UTC), newest day and newest change first, each entry `* [label](/concepts/{slug}.md) v{n} — {note}`. v1 is the doc's creation. Version metadata only (never `content`), so it discloses nothing beyond the concept docs; private members are already filtered out for anonymous callers before the log is built. Omitted entirely when no member carries history.
 - **First-class `Doc.type`** — promote option 2 from §5 if product need emerges. Migration + UI + CLI.
 - **OKF consumer / import** — `POST /collections?format=okf` to ingest an external bundle into a new collection. Separate, larger feature.
 - **CLI** — `dm export <collection-slug> --format okf -o ./bundle/` in the separate CLI repo, reusing the collection endpoint. Small once the API exists.

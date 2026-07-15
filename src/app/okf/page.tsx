@@ -170,11 +170,14 @@ export default function OkfPage() {
             <p>
               Ask a <Link href="/docs">collection</Link> for{" "}
               <code>?format=okf</code> and Draftmark returns a bundle manifest —
-              a generated <code>index.md</code> plus one{" "}
+              a generated <code>index.md</code>, a <code>log.md</code> changelog
+              built from edit history, and one{" "}
               <code>concepts/&#123;slug&#125;.md</code> per member, ordered as
-              you arranged them. Labels become the index entries. Want the whole
-              tree as a file? Hit <code>/c/&#123;slug&#125;.okf</code> for a
-              gzipped tarball you can <code>tar -xz</code> straight into a repo.
+              you arranged them. Labels become the index entries, and links
+              between members are rewritten to bundle-relative paths so the tree
+              navigates offline. Want the whole thing as a file? Hit{" "}
+              <code>/c/&#123;slug&#125;.okf</code> for a gzipped tarball you can{" "}
+              <code>tar -xz</code> straight into a repo.
             </p>
             <div className="agents-code">
               <span className="code-method">$</span> curl
@@ -232,7 +235,9 @@ export default function OkfPage() {
               <br />
               &nbsp;&nbsp;| tar -xz
               <br />
-              <span className="code-comment"># → sales/index.md, sales/concepts/…</span>
+              <span className="code-comment">
+                # → sales/index.md, sales/log.md, sales/concepts/…
+              </span>
             </div>
           </div>
         </div>

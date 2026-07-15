@@ -396,7 +396,7 @@ export default function DocsPage() {
 # → { "okf_version": "0.1", "bundle": "abc123", "files": [...] }
 
 curl -L https://draftmark.app/c/abc123.okf | tar -xz
-# → abc123/index.md, abc123/concepts/*.md, abc123/okf.json`}
+# → abc123/index.md, abc123/log.md, abc123/concepts/*.md, abc123/okf.json`}
           </div>
 
           <h3>

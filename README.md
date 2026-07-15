@@ -94,7 +94,7 @@ GET /collections/:slug?format=okf&archive=tar  # The same bundle as a gzipped ta
 GET /c/:slug.okf                            # Tarball download (browser-friendly shortcut)
 ```
 
-The tarball is a self-contained `{slug}/` tree (`index.md`, `concepts/*.md`, and an `okf.json` sidecar carrying `okf_version`) — `tar -xzf` it or `curl … | tar -xz`. Anonymous exports include public docs only; collection owners also get private members. See [`/okf`](https://draftmark.app/okf) and [`docs/OKF_EXPORT_SPEC.md`](docs/OKF_EXPORT_SPEC.md).
+The tarball is a self-contained `{slug}/` tree (`index.md`, a `log.md` changelog, `concepts/*.md`, and an `okf.json` sidecar carrying `okf_version`) — `tar -xzf` it or `curl … | tar -xz`. Same-bundle links between docs are rewritten to bundle-relative concept paths. Anonymous exports include public docs only; collection owners also get private members. See [`/okf`](https://draftmark.app/okf) and [`docs/OKF_EXPORT_SPEC.md`](docs/OKF_EXPORT_SPEC.md).
 
 ### Auth
 
