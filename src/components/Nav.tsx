@@ -11,6 +11,7 @@ export default function Nav({ links }: { links?: NavLink[] }) {
     { href: "/explore", label: "explore" },
     { href: "/cli", label: "cli" },
     { href: "/skill", label: "skill" },
+    { href: "/okf", label: "okf" },
     { href: "/docs", label: "docs" },
     { href: "/about", label: "about" },
   ];

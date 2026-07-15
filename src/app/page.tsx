@@ -283,6 +283,15 @@ export default function Home() {
               own your files.
             </p>
           </div>
+          <div className="feature">
+            <div className="feature-icon">[okf]</div>
+            <h3>OKF compatible</h3>
+            <p>
+              Export any doc or collection as an{" "}
+              <a href="/okf">Open Knowledge Format</a> bundle — portable,
+              git-native, consumable by any AI agent.
+            </p>
+          </div>
         </div>
       </section>
 

@@ -10,7 +10,7 @@ export async function middleware(request: NextRequest) {
   // .md rewrite so the token never lingers on a raw-markdown URL either.
   // Slug is validated to safe chars before it becomes a cookie name. Share
   // tokens (share_) are intentionally shareable read links, left in the URL.
-  const shareMatch = pathname.match(/^\/share\/([A-Za-z0-9_-]{1,64})(?:\.md|\/edit)?$/);
+  const shareMatch = pathname.match(/^\/share\/([A-Za-z0-9_-]{1,64})(?:\.okf\.md|\.md|\/edit)?$/);
   if (shareMatch) {
     const token = request.nextUrl.searchParams.get("token");
     if (token && token.startsWith("tok_")) {
@@ -29,6 +29,19 @@ export async function middleware(request: NextRequest) {
       });
       return response;
     }
+  }
+
+  // Rewrite /share/{slug}.okf.md → API OKF concept-document endpoint.
+  // Checked before the plain .md rewrite so the `.okf` suffix isn't swallowed
+  // into the slug by the broader `.md` pattern.
+  const okfMatch = pathname.match(/^\/share\/([^/]+)\.okf\.md$/);
+  if (okfMatch) {
+    const slug = okfMatch[1];
+    const url = request.nextUrl.clone();
+    url.pathname = `/api/v1/docs/${slug}`;
+    const headers = new Headers(request.headers);
+    headers.set("x-format", "okf");
+    return NextResponse.rewrite(url, { request: { headers } });
   }
 
   // Rewrite /share/{slug}.md → API raw markdown endpoint

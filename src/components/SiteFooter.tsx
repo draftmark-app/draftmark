@@ -47,6 +47,9 @@ export default function SiteFooter({ variant = "landing" }: Props) {
             </li>
           )}
           <li>
+            <Link href="/okf">okf</Link>
+          </li>
+          <li>
             <Link href="/about">about</Link>
           </li>
           <li>

@@ -101,7 +101,11 @@ paths:
 
         Use `?format=raw` to get raw markdown as `text/markdown`.
 
-        Shortcut: `GET /share/{slug}.md` returns raw markdown directly (via middleware rewrite).
+        Use `?format=okf` to get an [Open Knowledge Format](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md)
+        v0.1 concept document (synthesized YAML frontmatter + raw body) as `text/markdown`.
+
+        Shortcuts: `GET /share/{slug}.md` returns raw markdown; `GET /share/{slug}.okf.md`
+        returns the OKF concept document (both via middleware rewrite).
       tags: [Documents]
       security:
         - {}
@@ -113,8 +117,10 @@ paths:
           in: query
           schema:
             type: string
-            enum: [raw]
-          description: Set to `raw` to return markdown as `text/markdown`
+            enum: [raw, okf]
+          description: |
+            `raw` returns markdown as `text/markdown`; `okf` returns an OKF v0.1
+            concept document (frontmatter + body) as `text/markdown`.
         - name: token
           in: query
           schema:
@@ -511,16 +517,37 @@ paths:
     get:
       operationId: getCollection
       summary: Get a collection with its documents
+      description: |
+        Returns the collection and its ordered documents.
+
+        Use `?format=okf` to export the collection as an
+        [Open Knowledge Format](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md)
+        v0.1 bundle manifest — a generated `index.md` plus one concept document
+        per member. Anonymous callers get public docs only; a collection owner
+        (magic token, collection API key, or owning account) also gets private
+        members.
       tags: [Collections]
       security:
         - {}
+        - BearerApiKey: []
+        - MagicTokenHeader: []
+        - MagicTokenQuery: []
+      parameters:
+        - name: format
+          in: query
+          schema:
+            type: string
+            enum: [okf]
+          description: Set to `okf` to return an OKF bundle manifest instead of the collection JSON.
       responses:
         "200":
-          description: Collection with ordered documents
+          description: Collection with ordered documents, or an OKF bundle manifest when `format=okf`.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Collection"
+                oneOf:
+                  - $ref: "#/components/schemas/Collection"
+                  - $ref: "#/components/schemas/OkfBundle"
         "404":
           $ref: "#/components/responses/NotFound"
 
@@ -1313,6 +1340,32 @@ components:
         updated_at:
           type: string
           format: date-time
+
+    OkfBundle:
+      type: object
+      description: >
+        An Open Knowledge Format v0.1 bundle manifest: a list of markdown files
+        (a generated `index.md` plus one `concepts/{slug}.md` per member doc).
+      required: [okf_version, bundle, files]
+      properties:
+        okf_version:
+          type: string
+          example: "0.1"
+        bundle:
+          type: string
+          description: The collection slug.
+        files:
+          type: array
+          items:
+            type: object
+            required: [path, content]
+            properties:
+              path:
+                type: string
+                example: concepts/orders.md
+              content:
+                type: string
+                description: Full markdown file content.
 
     UpdateCollectionRequest:
       type: object

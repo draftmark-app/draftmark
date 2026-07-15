@@ -335,6 +335,15 @@ export default function AgentsPage() {
             </p>
           </div>
           <div className="feature">
+            <div className="feature-icon">[okf]</div>
+            <h3>OKF compatible</h3>
+            <p>
+              <code>?format=okf</code> exports docs and collections as{" "}
+              <a href="/okf">Open Knowledge Format</a> bundles — plain markdown +
+              frontmatter, consumable by any agent framework. No lock-in.
+            </p>
+          </div>
+          <div className="feature">
             <div className="feature-icon">[&#128209;]</div>
             <h3>Collections</h3>
             <p>

@@ -107,6 +107,58 @@ describe("Agent DX Improvements", () => {
     });
   });
 
+  describe("GET /docs/:slug?format=okf", () => {
+    it("returns an OKF concept document with synthesized frontmatter", async () => {
+      const { doc } = await createTestDoc({
+        meta: { type: "Runbook", description: "How to test.", tags: ["qa", "docs"] },
+      });
+
+      const res = await fetch(`${BASE_URL}/api/v1/docs/${doc.slug}?format=okf`);
+      expect(res.status).toBe(200);
+      expect(res.headers.get("content-type")).toContain("text/markdown");
+
+      const text = await res.text();
+      expect(text).toMatch(/^---\n/);
+      expect(text).toMatch(/^type: "Runbook"$/m);
+      expect(text).toMatch(/^title: "Test Doc"$/m);
+      expect(text).toMatch(/^description: "How to test\."$/m);
+      expect(text).toMatch(/^tags: \["qa", "docs"\]$/m);
+      expect(text).toMatch(new RegExp(`^resource: ".*/share/${doc.slug}"$`, "m"));
+      expect(text).toMatch(/^timestamp: ".+"$/m);
+      // Body follows the frontmatter unchanged.
+      expect(text).toContain("\n---\n\n# Test\n\nLine 1\nLine 2\nLine 3");
+    });
+
+    it("defaults type to Document when meta.type is absent", async () => {
+      const { doc } = await createTestDoc();
+      const res = await fetch(`${BASE_URL}/api/v1/docs/${doc.slug}?format=okf`);
+      const text = await res.text();
+      expect(text).toMatch(/^type: "Document"$/m);
+    });
+
+    it("works with api_key for private docs", async () => {
+      const { doc, rawApiKey } = await createTestDoc({ visibility: "private" });
+      const res = await fetch(`${BASE_URL}/api/v1/docs/${doc.slug}?format=okf`, {
+        headers: { Authorization: `Bearer ${rawApiKey}` },
+      });
+      expect(res.status).toBe(200);
+      const text = await res.text();
+      expect(text).toMatch(/^type: "Document"$/m);
+    });
+
+    it("rejects okf format on private docs without auth (no frontmatter leak)", async () => {
+      const { doc } = await createTestDoc({
+        visibility: "private",
+        meta: { type: "Secret", description: "should not leak" },
+      });
+      const res = await fetch(`${BASE_URL}/api/v1/docs/${doc.slug}?format=okf`);
+      expect(res.status).toBe(401);
+      const text = await res.text();
+      expect(text).not.toContain("Secret");
+      expect(text).not.toContain("should not leak");
+    });
+  });
+
   describe("POST /docs/:slug/comments/batch", () => {
     it("creates multiple comments in one request", async () => {
       const { doc } = await createTestDoc();

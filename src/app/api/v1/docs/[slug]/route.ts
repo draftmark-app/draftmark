@@ -4,6 +4,7 @@ import { authorizeWithMagicToken, getAuthenticatedUser, canAccessPrivateResource
 import { hashToken, generateShareToken, safeCompare } from "@/lib/tokens";
 import { extractTitleFromContent } from "@/lib/markdown";
 import { generateSeoSlug } from "@/lib/slug";
+import { buildOkfConceptDoc } from "@/lib/okf";
 
 export async function GET(
   request: NextRequest,
@@ -70,6 +71,16 @@ export async function GET(
   const format = new URL(request.url).searchParams.get("format") || request.headers.get("x-format");
   if (format === "raw") {
     return new Response(servedContent, {
+      headers: { "Content-Type": "text/markdown; charset=utf-8" },
+    });
+  }
+
+  // Support ?format=okf or /share/{slug}.okf.md — an OKF v0.1 concept document
+  // (synthesized YAML frontmatter + raw body). Runs after the auth gate above,
+  // so a private doc's synthesized frontmatter is never exposed unauthorized.
+  if (format === "okf") {
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || new URL(request.url).origin;
+    return new Response(buildOkfConceptDoc({ ...doc, content: servedContent }, baseUrl), {
       headers: { "Content-Type": "text/markdown; charset=utf-8" },
     });
   }
