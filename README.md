@@ -24,6 +24,7 @@ No accounts needed. Auth is handled via magic tokens (for owners) and API keys (
 - **Version tracking** — comments tagged to doc versions
 - **API-first** — everything the UI does, the API can do
 - **Agent support** — `author_type: "agent"` badge, batch comments, `.draftmark.json` convention
+- **OKF export** — docs and collections export as [Open Knowledge Format](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md) bundles
 
 ## Quick start
 
@@ -56,7 +57,7 @@ Base URL: `/api/v1`
 
 ```
 POST   /docs                    # Create doc
-GET    /docs/:slug              # Get doc (add ?format=raw for plain markdown)
+GET    /docs/:slug              # Get doc (?format=raw for markdown, ?format=okf for an OKF concept doc)
 PATCH  /docs/:slug              # Update doc (requires magic_token)
 DELETE /docs/:slug              # Delete doc (requires magic_token)
 ```
@@ -76,10 +77,22 @@ POST   /docs/:slug/reviews        # Mark as reviewed
 
 ```
 POST   /collections              # Create collection
-GET    /collections/:slug        # Get collection with docs
+GET    /collections/:slug        # Get collection with docs (?format=okf for an OKF bundle manifest)
 PATCH  /collections/:slug        # Add/remove/reorder docs
 DELETE /collections/:slug        # Delete collection
 ```
+
+### Open Knowledge Format (OKF)
+
+Draftmark is a producer of [OKF](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md) — an open, vendor-neutral markdown format for agent knowledge.
+
+```
+GET /share/:slug.okf.md              # A doc as an OKF concept document (frontmatter + body)
+GET /docs/:slug?format=okf           # Same, via the API
+GET /collections/:slug?format=okf    # A collection as an OKF bundle manifest (index.md + concept docs)
+```
+
+Anonymous exports include public docs only; collection owners also get private members. See [`/okf`](https://draftmark.app/okf) and [`docs/OKF_EXPORT_SPEC.md`](docs/OKF_EXPORT_SPEC.md).
 
 ### Auth
 

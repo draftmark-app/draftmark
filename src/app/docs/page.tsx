@@ -190,6 +190,37 @@ export default function DocsPage() {
           </div>
 
           <h3>
+            <span className="method get">GET</span> /share/:slug.okf.md
+          </h3>
+          <p>
+            Returns the document as an{" "}
+            <a
+              href="https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Open Knowledge Format
+            </a>{" "}
+            (OKF) v0.1 concept document — synthesized YAML frontmatter followed
+            by the raw body, as <code>text/markdown</code>. Equivalent to{" "}
+            <code>GET /docs/:slug?format=okf</code>. <code>type</code>,{" "}
+            <code>description</code>, and <code>tags</code> come from the
+            doc&apos;s <code>meta</code>; <code>type</code> defaults to{" "}
+            <code>Document</code>. See <a href="/okf">the OKF page</a>.
+          </p>
+          <div className="md-code">
+            {`curl https://draftmark.app/share/abc123.okf.md
+# ---
+# type: "Runbook"
+# title: "Deploy Plan"
+# resource: "https://draftmark.app/share/abc123"
+# timestamp: "2026-07-15T14:30:00Z"
+# ---
+#
+# # Deploy Plan ...`}
+          </div>
+
+          <h3>
             <span className="method patch">PATCH</span> /docs/:slug
           </h3>
           <p>
@@ -351,6 +382,18 @@ export default function DocsPage() {
             <span className="method get">GET</span> /collections/:slug
           </h3>
           <p>Get a collection with all its docs and their metadata.</p>
+          <p>
+            Add <code>?format=okf</code> to export the collection as an{" "}
+            <a href="/okf">OKF</a> bundle manifest — a generated{" "}
+            <code>index.md</code> plus one <code>concepts/&#123;slug&#125;.md</code>{" "}
+            per member. Anonymous callers get public docs only; a collection
+            owner (magic token, collection API key, or owning account) also gets
+            private members.
+          </p>
+          <div className="md-code">
+            {`curl "https://draftmark.app/api/v1/collections/abc123?format=okf"
+# → { "okf_version": "0.1", "bundle": "abc123", "files": [...] }`}
+          </div>
 
           <h3>
             <span className="method patch">PATCH</span> /collections/:slug
