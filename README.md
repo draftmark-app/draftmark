@@ -76,7 +76,7 @@ POST   /docs/:slug/reviews        # Mark as reviewed
 ### Collections
 
 ```
-POST   /collections              # Create collection
+POST   /collections              # Create collection (?format=okf to import an OKF bundle)
 GET    /collections/:slug        # Get collection with docs (?format=okf for an OKF bundle; &archive=tar for a tarball)
 PATCH  /collections/:slug        # Add/remove/reorder docs
 DELETE /collections/:slug        # Delete collection
@@ -84,17 +84,20 @@ DELETE /collections/:slug        # Delete collection
 
 ### Open Knowledge Format (OKF)
 
-Draftmark is a producer of [OKF](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md) — an open, vendor-neutral markdown format for agent knowledge.
+Draftmark is a **producer and consumer** of [OKF](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md) — an open, vendor-neutral markdown format for agent knowledge.
 
 ```
-GET /share/:slug.okf.md                     # A doc as an OKF concept document (frontmatter + body)
-GET /docs/:slug?format=okf                  # Same, via the API
-GET /collections/:slug?format=okf           # A collection as an OKF bundle manifest (index.md + concept docs)
-GET /collections/:slug?format=okf&archive=tar  # The same bundle as a gzipped tarball
-GET /c/:slug.okf                            # Tarball download (browser-friendly shortcut)
+GET  /share/:slug.okf.md                     # A doc as an OKF concept document (frontmatter + body)
+GET  /docs/:slug?format=okf                  # Same, via the API
+GET  /collections/:slug?format=okf           # A collection as an OKF bundle manifest (index.md + concept docs)
+GET  /collections/:slug?format=okf&archive=tar  # The same bundle as a gzipped tarball
+GET  /c/:slug.okf                            # Tarball download (browser-friendly shortcut)
+POST /collections?format=okf                 # Import an OKF bundle → a new collection of docs
 ```
 
-The tarball is a self-contained `{slug}/` tree (`index.md`, a `log.md` changelog, `concepts/*.md`, and an `okf.json` sidecar carrying `okf_version`) — `tar -xzf` it or `curl … | tar -xz`. Same-bundle links between docs are rewritten to bundle-relative concept paths. Anonymous exports include public docs only; collection owners also get private members. See [`/okf`](https://draftmark.app/okf) and [`docs/OKF_EXPORT_SPEC.md`](docs/OKF_EXPORT_SPEC.md).
+The tarball is a self-contained `{slug}/` tree (`index.md`, a `log.md` changelog, `concepts/*.md`, and an `okf.json` sidecar carrying `okf_version`) — `tar -xzf` it or `curl … | tar -xz`. Same-bundle links between docs are rewritten to bundle-relative concept paths. Anonymous exports include public docs only; collection owners also get private members.
+
+Import is the inverse: `POST /collections?format=okf` ingests a bundle manifest (`{ files: [{ path, content }] }`) into a new collection of docs — frontmatter → `meta`, `index.md` → order/labels, intra-bundle links rewritten to the new share URLs. The CLI wraps it as `dm import <dir>`. See [`/okf`](https://draftmark.app/okf), [`docs/OKF_EXPORT_SPEC.md`](docs/OKF_EXPORT_SPEC.md), and [`docs/OKF_IMPORT_SPEC.md`](docs/OKF_IMPORT_SPEC.md).
 
 ### Auth
 
