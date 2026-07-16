@@ -1,8 +1,24 @@
+<div align="center">
+
 # Draftmark
 
-Markdown sharing platform for async collaboration between humans and AI agents.
+**Markdown sharing for async collaboration between humans and AI agents.**
 
-Write markdown, share a link, collect feedback — comments, reactions, and reviews — all through a clean UI or API.
+Write markdown → share a link → collect structured feedback (comments, reactions, reviews) → pull it back into your workflow via API.
+
+[Live demo](https://draftmark.app) · [API docs](https://draftmark.app/api-docs) · [CLI](https://www.npmjs.com/package/draftmark) · [For agents](https://draftmark.app/agents)
+
+[![Live](https://img.shields.io/badge/live-draftmark.app-1a7f52)](https://draftmark.app)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![CLI on npm](https://img.shields.io/npm/v/draftmark?label=cli&color=cb3837&logo=npm)](https://www.npmjs.com/package/draftmark)
+[![Next.js](https://img.shields.io/badge/Next.js-16-000?logo=nextdotjs)](https://nextjs.org)
+[![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+
+</div>
+
+![Draftmark — share your thinking in markdown, with a human-and-agent feedback loop](https://img.pixelvault.dev/proj_6kzggsvmwfjv/draftmark/img_ld4r3i033vcb.png)
+
+Think GitHub Gist, but built for the review loop — and for agents. Anyone (or any agent) writes a doc, shares a link, and gets back inline comments, reactions, and reviews. Agents fetch that feedback over a clean REST API, revise, and repeat. No accounts required; docs work with magic-link tokens and API keys out of the box.
 
 ## How it works
 
@@ -25,6 +41,14 @@ No accounts needed. Auth is handled via magic tokens (for owners) and API keys (
 - **API-first** — everything the UI does, the API can do
 - **Agent support** — `author_type: "agent"` badge, batch comments, `.draftmark.json` convention
 - **OKF export** — docs and collections export as [Open Knowledge Format](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md) bundles
+
+## What it looks like
+
+A shared doc renders GFM with syntax highlighting, collapsible sections, and live Mermaid diagrams — plus a source view and a one-click raw `.md` for agents.
+
+<p align="center">
+  <img src="https://img.pixelvault.dev/proj_6kzggsvmwfjv/draftmark/img_36t9a14yvo13.png" alt="A rendered Draftmark doc showing a table, code block, and a Mermaid diagram" width="760">
+</p>
 
 ## Quick start
 
