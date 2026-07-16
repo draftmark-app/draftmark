@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { generateSlug } from "@/lib/slug";
 import {
@@ -153,7 +154,7 @@ async function importOkfBundle(request: NextRequest) {
           magicToken: hashToken(d.rawMagicToken),
           apiKey: hashToken(d.rawApiKey),
           shareToken: d.rawShareToken,
-          meta: Object.keys(d.meta).length ? d.meta : undefined,
+          meta: Object.keys(d.meta).length ? (d.meta as Prisma.InputJsonValue) : undefined,
           userId: user?.id ?? null,
           versions: { create: { content: d.content, versionNumber: 1 } },
         },
