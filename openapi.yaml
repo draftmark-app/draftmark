@@ -498,29 +498,73 @@ paths:
   /collections:
     post:
       operationId: createCollection
-      summary: Create a collection
+      summary: Create a collection (or import an OKF bundle)
+      description: |
+        Creates an empty collection from a `title`.
+
+        With `?format=okf`, instead **imports** an
+        [Open Knowledge Format](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md)
+        bundle: the body is a JSON manifest (`{ files: [{ path, content }] }`,
+        the inverse of the export manifest) and the server creates a new
+        collection with one doc per concept document, ordered and labelled from
+        the bundle's `index.md`. Intra-bundle concept links are rewritten to the
+        new docs' share URLs. Max 100 files. `visibility: private` requires an
+        authenticated account (account API key or session).
       tags: [Collections]
       security:
         - {}
+        - BearerAccountKey: []
+      parameters:
+        - name: format
+          in: query
+          schema:
+            type: string
+            enum: [okf]
+          description: Set to `okf` to import a bundle manifest instead of creating an empty collection.
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              required: [title]
-              properties:
-                title:
-                  type: string
+              oneOf:
+                - type: object
+                  required: [title]
+                  properties:
+                    title:
+                      type: string
+                - type: object
+                  required: [files]
+                  description: OKF import manifest (with `?format=okf`).
+                  properties:
+                    files:
+                      type: array
+                      items:
+                        type: object
+                        required: [path, content]
+                        properties:
+                          path: { type: string }
+                          content: { type: string }
+                    visibility:
+                      type: string
+                      enum: [public, private]
+                    title:
+                      type: string
+                      description: Fallback collection title when the bundle has no index.md H1.
       responses:
         "201":
-          description: Collection created
+          description: Collection created, or (with `format=okf`) the imported collection and its docs.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CreateCollectionResponse"
+                oneOf:
+                  - $ref: "#/components/schemas/CreateCollectionResponse"
+                  - $ref: "#/components/schemas/OkfImportResponse"
         "400":
           $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
 
   /collections/{slug}:
     parameters:
@@ -1321,6 +1365,37 @@ components:
         api_key:
           type: string
           description: "Collection API key. Shown once."
+
+    OkfImportResponse:
+      type: object
+      description: Result of an OKF bundle import (`POST /collections?format=okf`).
+      required: [collection, docs]
+      properties:
+        collection:
+          $ref: "#/components/schemas/CreateCollectionResponse"
+        docs:
+          type: array
+          description: One entry per imported concept doc; tokens shown once.
+          items:
+            type: object
+            required: [slug, url, magic_token, api_key]
+            properties:
+              slug:
+                type: string
+              title:
+                type: [string, "null"]
+              label:
+                type: [string, "null"]
+              url:
+                type: string
+                format: uri
+              magic_token:
+                type: string
+              api_key:
+                type: string
+              share_token:
+                type: string
+                description: Present only for private imports.
 
     Collection:
       type: object
