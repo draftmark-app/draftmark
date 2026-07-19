@@ -162,4 +162,4 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, testing, and PR gu
 
 ## License
 
-[MIT](LICENSE)
+[MIT](LICENSE) © [Rumbo Labs](https://rumbolabs.net)
