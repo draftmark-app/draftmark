@@ -161,6 +161,34 @@ describe("Reviews API", () => {
     expect(data.reviews).toHaveLength(1);
   });
 
+  it("GET /reviews flags the caller's own review with mine", async () => {
+    const { doc } = await createTestDoc();
+    const mineIp = "203.0.113.101";
+    const otherIp = "203.0.113.102";
+
+    // Alice reviews from mineIp; Bob from otherIp (distinct server-derived identities).
+    await fetch(`${BASE_URL}/api/v1/docs/${doc.slug}/reviews`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "cf-connecting-ip": mineIp },
+      body: JSON.stringify({ reviewer_name: "Alice" }),
+    });
+    await fetch(`${BASE_URL}/api/v1/docs/${doc.slug}/reviews`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "cf-connecting-ip": otherIp },
+      body: JSON.stringify({ reviewer_name: "Bob" }),
+    });
+
+    // Reading as mineIp: only Alice's review is "mine".
+    const res = await fetch(`${BASE_URL}/api/v1/docs/${doc.slug}/reviews`, {
+      headers: { "cf-connecting-ip": mineIp },
+    });
+    const data = await res.json();
+    const alice = data.reviews.find((r: { reviewer_name: string }) => r.reviewer_name === "Alice");
+    const bob = data.reviews.find((r: { reviewer_name: string }) => r.reviewer_name === "Bob");
+    expect(alice.mine).toBe(true);
+    expect(bob.mine).toBe(false);
+  });
+
   it("dedups same IP across different User-Agents (UA is not a spoofing dimension)", async () => {
     const { doc } = await createTestDoc();
     const ip = "203.0.113.88";

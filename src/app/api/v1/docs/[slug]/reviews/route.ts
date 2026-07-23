@@ -25,11 +25,19 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
     orderBy: { createdAt: "asc" },
   });
 
+  // Derive the requester's identity the same way POST does, so we can flag the
+  // caller's own review ("your review") without exposing the raw identifier.
+  // Mirrors the comments endpoint and powers self-notification suppression in
+  // polling clients (e.g. the VS Code extension).
+  const user = await getAuthenticatedUser(request);
+  const me = user ? `acct:${user.id}` : feedbackIdentity(request);
+
   return NextResponse.json({
     reviews: reviews.map((r) => ({
       id: r.id,
       reviewer_name: r.reviewerName,
       reviewer_type: r.reviewerType,
+      mine: !!me && r.identifier === me,
       created_at: r.createdAt.toISOString(),
     })),
   });
