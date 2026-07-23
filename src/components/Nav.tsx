@@ -10,6 +10,7 @@ export default function Nav({ links }: { links?: NavLink[] }) {
   const defaultLinks: NavLink[] = [
     { href: "/explore", label: "explore" },
     { href: "/cli", label: "cli" },
+    { href: "/vscode", label: "vs code" },
     { href: "/skill", label: "skill" },
     { href: "/okf", label: "okf" },
     { href: "/docs", label: "docs" },

@@ -468,6 +468,8 @@ export default function Home() {
           <span className="sep">&middot;</span>
           <Link href="/cli">the CLI</Link>
           <span className="sep">&middot;</span>
+          <Link href="/vscode">VS Code extension</Link>
+          <span className="sep">&middot;</span>
           <Link href="/skill">Claude Code skill</Link>
           <span className="sep">&middot;</span>
           <Link href="/vs/github-gist">vs GitHub Gist</Link>
