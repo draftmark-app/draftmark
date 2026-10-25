@@ -1,8 +1,4 @@
 import type { MetadataRoute } from "next";
-import { prisma } from "@/lib/prisma";
-
-export const dynamic = "force-dynamic";
-
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://draftmark.app";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -25,27 +21,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE_URL}/vs/stackedit`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.7 },
   ];
 
-  // Only verified-owner docs are submitted: anonymous public docs are the
-  // target of an ongoing spam campaign and stay out of the index until the
-  // backlog is cleaned up.
-  const publicDocs = await prisma.doc.findMany({
-    where: {
-      visibility: "public",
-      seoSlug: { not: null },
-      userId: { not: null },
-      user: { is: { emailVerifiedAt: { not: null } } },
-    },
-    select: { seoSlug: true, updatedAt: true },
-    orderBy: { updatedAt: "desc" },
-    take: 1000,
-  });
-
-  const docRoutes: MetadataRoute.Sitemap = publicDocs.map((doc) => ({
-    url: `${BASE_URL}/public/${doc.seoSlug}`,
-    lastModified: doc.updatedAt,
-    changeFrequency: "weekly" as const,
-    priority: 0.8,
-  }));
-
-  return [...staticRoutes, ...docRoutes];
+  // User docs are intentionally omitted while the anonymous-doc spam backlog
+  // is cleaned up (spam accounts verify email too, so ownership is not a
+  // sufficient signal yet). Re-enable verified-owner docs after moderation.
+  return staticRoutes;
 }
