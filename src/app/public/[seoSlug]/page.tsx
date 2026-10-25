@@ -72,9 +72,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title,
       description,
     },
+    // Temporarily deindexed while the anonymous-doc spam backlog is cleaned up.
     robots: {
-      index: true,
-      follow: true,
+      index: false,
+      follow: false,
     },
   };
 }

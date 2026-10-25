@@ -43,6 +43,28 @@ function textContent(node: ReactNode): string {
 }
 
 const components: Components = {
+  a({ href, children, title }) {
+    // User-authored content is untrusted: never hand it dofollow link equity.
+    // External links get ugc + nofollow; in-page anchors stay plain.
+    const isExternal = typeof href === "string" && /^https?:\/\//i.test(href);
+    if (!isExternal) {
+      return (
+        <a href={href} title={title}>
+          {children}
+        </a>
+      );
+    }
+    return (
+      <a
+        href={href}
+        title={title}
+        target="_blank"
+        rel="nofollow ugc noopener noreferrer"
+      >
+        {children}
+      </a>
+    );
+  },
   h2({ children }) {
     const text = textContent(children);
     const id = slugify(text);

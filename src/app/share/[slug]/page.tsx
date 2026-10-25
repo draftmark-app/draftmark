@@ -41,9 +41,10 @@ export async function generateMetadata({ params }: Props) {
       title,
       description,
     },
+    // Temporarily deindexed while the anonymous-doc spam backlog is cleaned up.
     robots: {
-      index: doc.visibility === "public",
-      follow: true,
+      index: false,
+      follow: false,
     },
     alternates: doc.visibility === "public" && doc.seoSlug
       ? { canonical: `/public/${doc.seoSlug}` }
