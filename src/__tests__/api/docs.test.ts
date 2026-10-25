@@ -196,7 +196,7 @@ describe("Doc CRUD", () => {
 
   describe("GET /docs/:slug social data", () => {
     it("returns reactions_count, comments_count, and reviews", async () => {
-      const { doc, rawApiKey } = await createTestDoc();
+      const { doc } = await createTestDoc();
 
       // Add a reaction
       await prisma.reaction.create({

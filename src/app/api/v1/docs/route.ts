@@ -5,18 +5,15 @@ import { generateMagicToken, generateApiKey, generateShareToken, hashToken } fro
 import { extractTitleFromContent } from "@/lib/markdown";
 import { getAuthenticatedUser, canAccessPrivateResources } from "@/lib/auth";
 import { enforceRateLimit, LIMITS } from "@/lib/ratelimit";
+import { validateContent, validateTitle, validateVersionNote, validateMeta } from "@/lib/validation";
 
 export async function POST(request: NextRequest) {
   const limited = enforceRateLimit(request, LIMITS.createDoc.bucket, LIMITS.createDoc.limit, LIMITS.createDoc.windowMs);
   if (limited) return limited;
 
   const body = await request.json().catch(() => null);
-
-  if (!body || !body.content) {
-    return NextResponse.json(
-      { error: "Content is required" },
-      { status: 400 }
-    );
+  if (!body) {
+    return NextResponse.json({ error: "Request body required" }, { status: 400 });
   }
 
   const {
@@ -28,6 +25,15 @@ export async function POST(request: NextRequest) {
     review_deadline,
     meta,
   } = body;
+
+  const validationError =
+    validateContent(content) ??
+    validateTitle(title) ??
+    validateVersionNote(version_note) ??
+    validateMeta(meta);
+  if (validationError) {
+    return NextResponse.json({ error: validationError }, { status: 400 });
+  }
 
   if (visibility !== "public" && visibility !== "private") {
     return NextResponse.json(

@@ -1,0 +1,80 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    name: Lint, typecheck, unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+      - run: npx prisma generate
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run test:unit
+
+  integration:
+    name: Integration tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: draftmark
+          POSTGRES_PASSWORD: draftmark
+          POSTGRES_DB: draftmark_test
+        ports:
+          - 5435:5432
+        options: >-
+          --health-cmd "pg_isready -U draftmark"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgres://draftmark:draftmark@localhost:5435/draftmark_test
+      JWT_SECRET: test-jwt-secret-for-vitest
+      NEXT_PUBLIC_BASE_URL: http://localhost:3333
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+      - run: npx prisma generate
+      - run: npx prisma migrate deploy
+
+      - name: Start dev server
+        run: |
+          RATE_LIMIT_DISABLED=1 npm run dev > /tmp/next.log 2>&1 &
+          for i in $(seq 1 60); do
+            if curl -sf http://localhost:3333/api/v1/explore > /dev/null; then
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Server failed to start"
+          cat /tmp/next.log
+          exit 1
+
+      - run: npm run test:integration
+
+      - name: Show server log on failure
+        if: failure()
+        run: cat /tmp/next.log

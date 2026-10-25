@@ -164,7 +164,7 @@ export default function Home() {
 
       {/* HOW IT WORKS */}
       <section className="flow" id="how">
-        <div className="flow-label">// how it works</div>
+        <div className="flow-label">{"// how it works"}</div>
         <div className="flow-steps">
           <div className="flow-step">
             <div className="step-num">01</div>
@@ -207,7 +207,7 @@ export default function Home() {
 
       {/* FEATURES */}
       <section className="features" id="features">
-        <div className="features-label">// what you get</div>
+        <div className="features-label">{"// what you get"}</div>
         <div className="features-grid">
           <div className="feature">
             <div className="feature-icon">[md]</div>
@@ -298,7 +298,7 @@ export default function Home() {
       {/* API */}
       <section className="api-section">
         <div>
-          <div className="api-label">// api first</div>
+          <div className="api-label">{"// api first"}</div>
           <div className="api-heading">
             Built for
             <br />
@@ -378,7 +378,7 @@ export default function Home() {
       {/* CLI */}
       <section className="api-section" id="cli">
         <div>
-          <div className="api-label">// cli</div>
+          <div className="api-label">{"// cli"}</div>
           <div className="api-heading">
             One command
             <br />
@@ -459,7 +459,7 @@ export default function Home() {
 
       {/* USE CASES */}
       <section className="usecases-section">
-        <div className="usecases-label">// use cases</div>
+        <div className="usecases-label">{"// use cases"}</div>
         <UseCasesCarousel />
         <div className="related-links">
           <Link href="/share-markdown-online">share markdown online</Link>
@@ -482,7 +482,7 @@ export default function Home() {
 
       {/* PRICING */}
       <section className="pricing" id="pricing">
-        <div className="pricing-label">// pricing</div>
+        <div className="pricing-label">{"// pricing"}</div>
         <div className="pricing-grid">
           <div className="plan highlighted">
             <div className="plan-name">free</div>

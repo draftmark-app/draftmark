@@ -94,7 +94,7 @@ export default function SkillPage() {
 
       {/* HOW IT WORKS */}
       <section className="agents-section">
-        <div className="agents-section-label">// how it works</div>
+        <div className="agents-section-label">{"// how it works"}</div>
         <div className="agents-steps">
           <div className="agents-step">
             <div className="step-num">00</div>
@@ -179,7 +179,7 @@ export default function SkillPage() {
 
       {/* WHAT THE SKILL KNOWS */}
       <section className="agents-section">
-        <div className="agents-section-label">// what the skill knows</div>
+        <div className="agents-section-label">{"// what the skill knows"}</div>
         <div className="features-grid">
           <div className="feature">
             <div className="feature-icon">[&rsaquo;]</div>
@@ -259,7 +259,7 @@ export default function SkillPage() {
 
       {/* PREREQUISITES */}
       <section className="agents-section">
-        <div className="agents-section-label">// prerequisites</div>
+        <div className="agents-section-label">{"// prerequisites"}</div>
         <div className="agents-example">
           <div className="agents-example-step">
             <div className="agents-example-label">the CLI</div>

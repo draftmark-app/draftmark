@@ -96,7 +96,7 @@ export default function VscodePage() {
 
       {/* HOW IT WORKS */}
       <section className="agents-section">
-        <div className="agents-section-label">// how it works</div>
+        <div className="agents-section-label">{"// how it works"}</div>
         <div className="agents-steps">
           <div className="agents-step">
             <div className="step-num">00</div>
@@ -180,7 +180,7 @@ export default function VscodePage() {
 
       {/* WHAT IT DOES */}
       <section className="agents-section">
-        <div className="agents-section-label">// what it does</div>
+        <div className="agents-section-label">{"// what it does"}</div>
         <div className="features-grid">
           <div className="feature">
             <div className="feature-icon">[&#128172;]</div>
@@ -261,7 +261,7 @@ export default function VscodePage() {
 
       {/* INSTALL */}
       <section className="agents-section">
-        <div className="agents-section-label">// install</div>
+        <div className="agents-section-label">{"// install"}</div>
         <div className="agents-example">
           <div className="agents-example-step">
             <div className="agents-example-label">vs code</div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import Nav from "@/components/Nav";
@@ -13,25 +13,43 @@ type DocCredentials = {
   share_url?: string;
 };
 
+function subscribeToStorage(onChange: () => void) {
+  window.addEventListener("storage", onChange);
+  return () => window.removeEventListener("storage", onChange);
+}
+
+function readStoredCreds(key: string): string | null {
+  // Try localStorage first (persistent), fall back to sessionStorage (legacy)
+  return localStorage.getItem(key) ?? sessionStorage.getItem(key);
+}
+
 export default function CreatedPage() {
   const params = useParams();
   const slug = params.slug as string;
-  const [creds, setCreds] = useState<DocCredentials | null>(null);
+  const storageKey = `doc_${slug}`;
+  const stored = useSyncExternalStore(
+    subscribeToStorage,
+    () => readStoredCreds(storageKey),
+    () => null
+  );
+  const creds = useMemo<DocCredentials | null>(() => {
+    if (!stored) return null;
+    try {
+      return JSON.parse(stored) as DocCredentials;
+    } catch {
+      return null;
+    }
+  }, [stored]);
   const [copied, setCopied] = useState<string | null>(null);
 
+  // Migrate from sessionStorage to localStorage if needed. Write-only effect:
+  // no setState, so it can't trigger cascading renders.
   useEffect(() => {
-    // Try localStorage first (persistent), fall back to sessionStorage (legacy)
-    const stored = localStorage.getItem(`doc_${slug}`) || sessionStorage.getItem(`doc_${slug}`);
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      setCreds(parsed);
-      // Migrate from sessionStorage to localStorage if needed
-      if (!localStorage.getItem(`doc_${slug}`)) {
-        localStorage.setItem(`doc_${slug}`, stored);
-        sessionStorage.removeItem(`doc_${slug}`);
-      }
+    if (stored && !localStorage.getItem(storageKey)) {
+      localStorage.setItem(storageKey, stored);
+      sessionStorage.removeItem(storageKey);
     }
-  }, [slug]);
+  }, [stored, storageKey]);
 
   function copyToClipboard(text: string, label: string) {
     navigator.clipboard.writeText(text);

@@ -84,7 +84,7 @@ export default function CliPage() {
 
       {/* THE FLOW */}
       <section className="agents-section">
-        <div className="agents-section-label">// the flow</div>
+        <div className="agents-section-label">{"// the flow"}</div>
         <div className="agents-steps">
           <div className="agents-step">
             <div className="step-num">00</div>
@@ -202,7 +202,7 @@ export default function CliPage() {
 
       {/* BUILT FOR THE TERMINAL */}
       <section className="agents-section">
-        <div className="agents-section-label">// built for the terminal</div>
+        <div className="agents-section-label">{"// built for the terminal"}</div>
         <div className="features-grid">
           <div className="feature">
             <div className="feature-icon">[|]</div>
@@ -284,7 +284,7 @@ export default function CliPage() {
 
       {/* EXAMPLE SESSION */}
       <section className="agents-section">
-        <div className="agents-section-label">// example: full loop</div>
+        <div className="agents-section-label">{"// example: full loop"}</div>
         <div className="agents-example">
           <div className="agents-example-step">
             <div className="agents-example-label">setup (once)</div>
