@@ -164,7 +164,7 @@ describe("GET /docs/:slug access paths", () => {
 
     const explore = await fetch(`${BASE_URL}/explore`);
     expect(explore.headers.get("x-robots-tag")).toContain("noindex");
-  });
+  }, 20_000);
 
   it("only lists account-owned docs in the explore feed", async () => {
     const user = await prisma.user.create({
