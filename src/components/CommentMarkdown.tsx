@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
@@ -44,10 +45,41 @@ function normalizeMarkdown(text: string): string {
   return result.trim();
 }
 
+const components = {
+  a({
+    href,
+    children,
+    title,
+  }: {
+    href?: string;
+    children?: ReactNode;
+    title?: string;
+  }) {
+    const isExternal = typeof href === "string" && /^https?:\/\//i.test(href);
+    if (!isExternal) {
+      return (
+        <a href={href} title={title}>
+          {children}
+        </a>
+      );
+    }
+    return (
+      <a
+        href={href}
+        title={title}
+        target="_blank"
+        rel="nofollow ugc noopener noreferrer"
+      >
+        {children}
+      </a>
+    );
+  },
+};
+
 export default function CommentMarkdown({ content }: { content: string }) {
   return (
     <div className="comment-markdown">
-      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+      <ReactMarkdown remarkPlugins={[remarkGfm]} components={components}>
         {normalizeMarkdown(content)}
       </ReactMarkdown>
     </div>

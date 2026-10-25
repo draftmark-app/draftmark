@@ -7,7 +7,9 @@ export async function GET(request: NextRequest) {
   const cursor = request.nextUrl.searchParams.get("cursor");
 
   const docs = await prisma.doc.findMany({
-    where: { visibility: "public" },
+    // Mirrors the /explore page: only account-owned docs while anonymous
+    // creation is gated against the current spam wave.
+    where: { visibility: "public", userId: { not: null } },
     orderBy: { createdAt: "desc" },
     take: PAGE_SIZE + 1,
     ...(cursor && {

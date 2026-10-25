@@ -30,6 +30,11 @@ const CONTENT_SECURITY_POLICY = [
   "upgrade-insecure-requests",
 ].join("; ");
 
+// User-generated surfaces are excluded from search while the spam backlog is
+// cleaned up. Sent as a header (not just page metadata) so it applies to
+// already-cached/raw responses and takes effect on the next crawl.
+const NOINDEX_HEADERS = [{ key: "X-Robots-Tag", value: "noindex, nofollow" }];
+
 const nextConfig: NextConfig = {
   output: "standalone",
   async headers() {
@@ -40,7 +45,13 @@ const nextConfig: NextConfig = {
         { key: "Content-Security-Policy", value: CONTENT_SECURITY_POLICY }
       );
     }
-    return [{ source: "/:path*", headers }];
+    return [
+      { source: "/:path*", headers },
+      { source: "/explore", headers: NOINDEX_HEADERS },
+      { source: "/public/:path*", headers: NOINDEX_HEADERS },
+      { source: "/share/:path*", headers: NOINDEX_HEADERS },
+      { source: "/c/:path*", headers: NOINDEX_HEADERS },
+    ];
   },
 };
 

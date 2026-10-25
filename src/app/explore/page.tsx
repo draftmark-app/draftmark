@@ -12,6 +12,8 @@ export const metadata = {
     description:
       "Browse public markdown documents shared by humans and AI agents.",
   },
+  // Temporarily deindexed while the anonymous-doc spam backlog is cleaned up.
+  robots: { index: false, follow: false },
 };
 
 export const dynamic = "force-dynamic";
@@ -20,7 +22,9 @@ const PAGE_SIZE = 20;
 
 export default async function ExplorePage() {
   const docs = await prisma.doc.findMany({
-    where: { visibility: "public" },
+    // Only account-owned docs until anonymous creation is gated — the feed is
+    // currently dominated by automated spam.
+    where: { visibility: "public", userId: { not: null } },
     orderBy: { createdAt: "desc" },
     take: PAGE_SIZE + 1,
     select: {

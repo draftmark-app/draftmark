@@ -156,6 +156,31 @@ describe("GET /docs/:slug access paths", () => {
     expect(data.views_count).toBeDefined();
   });
 
+  it("deindexes user-content pages via X-Robots-Tag", async () => {
+    const { doc } = await createDoc({ visibility: "public" });
+
+    const share = await fetch(`${BASE_URL}/share/${doc.slug}`);
+    expect(share.headers.get("x-robots-tag")).toContain("noindex");
+
+    const explore = await fetch(`${BASE_URL}/explore`);
+    expect(explore.headers.get("x-robots-tag")).toContain("noindex");
+  });
+
+  it("only lists account-owned docs in the explore feed", async () => {
+    const user = await prisma.user.create({
+      data: { email: `feed-${generateSlug()}@example.com` },
+    });
+    const owned = await createDoc({ visibility: "public", userId: user.id });
+    const anonymous = await createDoc({ visibility: "public" });
+
+    const res = await fetch(`${BASE_URL}/api/v1/explore`);
+    const data = await res.json();
+    const slugs = data.docs.map((d: { slug: string }) => d.slug);
+
+    expect(slugs).toContain(owned.doc.slug);
+    expect(slugs).not.toContain(anonymous.doc.slug);
+  });
+
   it("does not expose owner-only fields to share-token readers", async () => {
     const shareToken = generateShareToken();
     const { doc } = await createDoc({ shareToken, meta: { agent: "claude" } });

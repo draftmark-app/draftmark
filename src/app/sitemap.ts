@@ -10,7 +10,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: BASE_URL, lastModified: new Date(), changeFrequency: "weekly", priority: 1.0 },
     { url: `${BASE_URL}/docs`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.7 },
     { url: `${BASE_URL}/about`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.5 },
-    { url: `${BASE_URL}/explore`, lastModified: new Date(), changeFrequency: "daily", priority: 0.8 },
     { url: `${BASE_URL}/example`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.6 },
     { url: `${BASE_URL}/agents`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.7 },
     { url: `${BASE_URL}/cli`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.7 },
@@ -26,8 +25,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE_URL}/vs/stackedit`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.7 },
   ];
 
+  // Only verified-owner docs are submitted: anonymous public docs are the
+  // target of an ongoing spam campaign and stay out of the index until the
+  // backlog is cleaned up.
   const publicDocs = await prisma.doc.findMany({
-    where: { visibility: "public", seoSlug: { not: null } },
+    where: {
+      visibility: "public",
+      seoSlug: { not: null },
+      userId: { not: null },
+      user: { is: { emailVerifiedAt: { not: null } } },
+    },
     select: { seoSlug: true, updatedAt: true },
     orderBy: { updatedAt: "desc" },
     take: 1000,
