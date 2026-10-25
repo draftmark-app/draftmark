@@ -1,6 +1,8 @@
 import { notFound } from "next/navigation";
+import { cookies, headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
+import { evaluateDocAccess } from "@/lib/auth";
 import { buildMetaDescription } from "@/lib/seo";
 import Nav from "@/components/Nav";
 import DocView from "@/components/DocView";
@@ -74,29 +76,37 @@ export default async function DocPage({ params, searchParams }: Props) {
     data: { viewsCount: { increment: 1 } },
   }).catch(() => {});
 
-  // Check access: magic token, share token, or account ownership.
-  // The magic token normally arrives via the httpOnly cookie set by the
-  // middleware token->cookie exchange (kept out of the URL); ?token= is still
-  // honored for the first hop / API clients.
-  const { hashToken, safeCompare } = await import("@/lib/tokens");
-  const { cookies } = await import("next/headers");
-  const cookieMagic = (await cookies()).get(`dm_tok_${slug}`)?.value;
-  const hasValidToken =
-    !!(token && doc.magicToken === hashToken(token)) ||
-    !!(cookieMagic && doc.magicToken === hashToken(cookieMagic));
-  // Share token can come via dedicated param or via token param (from prompt
-  // form). Stored unhashed, so compare in constant time.
-  const hasShareToken =
-    !!(share_token && doc.shareToken && safeCompare(doc.shareToken, share_token)) ||
-    !!(token && token.startsWith("share_") && doc.shareToken && safeCompare(doc.shareToken, token));
+  // Access is resolved by the same evaluator the API uses. The magic token
+  // normally arrives via the httpOnly cookie set by the middleware token->cookie
+  // exchange (kept out of the URL); ?token= is still honored for the first hop.
+  const cookieStore = await cookies();
+  const headerStore = await headers();
+  const headerMagic = headerStore.get("x-magic-token");
+  const tokenParam = token ?? null;
+  const magicTokens = [
+    headerMagic,
+    tokenParam,
+    cookieStore.get(`dm_tok_${slug}`)?.value ?? null,
+  ].filter((t): t is string => !!t);
+  const shareTokens = [
+    share_token ?? null,
+    headerStore.get("x-share-token"),
+    ...[tokenParam, headerMagic].filter((t): t is string => !!t && t.startsWith("share_")),
+  ].filter((t): t is string => !!t);
+  const authHeader = headerStore.get("authorization");
+  const bearerToken = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
 
   const session = await getSession();
-  const isAccountOwner = !!(session && doc.userId && session.userId === doc.userId);
-  const isOwner = hasValidToken || isAccountOwner;
-  const hasReadAccess = isOwner || hasShareToken;
+  const access = evaluateDocAccess(doc, {
+    magicTokens,
+    shareTokens,
+    apiKey: bearerToken && !bearerToken.startsWith("acct_") ? bearerToken : null,
+    userId: session?.userId ?? null,
+  });
+  const isOwner = access.owner;
 
   // Private doc without access — show token prompt
-  if (doc.visibility === "private" && !hasReadAccess) {
+  if (!access.readable) {
     return (
       <>
         <Nav />
@@ -134,9 +144,9 @@ export default async function DocPage({ params, searchParams }: Props) {
       {shareUrl && <ShareBanner url={shareUrl} rawUrl={rawUrl} />}
       <DocView
         authToken={
-          hasValidToken
+          access.ownerByMagic
             ? token
-            : hasShareToken
+            : access.byShareToken
               ? doc.shareToken ?? undefined
               : undefined
         }

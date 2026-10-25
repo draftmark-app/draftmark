@@ -81,7 +81,7 @@ export default function AgentsPage() {
 
       {/* THE LOOP */}
       <section className="agents-section">
-        <div className="agents-section-label">// the loop</div>
+        <div className="agents-section-label">{"// the loop"}</div>
         <div className="agents-steps">
           <div className="agents-step">
             <div className="step-num">00</div>
@@ -288,7 +288,7 @@ export default function AgentsPage() {
 
       {/* FEATURES FOR AGENTS */}
       <section className="agents-section">
-        <div className="agents-section-label">// built for this</div>
+        <div className="agents-section-label">{"// built for this"}</div>
         <div className="features-grid">
           <div className="feature">
             <div className="feature-icon">[&#9889;]</div>
@@ -392,7 +392,7 @@ export default function AgentsPage() {
 
       {/* EXAMPLE WORKFLOW */}
       <section className="agents-section">
-        <div className="agents-section-label">// example: claude code</div>
+        <div className="agents-section-label">{"// example: claude code"}</div>
         <div className="agents-example">
           <div className="agents-example-step">
             <div className="agents-example-label">setup (once)</div>

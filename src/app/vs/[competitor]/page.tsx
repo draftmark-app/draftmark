@@ -117,7 +117,7 @@ export default async function ComparisonPage({ params }: Props) {
 
       {/* COMPARISON TABLE */}
       <section className="usecase-section">
-        <div className="usecase-section-label">// feature comparison</div>
+        <div className="usecase-section-label">{"// feature comparison"}</div>
         <div className="compare-wrap">
           <table className="compare-table">
             <thead>
@@ -160,7 +160,7 @@ export default async function ComparisonPage({ params }: Props) {
 
       {/* FAQ */}
       <section className="usecase-section">
-        <div className="usecase-section-label">// faq</div>
+        <div className="usecase-section-label">{"// faq"}</div>
         <div className="features-grid">
           {c.faq.map((item) => (
             <div className="feature" key={item.q}>

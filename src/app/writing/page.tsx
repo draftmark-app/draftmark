@@ -71,7 +71,7 @@ export default function WritingPage() {
 
       {/* THE LOOP */}
       <section className="usecase-section">
-        <div className="usecase-section-label">// the loop</div>
+        <div className="usecase-section-label">{"// the loop"}</div>
         <div className="usecase-steps">
           <div className="usecase-step">
             <div className="step-num">01</div>
@@ -110,7 +110,7 @@ export default function WritingPage() {
 
       {/* FEATURES */}
       <section className="usecase-section">
-        <div className="usecase-section-label">// built for writers</div>
+        <div className="usecase-section-label">{"// built for writers"}</div>
         <div className="features-grid">
           <div className="feature">
             <div className="feature-icon">[md]</div>
@@ -167,7 +167,7 @@ export default function WritingPage() {
 
       {/* EXAMPLE WORKFLOW */}
       <section className="usecase-section">
-        <div className="usecase-section-label">// example: blog post review</div>
+        <div className="usecase-section-label">{"// example: blog post review"}</div>
         <div className="usecase-example">
           <div className="usecase-example-step">
             <div className="usecase-example-label">writer creates draft</div>

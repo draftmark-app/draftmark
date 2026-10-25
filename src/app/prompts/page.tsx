@@ -76,7 +76,7 @@ export default function PromptsPage() {
 
       {/* THE LOOP */}
       <section className="usecase-section">
-        <div className="usecase-section-label">// the loop</div>
+        <div className="usecase-section-label">{"// the loop"}</div>
         <div className="usecase-steps">
           <div className="usecase-step">
             <div className="step-num">01</div>
@@ -115,7 +115,7 @@ export default function PromptsPage() {
 
       {/* FEATURES */}
       <section className="usecase-section">
-        <div className="usecase-section-label">// built for prompt work</div>
+        <div className="usecase-section-label">{"// built for prompt work"}</div>
         <div className="features-grid">
           <div className="feature">
             <div className="feature-icon">[#42]</div>
@@ -171,7 +171,7 @@ export default function PromptsPage() {
 
       {/* EXAMPLE WORKFLOW */}
       <section className="usecase-section">
-        <div className="usecase-section-label">// example: agent prompt iteration</div>
+        <div className="usecase-section-label">{"// example: agent prompt iteration"}</div>
         <div className="usecase-example">
           <div className="usecase-example-step">
             <div className="usecase-example-label">agent posts prompt</div>

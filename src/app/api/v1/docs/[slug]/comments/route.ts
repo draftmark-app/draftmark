@@ -10,7 +10,13 @@ import { commentIdentity } from "@/lib/identity";
 import { notifyOwnerOfComment } from "@/lib/notify";
 import { createReplySubscription, notifyReplySubscribers } from "@/lib/subscriptions";
 import { enforceRateLimit, LIMITS } from "@/lib/ratelimit";
-import { parseNullableInt } from "@/lib/validation";
+import {
+  parseNullableInt,
+  validateCommentBody,
+  validateAuthor,
+  validateAnchorText,
+  validateAnchorType,
+} from "@/lib/validation";
 
 type RouteContext = { params: Promise<{ slug: string }> };
 
@@ -89,11 +95,17 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
   if (feedbackCheck) return feedbackCheck;
 
   const body = await request.json().catch(() => null);
-  if (!body || !body.body || typeof body.body !== "string") {
-    return NextResponse.json(
-      { error: "Comment body is required" },
-      { status: 400 }
-    );
+  if (!body) {
+    return NextResponse.json({ error: "Request body required" }, { status: 400 });
+  }
+
+  const validationError =
+    validateCommentBody(body.body) ??
+    validateAuthor(body.author) ??
+    validateAnchorText(body.anchor_text) ??
+    validateAnchorType(body.anchor_type);
+  if (validationError) {
+    return NextResponse.json({ error: validationError }, { status: 400 });
   }
 
   // anchor_ref/cross_ref_line map to Int columns — validate before the

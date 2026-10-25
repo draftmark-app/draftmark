@@ -2,11 +2,12 @@ import { describe, it, expect } from "vitest";
 import { prisma } from "@/lib/prisma";
 import { generateSlug } from "@/lib/slug";
 import { generateMagicToken, generateApiKey, hashToken } from "@/lib/tokens";
+import type { Prisma } from "@/generated/prisma/client";
 
 async function createTestDoc(
   overrides: {
     visibility?: string;
-    meta?: Record<string, unknown>;
+    meta?: Prisma.InputJsonValue;
   } = {}
 ) {
   const slug = generateSlug();

@@ -10,7 +10,13 @@ import { commentIdentity } from "@/lib/identity";
 import { notifyOwnerOfComment } from "@/lib/notify";
 import { notifyReplySubscribers } from "@/lib/subscriptions";
 import { enforceRateLimit, LIMITS } from "@/lib/ratelimit";
-import { parseNullableInt } from "@/lib/validation";
+import {
+  parseNullableInt,
+  validateCommentBody,
+  validateAuthor,
+  validateAnchorText,
+  validateAnchorType,
+} from "@/lib/validation";
 
 type RouteContext = { params: Promise<{ slug: string }> };
 
@@ -53,9 +59,14 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
   const parsed: { anchorRef: number | null; crossRefLine: number | null }[] = [];
   for (let i = 0; i < body.comments.length; i++) {
     const c = body.comments[i];
-    if (!c.body || typeof c.body !== "string") {
+    const commentError =
+      validateCommentBody(c.body) ??
+      validateAuthor(c.author) ??
+      validateAnchorText(c.anchor_text) ??
+      validateAnchorType(c.anchor_type);
+    if (commentError) {
       return NextResponse.json(
-        { error: `Comment at index ${i}: body is required` },
+        { error: `Comment at index ${i}: ${commentError}` },
         { status: 400 }
       );
     }

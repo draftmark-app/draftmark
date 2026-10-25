@@ -132,7 +132,7 @@ export default function ShareMarkdownOnlinePage() {
 
       {/* HOW */}
       <section className="usecase-section">
-        <div className="usecase-section-label">// how it works</div>
+        <div className="usecase-section-label">{"// how it works"}</div>
         <div className="usecase-steps">
           <div className="usecase-step">
             <div className="step-num">01</div>
@@ -166,7 +166,7 @@ export default function ShareMarkdownOnlinePage() {
 
       {/* WHY */}
       <section className="usecase-section">
-        <div className="usecase-section-label">// why draftmark</div>
+        <div className="usecase-section-label">{"// why draftmark"}</div>
         <div className="features-grid">
           <div className="feature">
             <div className="feature-icon">[&#9889;]</div>
@@ -224,7 +224,7 @@ export default function ShareMarkdownOnlinePage() {
 
       {/* FAQ */}
       <section className="usecase-section">
-        <div className="usecase-section-label">// faq</div>
+        <div className="usecase-section-label">{"// faq"}</div>
         <div className="features-grid">
           {faq.map((item) => (
             <div className="feature" key={item.q}>

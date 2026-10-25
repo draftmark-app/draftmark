@@ -37,6 +37,9 @@ export default function ReviewsSection({ slug, reviewerName, setReviewerName, pe
   }, [slug, authToken, reviewedKey]);
 
   useEffect(() => {
+    // Initial data fetch on mount — state is only set asynchronously once the
+    // request resolves, so this is not a cascading-render case.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchReviews();
   }, [fetchReviews]);
 

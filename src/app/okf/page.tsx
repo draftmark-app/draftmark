@@ -95,7 +95,7 @@ export default function OkfPage() {
 
       {/* WHAT IS OKF */}
       <section className="agents-section">
-        <div className="agents-section-label">// what is OKF</div>
+        <div className="agents-section-label">{"// what is OKF"}</div>
         <div className="features-grid">
           <div className="feature">
             <div className="feature-icon">[md]</div>
@@ -140,7 +140,7 @@ export default function OkfPage() {
 
       {/* HOW DRAFTMARK PRODUCES IT */}
       <section className="agents-section">
-        <div className="agents-section-label">// how Draftmark produces it</div>
+        <div className="agents-section-label">{"// how Draftmark produces it"}</div>
         <div className="agents-steps">
           <div className="agents-step">
             <div className="step-num">00</div>
@@ -245,7 +245,7 @@ export default function OkfPage() {
 
       {/* THE MAPPING */}
       <section className="agents-section">
-        <div className="agents-section-label">// the mapping</div>
+        <div className="agents-section-label">{"// the mapping"}</div>
         <div className="features-grid">
           <div className="feature">
             <div className="feature-icon">[→]</div>

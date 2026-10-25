@@ -1,10 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { authorizeWithMagicToken, getAuthenticatedUser, canAccessPrivateResources } from "@/lib/auth";
-import { hashToken, generateShareToken, safeCompare } from "@/lib/tokens";
+import {
+  authorizeWithMagicToken,
+  getAuthenticatedUser,
+  canAccessPrivateResources,
+  getDocAccessForRequest,
+} from "@/lib/auth";
+import { generateShareToken } from "@/lib/tokens";
 import { extractTitleFromContent } from "@/lib/markdown";
 import { generateSeoSlug } from "@/lib/slug";
 import { buildOkfConceptDoc } from "@/lib/okf";
+import { validateContent, validateTitle, validateVersionNote } from "@/lib/validation";
 
 export async function GET(
   request: NextRequest,
@@ -24,41 +30,27 @@ export async function GET(
     return NextResponse.json({ error: "Document not found" }, { status: 404 });
   }
 
-  // Determine access level: owner (magic_token) vs reviewer (api_key/public)
-  const tokenParam = new URL(request.url).searchParams.get("token");
-  const authHeader = request.headers.get("authorization");
-  const apiKey = authHeader?.startsWith("Bearer ")
-    ? authHeader.slice(7)
-    : null;
+  // Owner vs reviewer access is resolved by the shared evaluator so this route
+  // and the feedback endpoints (and the share page) can't drift.
+  const { access, user } = await getDocAccessForRequest(request, doc);
+  const isOwner = access.owner;
 
-  const cookieToken = request.cookies.get(`dm_tok_${slug}`)?.value;
-  const isOwnerByToken =
-    !!(tokenParam && doc.magicToken === hashToken(tokenParam)) ||
-    !!(cookieToken && doc.magicToken === hashToken(cookieToken));
-  const hasApiKey = !!(apiKey && !apiKey.startsWith("acct_") && doc.apiKey === hashToken(apiKey));
-
-  // Check share token (unhashed, read-only access).
-  // Accept via ?share_token=, x-share-token header, or ?token=share_... (matches share page).
-  const shareTokenParam = new URL(request.url).searchParams.get("share_token") ||
-    request.headers.get("x-share-token");
-  const hasShareToken =
-    !!(shareTokenParam && doc.shareToken && safeCompare(doc.shareToken, shareTokenParam)) ||
-    !!(tokenParam && tokenParam.startsWith("share_") && doc.shareToken && safeCompare(doc.shareToken, tokenParam));
-
-  // Check account ownership (session cookie or acct_ API key)
-  const user = await getAuthenticatedUser(request);
-  const isAccountOwner = !!(user && doc.userId && user.id === doc.userId);
-  const isOwner = isOwnerByToken || isAccountOwner;
-
-  // Suspended account (unverified >24h) loses private doc access
-  if (doc.visibility === "private" && isAccountOwner && !isOwnerByToken && user && !canAccessPrivateResources(user)) {
+  // Suspended account (unverified >24h) loses private doc access, unless the
+  // request also presented a valid magic token.
+  if (
+    doc.visibility === "private" &&
+    access.accountOwner &&
+    !access.ownerByMagic &&
+    user &&
+    !canAccessPrivateResources(user)
+  ) {
     return NextResponse.json(
       { error: "Email verification required. Verify your email to continue accessing private documents." },
       { status: 403 }
     );
   }
 
-  if (doc.visibility === "private" && !isOwner && !hasApiKey && !hasShareToken) {
+  if (!access.readable) {
     return NextResponse.json(
       { error: "This document is private. Provide a valid token or API key." },
       { status: 401 }
@@ -164,6 +156,14 @@ export async function PATCH(
   }
 
   const { content, title, visibility, version_note, status, expected_reviews, review_deadline } = body;
+
+  const validationError =
+    (content !== undefined ? validateContent(content) : null) ??
+    (title !== undefined ? validateTitle(title) : null) ??
+    (version_note !== undefined ? validateVersionNote(version_note) : null);
+  if (validationError) {
+    return NextResponse.json({ error: validationError }, { status: 400 });
+  }
 
   // Get current version number
   const latestVersion = await prisma.docVersion.findFirst({

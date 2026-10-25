@@ -34,6 +34,9 @@ export default function ReactionsBar({ slug, authToken }: Props) {
   }, [slug, authToken]);
 
   useEffect(() => {
+    // Initial data fetch on mount — state is only set asynchronously once the
+    // request resolves, so this is not a cascading-render case.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchReactions();
     // Load reacted state from localStorage
     const stored = localStorage.getItem(`reactions:${slug}`);

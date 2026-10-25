@@ -191,6 +191,120 @@ export async function isDocOwner(
 }
 
 /**
+ * Access decision for reading a doc. `owner` implies full read access plus the
+ * owner-only response fields (meta, views_count, share token); `readable`
+ * covers owner, public docs, doc API keys, and read-only share tokens.
+ *
+ * `ownerByMagic` is tracked separately from account ownership because the
+ * suspended-account check only applies to account owners who did not also
+ * present a magic token.
+ */
+export type DocAccess = {
+  readable: boolean;
+  owner: boolean;
+  ownerByMagic: boolean;
+  accountOwner: boolean;
+  byShareToken: boolean;
+};
+
+type AccessDoc = {
+  visibility: string;
+  magicToken: string;
+  apiKey: string;
+  shareToken: string | null;
+  userId: string | null;
+};
+
+export type DocReadSources = {
+  magicTokens: string[];
+  shareTokens: string[];
+  apiKey: string | null;
+  userId: string | null;
+};
+
+/**
+ * Pure access evaluation shared by API routes and server components, so the
+ * owner-vs-reader split has exactly one implementation.
+ */
+export function evaluateDocAccess(doc: AccessDoc, sources: DocReadSources): DocAccess {
+  const ownerByMagic = sources.magicTokens.some((t) => doc.magicToken === hashToken(t));
+  const accountOwner = !!(sources.userId && doc.userId === sources.userId);
+  const owner = ownerByMagic || accountOwner;
+
+  // Doc-level API key (key_...) — reviewers can read but are not owners.
+  const hasApiKey = !!(sources.apiKey && doc.apiKey === hashToken(sources.apiKey));
+
+  // Share token is stored unhashed, so compare in constant time. Dedicated
+  // share_token param / X-Share-Token header are matched directly; the generic
+  // ?token= / X-Magic-Token sources only count when they carry the share_
+  // prefix (a magic token can never be misread as a share token here).
+  const hasShareToken =
+    !!doc.shareToken && sources.shareTokens.some((t) => safeCompare(doc.shareToken!, t));
+
+  return {
+    readable: owner || doc.visibility === "public" || hasApiKey || hasShareToken,
+    owner,
+    ownerByMagic,
+    accountOwner,
+    byShareToken: hasShareToken,
+  };
+}
+
+/** Normalize the token sources carried by an API request into read sources. */
+export function readSourcesFromRequest(
+  request: NextRequest,
+  slug: string,
+  user: { id: string } | null
+): DocReadSources {
+  const url = new URL(request.url);
+  const tokenParam = url.searchParams.get("token");
+  const headerMagic = request.headers.get("x-magic-token");
+
+  // Magic token from any independent source (header, query param, or the
+  // httpOnly per-doc cookie set by the middleware token->cookie exchange) so a
+  // stray/wrong ?token= can't shadow a valid cookie.
+  const magicTokens = [
+    headerMagic,
+    tokenParam,
+    request.cookies.get(`dm_tok_${slug}`)?.value ?? null,
+  ].filter((t): t is string => !!t);
+
+  const shareTokens = [
+    url.searchParams.get("share_token"),
+    request.headers.get("x-share-token"),
+    ...[tokenParam, headerMagic].filter((t): t is string => !!t && t.startsWith("share_")),
+  ].filter((t): t is string => !!t);
+
+  const authHeader = request.headers.get("authorization");
+  const bearerToken = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
+
+  return {
+    magicTokens,
+    shareTokens,
+    apiKey: bearerToken && !bearerToken.startsWith("acct_") ? bearerToken : null,
+    userId: user?.id ?? null,
+  };
+}
+
+/**
+ * Resolve the access decision for an already-fetched doc. Callers that already
+ * have the authenticated user pass it via `resolvedUser` to avoid a duplicate
+ * lookup (and a duplicate API-key lastUsedAt write).
+ */
+export async function getDocAccessForRequest(
+  request: NextRequest,
+  doc: AccessDoc & { slug: string },
+  resolvedUser?: AuthenticatedUser | null
+): Promise<{ access: DocAccess; user: AuthenticatedUser | null }> {
+  const user =
+    resolvedUser !== undefined ? resolvedUser : await getAuthenticatedUser(request);
+  return {
+    access: evaluateDocAccess(doc, readSourcesFromRequest(request, doc.slug, user)),
+    user,
+  };
+}
+
+/**
  * Find a doc and authorize read access for feedback endpoints (comments, reactions, reviews).
  * Checks: public visibility, API key (Bearer key_...), magic token (?token= or X-Magic-Token),
  * account API key (Bearer acct_...), or session cookie (account owner).
@@ -202,58 +316,8 @@ export async function findDocWithReadAccess(
   const doc = await prisma.doc.findUnique({ where: { slug } });
   if (!doc) return { doc: null, authorized: false };
 
-  if (doc.visibility === "public") {
-    return { doc, authorized: true };
-  }
-
-  // Check doc-level API key (key_...)
-  const authHeader = request.headers.get("authorization");
-  const bearerToken = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
-  if (bearerToken && !bearerToken.startsWith("acct_") && doc.apiKey === hashToken(bearerToken)) {
-    return { doc, authorized: true };
-  }
-
-  // Check magic token from any independent source (header, query param, or the
-  // httpOnly per-doc cookie set by the middleware token->cookie exchange) so a
-  // stray/wrong ?token= can't shadow a valid cookie.
-  const url = new URL(request.url);
-  const magicCandidates = [
-    request.headers.get("x-magic-token"),
-    url.searchParams.get("token"),
-    request.cookies.get(`dm_tok_${slug}`)?.value ?? null,
-  ].filter((t): t is string => !!t);
-  if (magicCandidates.some((t) => doc.magicToken === hashToken(t))) {
-    return { doc, authorized: true };
-  }
-
-  // Check share token (unhashed, read-only access for private docs). Dedicated
-  // share_token param / X-Share-Token header are matched directly; the generic
-  // ?token= / X-Magic-Token sources only count as a share token when they carry
-  // the share_ prefix. This mirrors the /docs/:slug GET owner-vs-share split so
-  // the two access paths can't diverge, and the prefix gate means a magic token
-  // on ?token= can never be misread here (it's already been checked above). The
-  // share token is stored unhashed, so compare it in constant time.
-  const shareCandidates = [
-    url.searchParams.get("share_token"),
-    request.headers.get("x-share-token"),
-    ...[url.searchParams.get("token"), request.headers.get("x-magic-token")].filter(
-      (t): t is string => !!t && t.startsWith("share_")
-    ),
-  ].filter((t): t is string => !!t);
-  const storedShareToken = doc.shareToken;
-  if (storedShareToken && shareCandidates.some((t) => safeCompare(storedShareToken, t))) {
-    return { doc, authorized: true };
-  }
-
-  // Check account ownership (acct_ key or session cookie)
-  if (doc.userId) {
-    const user = await getAuthenticatedUser(request);
-    if (user?.id === doc.userId) {
-      return { doc, authorized: true };
-    }
-  }
-
-  return { doc, authorized: false };
+  const { access } = await getDocAccessForRequest(request, doc);
+  return { doc, authorized: access.readable };
 }
 
 /**

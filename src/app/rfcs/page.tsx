@@ -76,7 +76,7 @@ export default function RfcsPage() {
 
       {/* THE LOOP */}
       <section className="usecase-section">
-        <div className="usecase-section-label">// the loop</div>
+        <div className="usecase-section-label">{"// the loop"}</div>
         <div className="usecase-steps">
           <div className="usecase-step">
             <div className="step-num">01</div>
@@ -125,7 +125,7 @@ export default function RfcsPage() {
 
       {/* FEATURES */}
       <section className="usecase-section">
-        <div className="usecase-section-label">// built for proposals</div>
+        <div className="usecase-section-label">{"// built for proposals"}</div>
         <div className="features-grid">
           <div className="feature">
             <div className="feature-icon">[&#10003;]</div>
@@ -182,7 +182,7 @@ export default function RfcsPage() {
 
       {/* EXAMPLE WORKFLOW */}
       <section className="usecase-section">
-        <div className="usecase-section-label">// example: planning agent creates RFC</div>
+        <div className="usecase-section-label">{"// example: planning agent creates RFC"}</div>
         <div className="usecase-example">
           <div className="usecase-example-step">
             <div className="usecase-example-label">agent creates RFC</div>
